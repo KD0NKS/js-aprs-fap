@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "esnext",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "allowJs": false,
+        "preserveConstEnums": true,
+        "outDir": "build/dist",
+        "sourceMap": true,
+        "declaration": true
+    },
+    "include": [
+        "src/**/*"
+        , "test/**/*"
+    ],
+    "exclude": [ "bin", "node_modules" ],
+    "atom": { "rewriteTsconfig": false }
+}

@@ -165,11 +165,11 @@ export default class aprsParser {
      * @param {string} $val Value that caused the error.
      * @return {void}
      */
-    addError = function(packet: aprsPacket, errorCode: string, value?: string) {
+    addError = function(packet: aprsPacket, errorCode: string, value?: string): aprsPacket {
         packet.resultCode = errorCode;
 
-        packet.resultMessage = (RESULT_MESSAGES[errorCode]) ? RESULT_MESSAGES[errorCode] : errorCode
-                + (value !== undefined && value) ? value : value;
+        packet.resultMessage = ((RESULT_MESSAGES[errorCode]) ? RESULT_MESSAGES[errorCode] : errorCode)
+                + ((value !== undefined && value) ? value : value);
 
         return packet;
     }
@@ -182,15 +182,17 @@ export default class aprsParser {
      * @param {string} $val Value that caused the warning.
      * @return {void}
      */
-    addWarning = function(packet: aprsPacket, errorCode: string, value?: string) {
+    addWarning = function(packet: aprsPacket, errorCode: string, value?: string): aprsPacket {
         if(packet.warningCodes == undefined || !packet.warningCodes) {
             packet.warningCodes = [];
         }
 
         packet.warningCodes.push(errorCode);
 
-        packet.resultMessage = (RESULT_MESSAGES[errorCode]) ? RESULT_MESSAGES[errorCode] : errorCode
-                + (value !== undefined && value) ? value : value;
+        packet.resultMessage = ((RESULT_MESSAGES[errorCode] !== undefined && RESULT_MESSAGES[errorCode]) ? RESULT_MESSAGES[errorCode] : errorCode)
+                + ((value !== undefined && value) ? `: ${value}` : '');
+
+        return packet;
     }
 
     // Utility Functions

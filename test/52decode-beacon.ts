@@ -9,23 +9,23 @@ describe('FAP - Test parsing beacons', function() {
     let parser = new aprsParser();
 
     describe('#parseaprs - Test a beacon parsing', function() {
-        let $srccall = "OH2RDU";
-        let $dstcall = "UIDIGI";
-        let $message = " UIDIGI 1.9";
+        let srccall = "OH2RDU";
+        let dstcall = "UIDIGI";
+        let message = " UIDIGI 1.9";
 
-        let $aprspacket = $srccall + '>' + $dstcall + ':' + $message;
-        let $retval = parser.parseaprs($aprspacket);
+        let aprspacket = srccall + '>' + dstcall + ':' + message;
+        let retVal = parser.parseaprs(aprspacket);
 
-        it('Should return srccallsign: ' + $srccall, function() {
-            assert.equal($srccall, $retval['srccallsign']);
+        it('Should return srccallsign: ' + srccall, function() {
+            assert.equal(srccall, retVal.sourceCallsign);
         });
 
-        it('Should return a dstcall: ' + $dstcall, function() {
-            assert.equal($dstcall, $retval['dstcallsign']);
+        it('Should return a dstcall: ' + dstcall, function() {
+            assert.equal(dstcall, retVal.destCallsign);
         });
 
-        it('Should return body value: ' + $message, function() {
-            assert.equal($message, $retval['body']);
+        it('Should return body value: ' + message, function() {
+            assert.equal(message, retVal.body);
         });
     });
 });

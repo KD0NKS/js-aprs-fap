@@ -1,14 +1,18 @@
 /**
  * a basic uncompressed packet decoding test for a moving target
  * Tue Dec 11 2007, Hessu, OH7LZB
- *
+ */
+import * as chai from 'chai';
 
-var assert = require('assert')
-        , parser = require('../parser')
-        , should = require('chai').should()
-        ;
+const assert = require('assert');
+const should = chai.should();
+
+import aprsPacket from '../src/aprsPacket';
+import aprsParser from '../src/parser';
 
 describe('FAP - Test decoding uncompressed packets', function() {
+    let parser: aprsParser = new aprsParser();
+
     describe('#parseaprs - Test parsing uncompressed packet', function() {
         let $srccall = "OH7FDN";
         let $dstcall = "APZMDR";
@@ -20,83 +24,82 @@ describe('FAP - Test decoding uncompressed packets', function() {
 
         let $aprspacket = $header + ':' + $body;
 
-        let parsed = parser.parseaprs($aprspacket);
+        let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
         it('Should return the source call sign: ' + $srccall, function() {
-            assert.equal($srccall, parsed['srccallsign']);
+            assert.equal($srccall, parsed.sourceCallsign);
         });
 
         it('Should return the destination call sign: ' + $dstcall, function() {
-            assert.equal($dstcall, parsed['dstcallsign']);
+            assert.equal($dstcall, parsed.destCallsign);
         });
 
         it('Should return a header: ' + $header, function() {
-            assert.equal($header, parsed['header']);
+            assert.equal($header, parsed.header);
         });
 
         it('Should return a body: ' + $body, function() {
-            assert.equal($body, parsed['body']);
+            assert.equal($body, parsed.body);
         });
 
         it('Should return a type: location', function() {
-            assert.equal('location', parsed['type']);
+            assert.equal('location', parsed.type);
         });
 
         it('Should return 3 valid digis', function() {
-            assert.equal(4, parsed['digipeaters'].length);
+            assert.equal(4, parsed.digipeaters.length);
 
-            assert.equal('OH7AA-1', parsed['digipeaters'][0].call);
-            assert.equal(true, parsed['digipeaters'][0].wasdigied);
+            assert.equal('OH7AA-1', parsed.digipeaters[0].callsign);
+            assert.equal(true, parsed.digipeaters[0].wasDigipeated);
 
-            assert.equal('WIDE2-1', parsed['digipeaters'][1].call);
-            assert.equal(false, parsed['digipeaters'][1].wasdigied);
+            assert.equal('WIDE2-1', parsed.digipeaters[1].callsign);
+            assert.equal(false, parsed.digipeaters[1].wasDigipeated);
 
-            assert.equal('qAR', parsed['digipeaters'][2].call);
-            assert.equal(false, parsed['digipeaters'][2].wasdigied);
+            assert.equal('qAR', parsed.digipeaters[2].callsign);
+            assert.equal(false, parsed.digipeaters[2].wasDigipeated);
 
-            assert.equal('OH7AA', parsed['digipeaters'][3].call);
-            assert.equal(false, parsed['digipeaters'][3].wasdigied);
+            assert.equal('OH7AA', parsed.digipeaters[3].callsign);
+            assert.equal(false, parsed.digipeaters[3].wasDigipeated);
         });
 
         it('Should return the symbol table code: /', function() {
-            assert.equal('/', parsed['symboltable']);
+            assert.equal('/', parsed.symboltable);
         });
 
         it('Should return the symbol code: >', function() {
-            assert.equal('>', parsed['symbolcode']);
+            assert.equal('>', parsed.symbolcode);
         });
 
         it('Should return posambiguity: 0', function() {
-            assert.equal(0, parsed['posambiguity']);
+            assert.equal(0, parsed.posambiguity);
         });
 
         it('Should return messaging: false', function() {
-            assert.equal(false, parsed['messaging']);
+            assert.equal(false, parsed.messaging);
         });
 
         it('Should return latitude value, that when rounded should equal: 62.8920', function() {
-            assert.equal(62.8920, parsed['latitude'].toFixed(4));
+            assert.equal(62.8920, parsed.latitude.toFixed(4));
         });
 
         it('Should return longitude value, that when rounded should equal: 27.6578', function() {
-            assert.equal(27.6578, parsed['longitude'].toFixed(4));
+            assert.equal(27.6578, parsed.longitude.toFixed(4));
         });
 
         it('Should return position resolution: 18.52', function() {
-            assert.equal(18.52, parsed['posresolution']);
+            assert.equal(18.52, parsed.posresolution);
         });
 
         it('Should return speed: 18.52', function() {
-            assert.equal(18.52, parsed['speed']);
+            assert.equal(18.52, parsed.speed);
         });
 
         it('Should return course: 36', function() {
-            assert.equal(36, parsed['course']);
+            assert.equal(36, parsed.course);
         });
 
         it('Should return altitude: 141.732', function() {
-            assert.equal(141.732, parsed['altitude']);
+            assert.equal(141.732, parsed.altitude);
         });
     });
 });
-*/

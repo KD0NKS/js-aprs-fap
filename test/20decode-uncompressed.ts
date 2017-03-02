@@ -1,13 +1,14 @@
 /**
 # a basic uncompressed packet decoding test
 # Mon Dec 10 2007, Hessu, OH7LZB
- *
+ */
 const assert = require('assert');
 
 import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test decoding uncompressed packets', function() {
+    /*
     let parser = new aprsParser();
 
     describe('#parseaprs - Test parsing uncompressed packet', function() {
@@ -154,6 +155,7 @@ describe('FAP - Test decoding uncompressed packets', function() {
         let $aprspacket = $srccall + '>' + $dstcall + ",OH2RDG*,WIDE:hoponassualku!6028.51S/02505.68W#PHG" + $phg + $comment;
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        console.log(parsed);
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: -60.4752', function() {
@@ -239,5 +241,5 @@ describe('FAP - Test decoding uncompressed packets', function() {
             assert.equal(106.74350, parsed.longitude.toFixed(5));
         });
     });
+    */
 });
-*/

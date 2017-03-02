@@ -1,5 +1,6 @@
 import digipeater from './digipeater';
 import telemetry from './telemetry';
+import wx from './wx';
 
 export default class aprsPacket {
     constructor() { }
@@ -22,6 +23,7 @@ export default class aprsPacket {
     public messageAck?: string;
     public messageId?: string;
     public messageReject?: string;
+    public messaging?: boolean;
     public objectname?: string;
     public origpacket?: string;
     public phg?: string;
@@ -39,4 +41,5 @@ export default class aprsPacket {
     public timestamp?: number;
     public type?: string;
     public warningCodes?: string[];
+    public wx?: wx;
 }

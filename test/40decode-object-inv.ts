@@ -3,13 +3,18 @@
  * the packet contains has some binary characters, which were destroyed in
  * a cut 'n paste operation
  * Tue Dec 11 2007, Hessu, OH7LZB
- *
-var assert = require('assert')
-        , parser = require('../parser')
-        , should = require('chai').should()
-        ;
+ */
+import * as chai from 'chai';
+
+const assert = require('assert');
+const should = chai.should();
+
+import aprsPacket from '../src/aprsPacket';
+import aprsParser from '../src/parser';
 
 describe('FAP - Test parsing a bad packet', function() {
+    let parser: aprsParser = new aprsParser();
+
     describe('#parseaprs - Test parsing a bad packet', function() {
         let $srccall = "OH2KKU-1";
         let $dstcall = "APRS";
@@ -19,12 +24,11 @@ describe('FAP - Test parsing a bad packet', function() {
         let parsed = parser.parseaprs($aprspacket);
 
         it('Should return a resultcode: obj_inv', function() {
-            assert.equal('obj_inv', parsed['resultcode']);
+            assert.equal('obj_inv', parsed.resultCode);
         });
 
         it('Should return a type: object', function() {
-            assert.equal('object', parsed['type']);
+            assert.equal('object', parsed.type);
         });
     });
 });
-*/

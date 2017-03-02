@@ -1,6 +1,7 @@
 import aprsPacket from './aprsPacket';
 import digipeater from './digipeater';
 import telemetry from './telemetry';
+import wx from './wx';
 
 // conversion constants
 const KNOT_TO_KMH = 1.852;   // nautical miles per hour to kilometers per hour
@@ -428,7 +429,7 @@ export default class aprsParser {
 
         // Check the first character of the packet
         // and determine the packet type
-        let $retval = -1;
+        //let $retval = -1;
         let $packettype = body.charAt(0);
         let $paclen = body.length;
 
@@ -450,9 +451,8 @@ export default class aprsParser {
         // timestamp, with or without messaging capability
         } else if($packettype == '!' || $packettype == '=' ||
                 $packettype == '/' || $packettype == '@') {
-            /*
             // with or without messaging
-            retVal['messaging'] = !($packettype == '!' || $packettype == '/');
+            retVal.messaging = !($packettype == '!' || $packettype == '/');
 
             if($paclen >= 14) {
                 retVal.type = 'location';
@@ -460,74 +460,70 @@ export default class aprsParser {
                 if($packettype == '/' || $packettype == '@') {
                     // With a prepended timestamp, check it and jump over.
                     // If the timestamp is invalid, it will be set to zero.
-                    retVal['timestamp'] = this._parse_timestamp(options, body.substr(1, 7));
+                    retVal.timestamp = this.parseTimestamp(options, body.substr(1, 7));
 
                     /* TODO: DO WE NEED THIS?
                     if($rethash['timestamp'] == false) {
                         addWarning($rethash, 'timestamp_inv_loc');
                     }
-                    *
+                    */
 
-                    $body = $body.substr(7);
+                    body = body.substr(7);
                 }
 
                 // remove the first character
-                $body = $body.substr(1);
+                body = body.substr(1);
 
                 // grab the ascii value of the first byte of body
-                let $poschar = $body.charCodeAt(0);
+                let $poschar = body.charCodeAt(0);
 
                 if($poschar >= 48 && $poschar <= 57) {
                     // poschar is a digit... normal uncompressed position
-                    if($body.length >= 19) {
-                        $retval = this._normalpos_to_decimal($body, $srccallsign, $rethash);
+                    if(body.length >= 19) {
+                        retVal = this._normalpos_to_decimal(body, srcCallsign, retVal);
 
                         // continue parsing with possible comments, but only
                         // if this is not a weather report (course/speed mixup,
                         // weather as comment)
                         // if the comments don't parse, don't raise an error
-                        if($retval == 1 && $rethash['symbolcode'] != '_') {
-                            this._comments_to_decimal($body.substr(19), $srccallsign, $rethash);
+                        if((retVal.resultCode === undefined && !retVal.resultCode)  && retVal.symbolcode != '_') {
+                            retVal = this._comments_to_decimal(body.substr(19), srcCallsign, retVal);
                         } else {
                             // warn "maybe a weather report?\n" . substr($body, 19) . "\n";
-                            this._wx_parse($body.substr(19), $rethash);
+                            retVal = this._wx_parse(body.substr(19), retVal);
                         }
                     }
                 } else if($poschar == 47 || $poschar == 92
                         || ($poschar >= 65 && $poschar <= 90)
                         || ($poschar >= 97 && $poschar <= 106)) {
                     // compressed position
-                    if($body.length >= 13) {
-                        $retval = this._compressed_to_decimal($body.substr(0, 13), $srccallsign, $rethash);
+                    if(body.length >= 13) {
+                        retVal = this._compressed_to_decimal(body.substr(0, 13), srcCallsign, retVal);
 
                         // continue parsing with possible comments, but only
                         // if this is not a weather report (course/speed mixup,
                         // weather as comment)
                         // if the comments don't parse, don't raise an error
-                        if($retval == 1 && $rethash['symbolcode'] != '_') {
-                            this._comments_to_decimal($body.substr(13), $srccallsign, $rethash);
+                        if((retVal.resultCode === undefined && !retVal.resultCode) && retVal.symbolcode != '_') {
+                            this._comments_to_decimal(body.substr(13), srcCallsign, retVal);
                         } else {
                             // warn "maybe a weather report?\n" . substr($body, 13) . "\n";
-                            this._wx_parse($body.substr(13), $rethash);
+                            this._wx_parse(body.substr(13), retVal);
                         }
                     } else {
-                        this.addError($rethash, 'packet_invalid', 'Body is too short.');
-                        return $rethash;
+                        this.addError(retVal, 'packet_invalid', 'Body is too short.');
                     }
                 } else if($poschar == 33) { // '!'
                     // Weather report from Ultimeter 2000
-                    $rethash.type = 'wx';
+                    retVal.type = 'wx';
 
-                    this._wx_parse_peet_logging($body.substr(1), $srccallsign, $rethash);
+                    this._wx_parse_peet_logging(body.substr(1), srcCallsign, retVal);
                 } else {
-                    this.addError($rethash, 'packet_invalid');
-                    return $rethash;
+                    this.addError(retVal, 'packet_invalid');
                 }
             } else {
-                this.addError($rethash, 'packet_short', 'location');
-                return $rethash;
+                return this.addError(retVal, 'packet_short', 'location');
             }
-            */
         // Weather report
         } else if($packettype == '_') {
             /*
@@ -2523,11 +2519,10 @@ export default class aprsParser {
      * Parses a normal uncompressed weather report packet.
      */
     private _wx_parse($s: string, $rethash: aprsPacket): aprsPacket {
-        /*
         // 257/007g013t055r000P000p000h56b10160v31
         // 045/000t064r000p000h35b10203.open2300v1.10
         // 175/007g007p...P000r000t062h32b10224wRSW
-        let $w = {};
+        let $w = new wx();
         let $wind_dir;
         let $wind_speed;
         let $temp;
@@ -2576,7 +2571,7 @@ export default class aprsParser {
             $temp = tmp[2];
         } else {
             // warn "wx_parse: no initial match: $s\n";
-            return 0;
+            return $rethash;
         }
 
         if(!$temp) {
@@ -2590,24 +2585,24 @@ export default class aprsParser {
         }
 
         if(/^\d+$/.test($wind_gust)) {
-            $w['wind_gust'] = (parseFloat($wind_gust) * $mph_to_ms).toFixed(1);
+            $w.wind_gust = (parseFloat($wind_gust) * MPH_TO_MS).toFixed(1);
         }
 
         if(/^\d+$/.test($wind_dir)) {
-            $w['wind_direction'] = parseFloat($wind_dir).toFixed(0);
+            $w.wind_direction = parseFloat($wind_dir).toFixed(0);
         }
 
         if(/^\d+$/.test($wind_speed)) {
-            $w['wind_speed'] = ($wind_speed * $mph_to_ms).toFixed(1);
+            $w.wind_speed = (parseFloat($wind_speed) * MPH_TO_MS).toFixed(1);
         }
 
         if(/^-{0,1}\d+$/.test($temp)) {
-            $w['temp'] = this._fahrenheit_to_celsius($temp).toFixed(1) ;
+            $w.temp = this.fahrenheitToCelsius(parseInt($temp)).toFixed(1) ;
         }
 
         $s = $s.replace(/r(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w['rain_1h'] = (parseFloat($1) * $hinch_to_mm).toFixed(1); // during last 1h
+                $w.rain_1h = (parseFloat($1) * HINCH_TO_MM).toFixed(1); // during last 1h
             }
 
             return '';
@@ -2615,7 +2610,7 @@ export default class aprsParser {
 
         $s = $s.replace(/p(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w['rain_24h'] = (parseFloat($1) * $hinch_to_mm).toFixed(1); // during last 24h
+                $w.rain_24h = (parseFloat($1) * HINCH_TO_MM).toFixed(1); // during last 24h
             }
 
             return '';
@@ -2623,7 +2618,7 @@ export default class aprsParser {
 
         $s = $s.replace(/P(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w['rain_midnight'] = (parseFloat($1) * $hinch_to_mm).toFixed(1); // since midnight
+                $w.rain_midnight = (parseFloat($1) * HINCH_TO_MM).toFixed(1); // since midnight
             }
 
             return '';
@@ -2631,14 +2626,14 @@ export default class aprsParser {
 
         $s = $s.replace(/h(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w['humidity'] = parseFloat($1).toFixed(0); // percentage
+                $w.humidity = parseInt($1); // percentage
 
-                if($w['humidity'] == 0) {
-                    $w['humidity'] = 100;
+                if($w.humidity == 0) {
+                    $w.humidity = 100;
                 }
 
-                if($w['humidity'] > 100 || $w['humidity'] < 1) {
-                    $w['humidity'] = null;
+                if($w.humidity > 100 || $w.humidity < 1) {
+                    $w.humidity = null;
                 }
             }
 
@@ -2647,7 +2642,7 @@ export default class aprsParser {
 
         $s = $s.replace(/b(\d{4,5})/, function($0, $1) {
             if($1) {
-                $w['pressure'] = ($1 / 10).toFixed(1); // results in millibars
+                $w.pressure = ($1 / 10).toFixed(1); // results in millibars
             }
 
             return '';
@@ -2655,11 +2650,11 @@ export default class aprsParser {
 
         $s = $s.replace(/([lL])(\d{1,3})/, function($0, $1, $2) {
             if($2) {
-                $w['luminosity'] = parseFloat($2).toFixed(0); // watts / m2
+                $w.luminosity = parseFloat($2).toFixed(0); // watts / m2
             }
 
             if($1 && $1 == 'l') {
-                $w['luminosity'] += 1000;
+                $w.luminosity += 1000;
             }
 
             return '';
@@ -2669,12 +2664,12 @@ export default class aprsParser {
         if ($s =~ s/v([\-\+]{0,1}\d+)//) {
             # what ?
         }
-        *
+        */
 
         $s = $s.replace(/s(\d{1,3})/, function($0, $1) {
             // snowfall
             if($1) {
-                $w['snow_24h'] = ($1 * $hinch_to_mm).toFixed(1);
+                $w.snow_24h = ($1 * HINCH_TO_MM).toFixed(1);
             }
 
             return '';
@@ -2684,7 +2679,7 @@ export default class aprsParser {
         if ($s =~ s/#(\d+)//) {
             # raw rain counter
         }
-        *
+        */
 
         tmp = $s.match(/^([rPphblLs#][\. ]{1,5})+/);
 
@@ -2693,21 +2688,18 @@ export default class aprsParser {
 
         if(/^[a-zA-Z0-9\-_]{3,5}$/.test($s)) {
             if($s != '') {
-                $w['soft'] = $s.substr(0, 16);
+                $w.soft = $s.substr(0, 16);
             }
         } else {
-            $rethash['comment'] = $s.trim();
+            $rethash.comment = $s.trim();
         }
 
         if($w['temp'] || ($w['wind_speed'] && $w['wind_direction'])) {
             // warn "ok: $initial\n$s\n";
-            $rethash['wx'] = $w;
-            return 1;
+            $rethash.wx = $w;
         }
 
         return 0;
-        */
-        return null;
     }
 
     /**

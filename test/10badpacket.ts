@@ -1,50 +1,55 @@
 // a bad packet test
 // Tue Dec 11 2007, Hessu, OH7LZB
-/*
-const assert = require('assert')
-        , parser = require('../parser')
-        , should = require('chai').should()
-        ;
+import * as chai from 'chai';
+
+const assert = require('assert');
+const should = chai.should();
+
+import aprsPacket from '../src/aprsPacket';
+import aprsParser from '../src/parser';
 
 
 describe('FAP - test bad packets', function() {
+    /*
+    let parser = new aprsParser();
+
     describe('#parseaprs - corrupted uncompressed packet', function() {
         let $srccall = "OH2RDP-1";
         let $dstcall = "BEACON-15";
 
         let $aprspacket = `${$srccall}>${$dstcall},OH2RDG*,WIDE:!60ff.51N/0250akh3r99hfae`;
 
-        let parsed = parser.parseaprs($aprspacket);
+        let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
         it('Should return a resultcode: loc_inv', function() {
-            assert.equal('loc_inv', parsed['resultcode']);
+            assert.equal('loc_inv', parsed.resultCode);
         });
 
         it('Should return a resultmsg: "Invalid uncompressed location: undefined"', function() {
-            assert.equal('Invalid uncompressed location: undefined', parsed['resultmsg']);
+            assert.equal('Invalid uncompressed location: undefined', parsed.resultMessage);
         });
 
         it('Should return a type: location', function() {
-            assert.equal('location', parsed['type']);
+            assert.equal('location', parsed.type);
         });
 
         it('Should return the source call sign: ' + $srccall, function() {
-            assert.equal($srccall, parsed['srccallsign']);
+            assert.equal($srccall, parsed.sourceCallsign);
         });
 
         it('Should return the destination call sign: ' + $dstcall, function() {
-            assert.equal($dstcall, parsed['dstcallsign']);
+            assert.equal($dstcall, parsed.destCallsign);
         });
 
         it('Should not return latitude', function() {
-            should.not.exist(parsed['latitude']);
+            should.not.exist(parsed.latitude);
         });
 
         it('Should not return longitude', function() {
-            should.not.exist(parsed['longitude']);
+            should.not.exist(parsed.longitude);
         });
     });
-
+/*
     describe('#parseaprs - bad source call', function() {
         let $aprspacket = `K6IFR_S>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
 
@@ -94,5 +99,5 @@ describe('FAP - test bad packets', function() {
             assert.equal('Invalid symbol table or overlay: undefined', parsed['resultmsg']);
         });
     });
+    */
 });
-*/

@@ -1,4 +1,5 @@
 import digipeater from './digipeater';
+import telemetry from './telemetry';
 
 export default class aprsPacket {
     constructor() { }
@@ -7,10 +8,12 @@ export default class aprsPacket {
     public altitude?: number;
     public body?: string;
     public comment?: string;
+    public course?: number;
     public destCallsign?: string;
     public destination?: string;
     public digipeaters?: digipeater[];
     public format?: string;
+    public gpsfixstatus?: boolean;
     public header?: string;
     public latitude?: number;
     public longitude?: number;
@@ -23,12 +26,15 @@ export default class aprsPacket {
     public phg?: string;
     public posambiguity?: number;
     public posresolution?: number;
+    public radiorange?: number;
     public resultCode?: string;
     public resultMessage?: string;
     public sourceCallsign?: string;
+    public speed?: number;
     public status?: string;
     public symbolcode?: string;
     public symboltable?: string;
+    public telemetry?: telemetry;
     public timestamp?: number;
     public type?: string;
     public warningCodes?: string[];

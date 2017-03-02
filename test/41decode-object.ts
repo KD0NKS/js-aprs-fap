@@ -20,6 +20,7 @@ describe('FAP - Test parsing object', function() {
         });
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        console.log(parsed);
 
         it('Should return srccallsign: ' + $srccall, function() {
             assert.equal($srccall, parsed.sourceCallsign);

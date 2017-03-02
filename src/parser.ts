@@ -1,5 +1,6 @@
 import aprsPacket from './aprsPacket';
 import digipeater from './digipeater';
+import telemetry from './telemetry';
 
 // conversion constants
 const KNOT_TO_KMH = 1.852;   // nautical miles per hour to kilometers per hour
@@ -698,7 +699,7 @@ export default class aprsParser {
      *
      * @param {json} $options Looking for a raw_timestamp value
      * @param {string} $stamp 6 digit number followed by z, h, or /
-     * @returns {string} A unix timestamp
+     * @returns {number} A unix timestamp
      */
     parseTimestamp = function($options: any, $stamp: any): number {
         // Check initial format
@@ -795,7 +796,7 @@ export default class aprsParser {
             let $currtstamp = null;
             let $backtstamp = null;
 
-            if(this.check_date($cyear, $cmonth, $day)) {
+            if(this.checkDate($cyear, $cmonth, $day)) {
                 if($stamptype === 'z') {
                     //$currtstamp = Date_to_Time($cyear, $cmonth, $day, $hour, $minute, 0);
                     $currtstamp = Math.floor(new Date(Date.UTC($cyear, $cmonth, $cday, $hour, $minute, 0, 0)).getTime() / 1000);
@@ -804,7 +805,7 @@ export default class aprsParser {
                 }
             }
 
-            if(this.check_date($fwdyear, $fwdmonth, $day)) {
+            if(this.checkDate($fwdyear, $fwdmonth, $day)) {
                 if($stamptype === 'z') {
                     $fwdtstamp = Math.floor(new Date(Date.UTC($fwdyear, $fwdmonth, $day, $hour, $minute, 0, 0)).getTime() / 1000);
                 } else {
@@ -812,7 +813,7 @@ export default class aprsParser {
                 }
             }
 
-            if(this.check_date($backyear, $backmonth, $day)) {
+            if(this.checkDate($backyear, $backmonth, $day)) {
                 if($stamptype === 'z') {
                     $backtstamp = Math.floor(new Date(Date.UTC($backyear, $backmonth, $day, $hour, $minute, 0, 0)).getTime() / 1000);
                 } else {
@@ -840,7 +841,7 @@ export default class aprsParser {
      * Parse a message
      * possible TODO: ack piggybacking
      */
-    messageParse(packet: string, retVal: aprsPacket) {
+    private messageParse(packet: string, retVal: aprsPacket) {
         let tmp;
 
         // Check format
@@ -908,14 +909,13 @@ export default class aprsParser {
             return this.addError(retVal, 'obj_inv');
         }
 
-        /*
         // Check the timestamp for validity and convert
         // to UNIX epoch. If the timestamp is invalid, set it
         // to zero.
-        retVal['timestamp'] = this._parse_timestamp(options, $timestamp);
+        retVal.timestamp = this.parseTimestamp(options, $timestamp);
 
-        if(retVal['timestamp'] == 0) {
-            this.addWarning(retVal, 'timestamp_inv_obj');
+        if(retVal.timestamp == 0) {
+            retVal = this.addWarning(retVal, 'timestamp_inv_obj');
         }
 
         // Forward the location parsing onwards
@@ -932,24 +932,22 @@ export default class aprsParser {
             $locationoffset = 37; // now points to APRS data extension/comment
         } else {
             // error
-            this.addError(retVal, 'obj_dec_err');
-            return 0;
+            return this.addError(retVal, 'obj_dec_err');
         }
 
-        if(retVal != 1) {
-            return 0;
+        if(retVal.resultCode != undefined && retVal.resultCode) {
+            return retVal;
         }
 
         // Check the APRS data extension and possible comments,
         // unless it is a weather report (we don't want erroneus
         // course/speed figures and weather in the comments..)
-        if(retVal['symbolcode'] != '_') {
+        if(retVal.symbolcode != '_') {
             this._comments_to_decimal(packet.substr($locationoffset), srcCallsign, retVal);
         } else {
             // possibly a weather object, try to parse
             this._wx_parse(packet.substr($locationoffset), retVal);
         }
-        */
 
         return retVal;
     }
@@ -1651,65 +1649,65 @@ export default class aprsParser {
      */
     private _comments_to_decimal($rest: string, $srccallsign: string, $rethash: aprsPacket) {
         let tmprest;
-        /*
+
         // First check the possible APRS data extension,
         // immediately following the packet
         if($rest.length >= 7) {
             if((tmprest = $rest.match(/^([0-9. ]{3})\/([0-9. ]{3})/))) {
                 let $course = tmprest[1];
                 let $speed = tmprest[2];
+                let match;
 
-                if(($course = $course.match(/^\d{3}$/)) &&
+                if((match = $course.match(/^\d{3}$/)) &&
                         parseInt($course) <= 360 &&
                         parseInt($course) >= 1) {
                     // force numeric interpretation
-                    $rethash['course'] = parseInt($course);
+                    $rethash.course = parseInt($course);
                 } else {
                     // course is invalid, set it to zero
-                    $rethash['course'] = 0;
+                    $rethash.course = 0;
                 }
 
                 // If speed is invalid, don't set it
                 // (zero speed is a valid speed).
-                if(($speed = $speed.match(/^\d{3}$/))) {
+                if((match = $speed.match(/^\d{3}$/))) {
                     // force numeric interpretation
                     // and convert to km/h
-                    $rethash['speed'] = parseInt($speed) * $knot_to_kmh;
+                    $rethash.speed = parseInt($speed) * KNOT_TO_KMH;
                 }
 
                 $rest = $rest.substr(7);
             } else if((tmprest = $rest.match(/^PHG(\d[\x30-\x7e]\d\d[0-9A-Z])\//))) {
                 // PHGR
-                $rethash['phg'] = tmprest[1];
+                $rethash.phg = tmprest[1];
                 $rest = $rest.substr(8);
             } else if((tmprest = $rest.match(/^PHG(\d[\x30-\x7e]\d\d)/))) {
                 // don't do anything fancy with PHG, just store it
-                $rethash['phg'] = tmprest[1];
+                $rethash.phg = tmprest[1];
                 $rest = $rest.substr(7);
             } else if((tmprest = $rest.match(/^RNG(\d{4})/))) {
                 // radio range, in miles, so convert to km
-                $rethash['radiorange'] = parseInt(tmprest[1]) * $mph_to_kmh;
+                $rethash['radiorange'] = parseInt(tmprest[1]) * MPH_TO_KMH;
                 $rest = $rest.substr(7);
             }
-
         }
 
         // Check for optional altitude anywhere in the comment,
         // take the first occurrence
         if((tmprest = $rest.match(/^(.*?)\/A=(-\d{5}|\d{6})(.*)$/))) {
             // convert to meters as well
-            $rethash['altitude'] = parseFloat(tmprest[2]) * 0.3048;
+            $rethash.altitude = parseFloat(tmprest[2]) * 0.3048;
             $rest = tmprest[1] + tmprest[3];
         }
 
-        // Check for new-style base-91 comment telemetry
-        $rest = this._comment_telemetry($rethash, $rest);
+        // Check for new-style base-91 comment telemetry - ISSUE HERE
+        [ $rest, $rethash ] = this._comment_telemetry($rethash, $rest);
 
         // Check for !DAO!, take the last occurrence (per recommendation)
         if((tmprest = $rest.match(/^(.*)\!([\x21-\x7b][\x20-\x7b]{2})\!(.*?)$/))) {
-            let $daofound = this._dao_parse(tmprest[2], $srccallsign, $rethash);
+            $rethash = this._dao_parse(tmprest[2], $srccallsign, $rethash);
 
-            if($daofound == 1) {
+            if($rethash.resultCode == undefined && !$rethash.resultCode) {
                 $rest = tmprest[1] + tmprest[3];
             }
         }
@@ -1724,7 +1722,6 @@ export default class aprsParser {
         if($rest.length > 0) {
             $rethash['comment'] = $rest.trim();
         }
-        */
 
         // Always succeed as these are optional
         return $rethash;
@@ -1768,35 +1765,33 @@ export default class aprsParser {
         return $rethash;
     }
 
-    private _comment_telemetry($rethash: aprsPacket, $rest: string): aprsPacket {
-        /*
-        return $rest.replace(/^(.*)\|([!-{]{2})([!-{]{2})([!-{]{2}|)([!-{]{2}|)([!-{]{2}|)([!-{]{2}|)([!-{]{2}|)\|(.*)$/, function($0, $1, $2, $3, $4, $5, $6, $7, $8, $9) {
-            $rethash['telemetry'] = {
-                'seq': (($2.charCodeAt(0) - 33) * 91) + (($2.charCodeAt(1) - 33))
-                , 'vals': [
+    private _comment_telemetry($rethash: aprsPacket, $rest: string): [ string, aprsPacket ] {
+        $rest = $rest.replace(/^(.*)\|([!-{]{2})([!-{]{2})([!-{]{2}|)([!-{]{2}|)([!-{]{2}|)([!-{]{2}|)([!-{]{2}|)\|(.*)$/, function($0, $1, $2, $3, $4, $5, $6, $7, $8, $9) {
+            $rethash.telemetry = new telemetry(
+                (($2.charCodeAt(0) - 33) * 91) + (($2.charCodeAt(1) - 33))
+                , [
                     (($3.charCodeAt(0) - 33) * 91) + ($3.charCodeAt(1) - 33)
                     , $4 != '' ? (($4.charCodeAt(0) - 33) * 91) + (($4.charCodeAt(1) - 33)) : null
                     , $5 != '' ? (($5.charCodeAt(0) - 33) * 91) + (($5.charCodeAt(1) - 33)) : null
                     , $6 != '' ? (($6.charCodeAt(0) - 33) * 91) + (($6.charCodeAt(1) - 33)) : null
                     , $7 != '' ? (($7.charCodeAt(0) - 33) * 91) + (($7.charCodeAt(1) - 33)) : null
                 ]
-            };
+            );
 
             if($8 != '') {
                 // bits: first, decode the base-91 integer
                 let $bitint = ((($8.charCodeAt(0) - 33) * 91) + (($8.charCodeAt(1) - 33)));
 
                 // then, decode the 8 bits of telemetry
-                $bitint = ($bitint << 7).toString(2)
+                let $bitstr = ($bitint << 7).toString(2)
 
-                $rethash['telemetry'].bits = '00000000'.substring(0, 8 - $bitint.length) + $bitint; //unpack('b8', pack('C', $bitint));
+                $rethash.telemetry.bits = '00000000'.substring(0, 8 - $bitstr.length) + $bitint; //unpack('b8', pack('C', $bitint));
             }
 
             return $1 + $9;
         });
-        */
 
-        return $rethash;
+        return [ $rest, $rethash ];
     }
 
     /**
@@ -1870,14 +1865,12 @@ export default class aprsParser {
      * Parse a normal uncompressed location
      */
     private _normalpos_to_decimal($packet: string, $srccallsign: string, $rethash: aprsPacket): aprsPacket {
-        /*
         // Check the length
         if($packet.length < 19) {
-            this.addError($rethash, 'loc_short');
-            return 0;
+            return this.addError($rethash, 'loc_short');
         }
 
-        $rethash['format'] = 'uncompressed';
+        $rethash.format = 'uncompressed';
 
         // Make a more detailed check on the format, but do the
         // actual value checks later
@@ -1888,14 +1881,15 @@ export default class aprsParser {
         let $issouth = 0;
         let $iswest = 0;
         let $symboltable;
+        let matches;
 
-        if(($packet = $packet.match(/^(\d{2})([0-7 ][0-9 ]\.[0-9 ]{2})([NnSs])(.)(\d{3})([0-7 ][0-9 ]\.[0-9 ]{2})([EeWw])([\x21-\x7b\x7d])/))) {
-            let $sind = $packet[3].toUpperCase();
-            let $wind = $packet[7].toUpperCase();
+        if((matches = $packet.match(/^(\d{2})([0-7 ][0-9 ]\.[0-9 ]{2})([NnSs])(.)(\d{3})([0-7 ][0-9 ]\.[0-9 ]{2})([EeWw])([\x21-\x7b\x7d])/))) {
+            let $sind = matches[3].toUpperCase();
+            let $wind = matches[7].toUpperCase();
 
-            $symboltable = $packet[4];
+            $symboltable = matches[4];
 
-            $rethash['symbolcode'] = $packet[8];
+            $rethash['symbolcode'] = matches[8];
 
             if($sind == 'S') {
                 $issouth = 1;
@@ -1905,94 +1899,85 @@ export default class aprsParser {
                 $iswest = 1;
             }
 
-            $lat_deg = $packet[1];
-            $lat_min = $packet[2];
-            $lon_deg = $packet[5];
-            $lon_min = $packet[6];
+            $lat_deg = matches[1];
+            $lat_min = matches[2];
+            $lon_deg = matches[5];
+            $lon_min = matches[6];
         } else {
-            this.addError($rethash, 'loc_inv');
-            return 0;
+            return this.addError($rethash, 'loc_inv');
         }
 
         if(!$symboltable.match(/^[\/\\A-Z0-9]$/)) {
-            this.addError($rethash, 'sym_inv_table');
-            return 0;
+            return this.addError($rethash, 'sym_inv_table');
         }
 
-        $rethash['symboltable'] = $symboltable;
+        $rethash.symboltable = $symboltable;
 
         // Check the degree values
-        if($lat_deg > 89 || $lon_deg > 179) {
-            this.addError($rethash, 'loc_large');
-            return 0;
+        if(parseInt($lat_deg) > 89 || parseInt($lon_deg) > 179) {
+            return this.addError($rethash, 'loc_large');
         }
 
         // Find out the amount of position ambiguity
         let $tmplat = $lat_min.replace(/\./, '');
 
         // Count the amount of spaces at the end
-        if(($tmplat = $tmplat.match(/^(\d{0,4})( {0,4})$/i))) {
-            $rethash['posambiguity'] = $tmplat[2].length;
+        if((matches = $tmplat.match(/^(\d{0,4})( {0,4})$/i))) {
+            $rethash.posambiguity = matches[2].length;
         } else {
-            this.addError($rethash, 'loc_amb_inv');
-            return 0;
+            return this.addError($rethash, 'loc_amb_inv');
         }
 
-        let $latitude;
-        let $longitude;
+        let $latitude: number;
+        let $longitude: number;
 
-        if($rethash['posambiguity'] == 0) {
+        if($rethash.posambiguity == 0) {
             // No position ambiguity. Check longitude for invalid spaces
             if($lon_min.match(/ /)) {
-                this.addError($rethash, 'loc_amb_inv', 'longitude 0');
-                return 0;
+                return this.addError($rethash, 'loc_amb_inv', 'longitude 0');
             }
 
             $latitude = parseFloat($lat_deg) + (parseFloat($lat_min) / 60);
             $longitude = parseFloat($lon_deg) + (parseFloat($lon_min) / 60);
-        } else if($rethash['posambiguity'] == 4) {
+        } else if($rethash.posambiguity == 4) {
             // disregard the minutes and add 0.5 to the degree values
             $latitude = parseFloat($lat_deg) + 0.5;
             $longitude = parseFloat($lon_deg) + 0.5;
-        } else if($rethash['posambiguity'] == 1) {
+        } else if($rethash.posambiguity == 1) {
             // the last digit is not used
             $lat_min = $lat_min.substr(0, 4);
             $lon_min = $lon_min.substr(0, 4);
 
             if($lat_min.match(/ /i) || $lon_min.match(/ /i)) {
-                this.addError($rethash, 'loc_amb_inv', 'lat/lon 1');
-                return 0;
+                return this.addError($rethash, 'loc_amb_inv', 'lat/lon 1');
             }
 
-            $latitude = $lat_deg + (($lat_min + 0.05) / 60);
-            $longitude = $lon_deg + (($lon_min + 0.05) / 60);
-        } else if($rethash['posambiguity'] == 2) {
+            $latitude = parseFloat($lat_deg) + ((parseFloat($lat_min) + 0.05) / 60);
+            $longitude = parseFloat($lon_deg) + ((parseFloat($lon_min) + 0.05) / 60);
+        } else if($rethash.posambiguity == 2) {
             // the minute decimals are not used
             $lat_min = $lat_min.substr(0, 2);
             $lon_min = $lon_min.substr(0, 2);
 
             if($lat_min.match(/ /i) || $lon_min.match(/ /i)) {
-                this.addError($rethash, 'loc_amb_inv', 'lat/lon 2');
-                return 0;
+                return this.addError($rethash, 'loc_amb_inv', 'lat/lon 2');
             }
 
             $latitude = parseFloat($lat_deg) + ((parseFloat($lat_min) + 0.5) / 60);
             $longitude = parseFloat($lon_deg) + ((parseFloat($lon_min) + 0.5) / 60);
-        } else if($rethash['posambiguity'] == 3) {
+        } else if($rethash.posambiguity == 3) {
             // the single minutes are not used
             $lat_min = $lat_min.charAt(0) + '5';
             $lon_min = $lon_min.charAt(0) + '5';
 
             if($lat_min.match(/ /i) || $lon_min.match(/ /i)) {
-                this.addError($rethash, 'loc_amb_inv', 'lat/lon 3');
-                return 0;
+                return this.addError($rethash, 'loc_amb_inv', 'lat/lon 3');
             }
 
             $latitude = parseFloat($lat_deg) + (parseFloat($lat_min) / 60);
             $longitude = parseFloat($lon_deg) + (parseFloat($lon_min) / 60);
         } else {
-            this.addError($rethash, 'loc_amb_inv');
-            return 0;
+            return this.addError($rethash, 'loc_amb_inv');
         }
 
         // Finally apply south/west indicators
@@ -2005,19 +1990,16 @@ export default class aprsParser {
         }
 
         // Store the locations
-        $rethash['latitude'] = $latitude;
-        $rethash['longitude'] = $longitude;
+        $rethash.latitude = $latitude;
+        $rethash.longitude = $longitude;
 
         // Calculate position resolution based on position ambiguity
         // calculated above.
-        $rethash['posresolution'] = this._get_posresolution(2 - $rethash['posambiguity']);
+        $rethash.posresolution = this.get_posresolution(2 - $rethash.posambiguity);
 
         // Parse possible APRS data extension
         // afterwards along with comments
-        return 1;
-        */
-
-        return null;
+        return $rethash;
     }
 
     /**
@@ -2340,16 +2322,14 @@ export default class aprsParser {
      * convert a compressed position to decimal degrees
      */
     private _compressed_to_decimal($packet: string, $srccallsign: string, $rethash: aprsPacket): aprsPacket {
-        /*
         // A compressed position is always 13 characters long.
         // Make sure we get at least 13 characters and that they are ok.
         // Also check the allowed base-91 characters at the same time.
         if(!(/^[\/\\A-Za-j]{1}[\x21-\x7b]{8}[\x21-\x7b\x7d]{1}[\x20-\x7b]{3}/.test($packet))) {
-            this.addError($rethash, 'comp_inv');
-            return 0;
+            return this.addError($rethash, 'comp_inv');
         }
 
-        $rethash['format'] = 'compressed';
+        $rethash.format = 'compressed';
 
         let $lat1 = $packet.charCodeAt(1) - 33;
         let $lat2 = $packet.charCodeAt(2) - 33;
@@ -2365,24 +2345,24 @@ export default class aprsParser {
         let $comptype = $packet.charCodeAt(12) - 33;
 
         // save the symbol table and code
-        $rethash['symbolcode'] = $symbolcode;
+        $rethash.symbolcode = $symbolcode;
 
         // the symbol table values a..j are really 0..9
         if(/a-j/.test($packet.charAt(0))) {
-            $rethash['symboltable'] =  $packet.charCodeAt(0) - 97;
+            $rethash.symboltable =  ($packet.charCodeAt(0) - 97).toString();
         } else {
-            $rethash['symboltable'] =  $packet.charAt(0);
+            $rethash.symboltable =  $packet.charAt(0);
         }
 
         // calculate latitude and longitude
-        $rethash['latitude'] = 90 - ((
+        $rethash.latitude = 90 - ((
                 $lat1 * Math.pow(91, 3)
                 + $lat2 * Math.pow(91, 2)
                 + $lat3 * 91
                 + $lat4
                 ) / 380926);
 
-        $rethash['longitude'] = -180 + ((
+        $rethash.longitude = -180 + ((
                 $long1 * Math.pow(91, 3)
                 + $long2 * Math.pow(91, 2)
                 + $long3 * 91
@@ -2392,14 +2372,14 @@ export default class aprsParser {
         // save best-case position resolution in meters
         // 1852 meters * 60 minutes in a degree * 180 degrees
         // / 91 ** 4
-        $rethash['posresolution'] = 0.291;
+        $rethash.posresolution = 0.291;
 
         // GPS fix status, only if csT is used
         if($c1 != -1) {
             if(($comptype & 0x20) == 0x20) {
-                $rethash['gpsfixstatus'] = 1;
+                $rethash.gpsfixstatus = true;
             } else {
-                $rethash['gpsfixstatus'] = 0;
+                $rethash.gpsfixstatus = false;
             }
         }
 
@@ -2415,28 +2395,25 @@ export default class aprsParser {
             // cs is altitude
             let $cs = $c1 * 91 + $s1;
             // convert directly to meters
-            $rethash['altitude'] = Math.pow(1.002, $cs) * 0.3048;
+            $rethash.altitude = Math.pow(1.002, $cs) * 0.3048;
         } else if($c1 >= 0 && $c1 <= 89) {
             if($c1 == 0) {
                 // special case of north, APRS spec
                 // uses zero for unknown and 360 for north.
                 // so remember to convert north here.
-                $rethash['course'] = 360;
+                $rethash.course = 360;
             } else {
-                $rethash['course'] = $c1 * 4;
+                $rethash.course = $c1 * 4;
             }
 
             // convert directly to km/h
-            $rethash['speed'] = (Math.pow(1.08, $s1) - 1) * $knot_to_kmh;
+            $rethash.speed = (Math.pow(1.08, $s1) - 1) * KNOT_TO_KMH;
         } else if($c1 == 90) {
             // convert directly to km
-            $rethash['radiorange'] = (2 * Math.pow(1.08, $s1)) * $mph_to_kmh;
+            $rethash.radiorange = (2 * Math.pow(1.08, $s1)) * MPH_TO_KMH;
         }
 
-        return 1;
-        */
-
-        return null;
+        return $rethash;
     }
 
     /**

@@ -4,7 +4,7 @@ import telemetry from './telemetry';
 export default class aprsPacket {
     constructor() { }
 
-    public alive: boolean;
+    public alive?: boolean;
     public altitude?: number;
     public body?: string;
     public comment?: string;
@@ -15,6 +15,7 @@ export default class aprsPacket {
     public format?: string;
     public gpsfixstatus?: boolean;
     public header?: string;
+    public itemname?: string;
     public latitude?: number;
     public longitude?: number;
     public message?: string;

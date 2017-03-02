@@ -565,12 +565,10 @@ export default class aprsParser {
             */
         // Item
         } else if($packettype == ')') {
-            /*
             if($paclen >= 18) {
-                $rethash.type = 'item';
-                this._item_to_decimal($body, $srccallsign, $rethash);
+                retVal.type = 'item';
+                retVal = this._item_to_decimal(body, srcCallsign, retVal);
             }
-            */
         // Message, bulletin or an announcement
         } else if($packettype === ':') {
             if($paclen >= 11) {
@@ -671,7 +669,7 @@ export default class aprsParser {
      * and text report are supported. Maidenhead,
      * beam headings and symbols are not.
      */
-    statusParse(rawPacket: string, srcCall: string, retVal: aprsPacket) {
+    private statusParse(rawPacket: string, srcCall: string, retVal: aprsPacket) {
         let tmp;
 
         // Remove CRs, LFs and trailing spaces
@@ -701,7 +699,7 @@ export default class aprsParser {
      * @param {string} $stamp 6 digit number followed by z, h, or /
      * @returns {number} A unix timestamp
      */
-    parseTimestamp = function($options: any, $stamp: any): number {
+    private parseTimestamp = function($options: any, $stamp: any): number {
         // Check initial format
         if(!($stamp = $stamp.match(/^(\d{2})(\d{2})(\d{2})(z|h|\/)$/))) {
             return 0;
@@ -1798,67 +1796,57 @@ export default class aprsParser {
      * Parse an item
      */
     private _item_to_decimal($packet: string, $srccallsign: string, $rethash: aprsPacket): aprsPacket {
-        /*
         let tmp;
 
         // Minimum length for an item is 18 characters
         // (or 24 characters for non-compressed)
         if($packet.length < 18) {
-            this.addError($rethash, 'item_short');
-
-            return 0;
+            return this.addError($rethash, 'item_short');
         }
 
         // Parse the item up to the location
         if((tmp = $packet.match(/^\)([\x20\x22-\x5e\x60-\x7e]{3,9})(!|_)/))) {
             // hash member 'itemname' signals an item
-            $rethash['itemname'] = tmp[1];
+            $rethash.itemname = tmp[1];
 
             if(tmp[2] == '!') {
-                $rethash['alive'] = 1;
+                $rethash.alive = true;
             } else {
-                $rethash['alive'] = 0;
+                $rethash.alive = false;
             }
         } else {
-            this.addError($rethash, 'item_inv');
-
-            return 0;
+            return this.addError($rethash, 'item_inv');
         }
 
         // Forward the location parsing onwards
-        let $locationoffset = 2 + $rethash['itemname'].length;
+        let $locationoffset = 2 + $rethash.itemname.length;
         let $locationchar = $packet.charAt($locationoffset);
-        let $retval;
 
         if(/^[\/\\A-Za-j]$/.test($locationchar)) {
             // compressed
-            $retval = this._compressed_to_decimal($packet.substr($locationoffset, 13), $srccallsign, $rethash);
+            $rethash = this._compressed_to_decimal($packet.substr($locationoffset, 13), $srccallsign, $rethash);
             $locationoffset += 13;
         } else if(/^\d$/i.test($locationchar)) {
             // normal
-            $retval = this._normalpos_to_decimal($packet.substr($locationoffset), $srccallsign, $rethash);
+            $rethash = this._normalpos_to_decimal($packet.substr($locationoffset), $srccallsign, $rethash);
             $locationoffset += 19;
         } else {
             // error
-            this.addError($rethash, 'item_dec_err');
-
-            return 0;
+            return this.addError($rethash, 'item_dec_err');
         }
 
-        if($retval != 1) {
-            return 0 ;
+        if($rethash.resultCode !== undefined && $rethash.resultCode) {
+            return $rethash;
         }
 
         // Check the APRS data extension and possible comments,
         // unless it is a weather report (we don't want erroneus
         // course/speed figures and weather in the comments..)
         if($rethash['symbolcode'] != '_') {
-            this._comments_to_decimal($packet.substr($locationoffset), $srccallsign, $rethash);
+            $rethash = this._comments_to_decimal($packet.substr($locationoffset), $srccallsign, $rethash);
         }
 
-        return 1;
-        */
-        return null;
+        return $rethash;
     }
 
     /**

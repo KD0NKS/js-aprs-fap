@@ -1,10 +1,13 @@
 // message decoding
 // Tue Dec 11 2007, Hessu, OH7LZB
-/*
-var assert = require('assert');
-var parser = require('../parser');
+const assert = require('assert');
+
+import aprsPacket from '../src/aprsPacket';
+import aprsParser from '../src/parser';
 
 describe('FAP - Test parsing object', function() {
+    let parser = new aprsParser();
+
     describe('#parseaprs - Test object parsing', function() {
         let $srccall = "OH2KKU-1";
         let $dstcall = "APRS";
@@ -16,30 +19,30 @@ describe('FAP - Test parsing object', function() {
             $aprspacket += String.fromCharCode(parseInt(x, 16));
         });
 
-        let parsed = parser.parseaprs($aprspacket);
+        let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
         it('Should return srccallsign: ' + $srccall, function() {
-            assert.equal($srccall, parsed['srccallsign']);
+            assert.equal($srccall, parsed.sourceCallsign);
         });
 
         it('Should return a null result code.', function() {
-            assert.equal(null, parsed['resultcode']);
+            assert.equal(null, parsed.resultCode);
         });
 
         it('Should return a dstcall: ' + $dstcall, function() {
-            assert.equal($dstcall, parsed['dstcallsign']);
+            assert.equal($dstcall, parsed.destCallsign);
         });
 
         it('Should return type value: object', function() {
-            assert.equal('object', parsed['type']);
+            assert.equal('object', parsed.type);
         });
 
         it('Should return object name: \'SRAL HQ  \'', function() {
-            assert.equal('SRAL HQ  ', parsed['objectname']);
+            assert.equal('SRAL HQ  ', parsed.objectname);
         });
 
         it('Should return alive value: 1', function() {
-            assert.equal(1, parsed['alive']);
+            assert.equal(1, parsed.alive);
         });
 
         // timestamp test has been disabled, because it cannot be
@@ -49,32 +52,31 @@ describe('FAP - Test parsing object', function() {
         // ok($h{'timestamp'}, 1197278820, "wrong timestamp");
 
         it('Should return the symbol table code: S', function() {
-            assert.equal('S', parsed['symboltable']);
+            assert.equal('S', parsed.symboltable);
         });
 
         it('Should return the symbol code: a', function() {
-            assert.equal('a', parsed['symbolcode']);
+            assert.equal('a', parsed.symbolcode);
         });
 
         it('Should return latitude value, that when rounded should equal: 60.2305', function() {
-            assert.equal(60.2305, parsed['latitude'].toFixed(4));
+            assert.equal(60.2305, parsed.latitude.toFixed(4));
         });
 
         it('Should return longitude value, that when rounded should equal: 24.8790', function() {
-            assert.equal(24.8790, parsed['longitude'].toFixed(4));
+            assert.equal(24.8790, parsed.longitude.toFixed(4));
         });
 
         it('Should return position resolution: 0.291', function() {
-            assert.equal(0.291, parsed['posresolution']);
+            assert.equal(0.291, parsed.posresolution);
         });
 
         it('Should return PHG: null', function() {
-            assert.equal(null, parsed['phg']);
+            assert.equal(null, parsed.phg);
         });
 
         it('Should return the comment: ' + $comment, function() {
-            assert.equal($comment, parsed['comment']);
+            assert.equal($comment, parsed.comment);
         });
     });
 });
-*/

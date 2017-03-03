@@ -584,14 +584,12 @@ export default class aprsParser {
             */
         // Status reports
         } else if($packettype == '>') {
-            /*
             // we can live with empty status reports
             if($paclen >= 1) {
-                $rethash.type = 'status';
+                retVal.type = 'status';
 
-                this._status_parse($options, $body.substr(1), $srccallsign, $rethash);
+                retVal = this._status_parse(options, body.substr(1), srcCallsign, retVal)
             }
-            */
         // Telemetry
         } else if(/^T#(.*?),(.*)$/.test(body)) {
             /*
@@ -663,27 +661,27 @@ export default class aprsParser {
      * and text report are supported. Maidenhead,
      * beam headings and symbols are not.
      */
-    private statusParse(rawPacket: string, srcCall: string, retVal: aprsPacket) {
+    private _status_parse($options: any, $packet: string, $srccallsign: string, $rethash: aprsPacket): aprsPacket {
         let tmp;
 
         // Remove CRs, LFs and trailing spaces
-        rawPacket = rawPacket.trim();
+        $packet = $packet.trim();
 
         // Check for a timestamp
-        if((tmp = rawPacket.match(/^(\d{6}z)/))) {
-            retVal.timestamp = this.parseTimestamp({}, tmp[1]);
+        if((tmp = $packet.match(/^(\d{6}z)/))) {
+            $rethash.timestamp = this.parseTimestamp({}, tmp[1]);
 
-            if(retVal.timestamp == 0) {
-                this.addError(retVal, 'timestamp_inv_sta') ;
+            if($rethash.timestamp == 0) {
+                $rethash = this.addWarning($rethash, 'timestamp_inv_sta') ;
             }
 
-            rawPacket = rawPacket.substr(7);
+            $packet = $packet.substr(7);
         }
 
         // Save the rest as the report
-        retVal.status = rawPacket;
+        $rethash.status = $packet;
 
-        return retVal;
+        return $rethash;
     }
 
     /**

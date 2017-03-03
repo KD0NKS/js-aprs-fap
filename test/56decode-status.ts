@@ -22,7 +22,6 @@ describe('FAP - Status message decoding', function() {
         let $aprspacket = 'KB3HVP-14>APU25N,WIDE2-2,qAR,LANSNG:>' + $tstamp + $msg;
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket, { 'raw_timestamp': 1 });
-        console.log(parsed);
 
         it('Should return the type: status', function() {
             assert.equal('status', parsed.type);

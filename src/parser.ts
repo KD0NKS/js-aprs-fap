@@ -524,16 +524,13 @@ export default class aprsParser {
             }
         // Weather report
         } else if($packettype == '_') {
-            /*
-            if(/_(\d{8})c[\- \.\d]{1,3}s[\- \.\d]{1,3}/.test($body)) {
-                $rethash.type = 'wx';
+            if(/_(\d{8})c[\- \.\d]{1,3}s[\- \.\d]{1,3}/.test(body)) {
+                retVal.type = 'wx';
 
-                this._wx_parse($body.substr(9), $rethash);
+                retVal = this._wx_parse(body.substr(9), retVal);
             } else {
-                this.addError($rethash, 'wx_unsupp', 'Positionless');
-                return $rethash;
+                return this.addError(retVal, 'wx_unsupp', 'Positionless');
             }
-            */
         // Object
         } else if($packettype == ';') {
             if($paclen >= 31) {
@@ -2674,12 +2671,12 @@ export default class aprsParser {
             $rethash.comment = $s.trim();
         }
 
-        if($w['temp'] || ($w['wind_speed'] && $w['wind_direction'])) {
+        if($w.temp || ($w.wind_speed && $w.wind_direction)) {
             // warn "ok: $initial\n$s\n";
             $rethash.wx = $w;
         }
 
-        return 0;
+        return $rethash;
     }
 
     /**

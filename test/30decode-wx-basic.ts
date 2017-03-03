@@ -22,7 +22,6 @@ describe('FAP - Test wx packet parsing', function() {
         let $aprspacket = $srccall + '>' + $dstcall + ',WIDE2-1,qAo,OH2MQK-1:=6030.35N/02443.91E_150/002g004t039r001P002p004h00b10125XRSW';
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
-        console.log(parsed);
 
         it('Should return srccallsign: ' + $srccall, function() {
             assert.equal($srccall, parsed.sourceCallsign);

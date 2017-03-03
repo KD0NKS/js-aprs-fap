@@ -19,11 +19,13 @@ export default class aprsPacket {
     public itemname?: string;
     public latitude?: number;
     public longitude?: number;
+    public mbits?: string;
     public message?: string;
     public messageAck?: string;
     public messageId?: string;
     public messageReject?: string;
     public messaging?: boolean;
+    public mice_mangled?: boolean;
     public objectname?: string;
     public origpacket?: string;
     public phg?: string;

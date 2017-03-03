@@ -439,14 +439,12 @@ export default class aprsParser {
             // the following are obsolete mic-e types: 0x1c 0x1d
             // mic-encoder data
             // minimum body length 9 chars
-            /*
             if($paclen >= 9) {
                 retVal.type = 'location';
 
-                this._mice_to_decimal(body.substr(1), $dstcallsign, srcCallsign, retVal, options);
+                retVal = this._mice_to_decimal(body.substr(1), $dstcallsign, srcCallsign, retVal, options);
                 //return $rethash;
             }
-            */
         // Normal or compressed location packet, with or without
         // timestamp, with or without messaging capability
         } else if($packettype == '!' || $packettype == '=' ||
@@ -1990,9 +1988,8 @@ export default class aprsParser {
      * convert a mic-encoder packet
      */
     private _mice_to_decimal($packet: string, $dstcallsign: string, $srccallsign: string, $rethash: aprsPacket, $options: any): aprsPacket {
-        /*
-        let tmp;
-        $rethash['format'] = 'mice';
+        let tmp: any;
+        $rethash.format = 'mice';
 
         // We only want the base callsign
         $dstcallsign = $dstcallsign.replace(/-\d+$/, '');
@@ -2000,15 +1997,13 @@ export default class aprsParser {
         // Check the format
         if($packet.length < 8 || $dstcallsign.length != 6) {
             // too short packet to be mic-e
-            this.addError($rethash, 'mice_short');
-            return 0;
+            return this.addError($rethash, 'mice_short');
         }
 
         if(!(/^[0-9A-LP-Z]{3}[0-9LP-Z]{3}$/i.test($dstcallsign))) {
             // A-K characters are not used in the last 3 characters
             // and MNO are never used
-            this.addError($rethash, 'mice_inv');
-            return 0;
+            return this.addError($rethash, 'mice_inv');
         }
 
         // check the information field (longitude, course, speed and
@@ -2033,18 +2028,15 @@ export default class aprsParser {
                 $symboltable = $packet.charAt(7);
 
                 if(!/^[\/\\A-Z0-9]$/.test($symboltable)) {
-                    this.addError($rethash, 'sym_inv_table');
-                    return 0;
+                    return this.addError($rethash, 'sym_inv_table');
                 }
             } else {
                 // Get a more precise error message for invalid symbol table
                 if(!(/^[\/\\A-Z0-9]$/.test($symboltable))) {
-                    this.addError($rethash, 'sym_inv_table');
+                    return this.addError($rethash, 'sym_inv_table');
                 } else {
-                    this.addError($rethash, 'mice_inv_info');
+                    return this.addError($rethash, 'mice_inv_info');
                 }
-
-                return 0;
             }
         }
 
@@ -2052,13 +2044,13 @@ export default class aprsParser {
         // (latitude, message bits, N/S and W/E indicators and long. offset)
 
         // Translate the characters to get the latitude
-        let $tmplat = $dstcallsign.toUpperCase();
+        let $tmplat: any = $dstcallsign.toUpperCase();
         $tmplat = $tmplat.split('');
         tmp = '';
 
         // /A-JP-YKLZ/0-90-9___/ <- Unfortunately, JavaScript isn't as cool as Perl
         // Lets discrace Perl's awesomeness and use a loop instead.
-        $tmplat.forEach(function(c) {
+        $tmplat.forEach(function(c: string) {
             if(/[A-J]/.test(c)) {
                 tmp += (c.charCodeAt(0) - 65);
             } else if(/[P-Y]/.test(c)) {
@@ -2079,26 +2071,23 @@ export default class aprsParser {
             if($amount > 4) {
                 // only minutes and decimal minutes can
                 // be masked out
-                this.addError($rethash, 'mice_amb_large');
-                return 0;
+                return this.addError($rethash, 'mice_amb_large');
             }
 
-            $rethash['posambiguity'] = $amount;
+            $rethash.posambiguity = $amount;
 
             // Calculate position resolution based on position ambiguity
             // calculated above.
-            $rethash['posresolution'] = this._get_posresolution(2 - $amount);
+            $rethash.posresolution = this.get_posresolution(2 - $amount);
         } else {
             // no digits in the beginning, baaad..
             // or the ambiguity digits weren't continuous
-            this.addError($rethash, 'mice_amb_inv');
-
-            return 0;
+            return this.addError($rethash, 'mice_amb_inv');
         }
 
         // convert the latitude to the midvalue if position ambiguity
         // is used
-        if($rethash['posambiguity'] >= 4) {
+        if($rethash.posambiguity >= 4) {
             // the minute is between 0 and 60, so
             // the middle point is 30
             $tmplat = $tmplat.replace('_', '3');
@@ -2126,7 +2115,7 @@ export default class aprsParser {
         }
 
         // Latitude is finally complete, so store it
-        $rethash['latitude'] = $latitude;
+        $rethash.latitude = $latitude;
 
         // Get the message bits. 1 is standard one-bit and
         // 2 is custom one-bit. mice_messagetypes provides
@@ -2138,7 +2127,7 @@ export default class aprsParser {
         $mbitstring = $mbitstring.replace(/[P-Z]/g, '1');
         $mbitstring = $mbitstring.replace(/[A-K]/g, '2');
 
-        $rethash['mbits'] = $mbitstring;
+        $rethash.mbits = $mbitstring;
 
         // Decode the longitude, the first three bytes of the
         // body after the data type indicator.
@@ -2157,7 +2146,7 @@ export default class aprsParser {
         }
 
         // Decode the longitude minutes
-        let $longminutes = $packet.charCodeAt(1) - 28;
+        let $longminutes: any = $packet.charCodeAt(1) - 28;
 
         if($longminutes >= 60) {
             $longminutes -= 60;
@@ -2167,24 +2156,22 @@ export default class aprsParser {
         $longminutes = $longminutes + '.' + ($packet.charCodeAt(2) - 28);
 
         // apply position ambiguity to longitude
-        if($rethash['posambiguity'] == 4) {
+        if($rethash.posambiguity == 4) {
             // minute is unused -> add 0.5 degrees to longitude
             $longitude += 0.5;
-        } else if ($rethash['posambiguity'] == 3) {
+        } else if ($rethash.posambiguity == 3) {
             let $lontmp = $longminutes.charAt(0) + '5';
-            $longitude = parseFloat($longitude) + (parseFloat($lontmp) / 60);
-        } else if($rethash['posambiguity'] == 2) {
+            $longitude = $longitude + (parseFloat($lontmp) / 60);
+        } else if($rethash.posambiguity == 2) {
             let $lontmp = $longminutes.substr(0, 2) + '.5';
-            $longitude = parseFloat($longitude) + (parseFloat($lontmp) / 60);
-        } else if($rethash['posambiguity'] == 1) {
+            $longitude = $longitude + (parseFloat($lontmp) / 60);
+        } else if($rethash.posambiguity == 1) {
             let $lontmp = $longminutes.substr(0, 4) + '5';
-            $longitude = parseFloat($longitude) + (parseFloat($lontmp) / 60);
-        } else if($rethash['posambiguity'] == 0) {
-            $longitude = parseFloat($longitude) + (parseFloat($longminutes) / 60);
+            $longitude = ($longitude + (parseFloat($lontmp) / 60));
+        } else if($rethash.posambiguity == 0) {
+            $longitude = $longitude + (parseFloat($longminutes) / 60);
         } else {
-            this.addError($rethash, 'mice_amb_odd', $rethash['posambiguity']);
-
-            return 0;
+            return this.addError($rethash, 'mice_amb_odd', $rethash.posambiguity.toString());
         }
 
         // check the longitude E/W sign
@@ -2194,14 +2181,14 @@ export default class aprsParser {
         }
 
         // Longitude is finally complete, so store it
-        $rethash['longitude'] = $longitude;
+        $rethash.longitude = $longitude;
 
         // Now onto speed and course.
         // If the packet has had a mic-e fix applied, course and speed are likely to be off.
         if(!$mice_fixed) {
             let $speed = (($packet.charCodeAt(3)) - 28) * 10;
             let $coursespeed = ($packet.charCodeAt(4)) - 28;
-            let $coursespeedtmp = parseInt($coursespeed / 10);
+            let $coursespeedtmp = Math.round($coursespeed / 10);  // had been parseint... change to math.floor if tests start failing.
 
             $speed += $coursespeedtmp;
             $coursespeed -= $coursespeedtmp * 10;
@@ -2223,12 +2210,12 @@ export default class aprsParser {
             }
 
             // convert speed to km/h and store
-            $rethash['speed'] = $speed * $knot_to_kmh;
+            $rethash.speed = $speed * KNOT_TO_KMH;
         }
 
         // save the symbol table and code
-        $rethash['symbolcode'] = $packet.charAt(6);
-        $rethash['symboltable'] = $symboltable;
+        $rethash.symbolcode = $packet.charAt(6);
+        $rethash.symboltable = $symboltable;
 
         // Check for possible altitude and comment data.
         // It is base-91 coded and in format 'xxx}' where
@@ -2242,9 +2229,7 @@ export default class aprsParser {
                 // two hexadecimal values: channels 1 and 3
                 $rest = tmp[3];
 
-                $rethash['telemetry'] = {
-                    'vals': [ parseInt(tmp[1], 16), 0, parseInt(tmp[2], 16) ]
-                };
+                $rethash.telemetry = new telemetry(null, [ parseInt(tmp[1], 16), 0, parseInt(tmp[2], 16) ]);
             }
 
             if((tmp = $rest.match(/^‘([0-9a-f]{10})(.*)$/i))) {
@@ -2253,17 +2238,16 @@ export default class aprsParser {
 
                 // less elegant version of pack/unpack... gets the job done. deal with it or fix it
                 tmp[1] = tmp[1].match(/.{2}/g);
-                tmp[1].forEach(function(item, index) { tmp[1][index] = parseInt(tmp[1][index], 16); });
+                // don't know what item is, don't care, but don't remove it
+                tmp[1].forEach(function(item: any, index: number) { tmp[1][index] = parseInt(tmp[1][index], 16); });
 
-                $rethash['telemetry'] = {
-                    'vals': tmp[1]
-                };
+                $rethash.telemetry = new telemetry(null, tmp[1]);
             }
 
 
             // check for altitude
             if((tmp = $rest.match(/^(.*?)([\x21-\x7b])([\x21-\x7b])([\x21-\x7b])\}(.*)$/))) {
-                $rethash['altitude'] = (
+                $rethash.altitude = (
                         ((tmp[2].charCodeAt(0) - 33) * Math.pow(91, 2))
                         + ((tmp[3].charCodeAt(0) - 33) * 91)
                         + (tmp[4].charCodeAt(0) - 33))
@@ -2273,7 +2257,7 @@ export default class aprsParser {
             }
 
             // Check for new-style base-91 comment telemetry
-            $rest = this._comment_telemetry($rethash, $rest);
+            [ $rest, $rethash ] = this._comment_telemetry($rethash, $rest);
 
             // Check for !DAO!, take the last occurrence (per recommendation)
             if((tmp = $rest.match(/^(.*)\!([\x21-\x7b][\x20-\x7b]{2})\!(.*?)$/))) {
@@ -2288,18 +2272,16 @@ export default class aprsParser {
             // after removing non-printable ASCII
             // characters
             if($rest.length > 0) {
-                $rethash['comment'] = $rest.trim();
+                $rethash.comment = $rest.trim();
             }
         }
 
         if($mice_fixed) {
-            $rethash['mice_mangled'] = 1;
+            $rethash.mice_mangled = true;
             // warn "$srccallsign: fixed packet was parsed\n";
         }
 
-        return 1;
-        */
-        return null;
+        return $rethash;
     }
 
     /**

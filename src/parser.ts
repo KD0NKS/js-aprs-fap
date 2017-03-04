@@ -589,11 +589,9 @@ export default class aprsParser {
             }
         // Telemetry
         } else if(/^T#(.*?),(.*)$/.test(body)) {
-            /*
-            $rethash.type = 'telemetry';
+            retVal.type = 'telemetry';
 
-            this._telemetry_parse($body.substr(2), $rethash);
-            */
+            retVal = this._telemetry_parse(body.substr(2), retVal);
         // DX spot
         } else if(/^DX\s+de\s+(.*?)\s*[:>]\s*(.*)$/i.test(body)) {
             /*
@@ -2930,47 +2928,46 @@ export default class aprsParser {
      * Parses a telemetry packet.
      */
     private _telemetry_parse($s: string, $rh: aprsPacket): aprsPacket {
-        /*
-        let $t = {};
 
-        if(($s = $s.match(/^(\d+),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),([01]{0,8})/))) {
-            $t['seq'] = $s[1];
+        let $t: telemetry = new telemetry();
+        let tmp: string[];
 
-            let $vals = [ ($s[2] + $s[3]), ($s[4] + $s[5]), ($s[6] + $s[7]), ($s[8] + $s[9]), ($s[10] + $s[11]) ];
+        if((tmp = $s.match(/^(\d+),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),([01]{0,8})/))) {
+            $t.seq = parseInt(tmp[1]);
+
+
+            let $vals: string[] = [ (tmp[2] + tmp[3]), (tmp[4] + tmp[5]), (tmp[6] + tmp[7])
+                    , (tmp[8] + tmp[9]), (tmp[10] + tmp[11]) ];
 
             for(let $i = 0; $i < $vals.length; $i++) {
                 //$vals[$i] = $vals[$i] == '' ? 0 : sprintf('%.2f', $vals[$i]);
                 if($vals[$i] == '') {
-                    $vals[$i] = 0
+                    $vals[$i] = '0'
                 } else {
                     $vals[$i] = parseFloat($vals[$i]).toFixed(2);
                 }
 
-                if($vals[$i] >= 999999 || $vals[$i] <= -999999) {
+                if(parseFloat($vals[$i]) >= 999999 || parseFloat($vals[$i]) <= -999999) {
                     this.addError($rh, 'tlm_large');
                     return 0;
                 }
             }
 
-            $t['vals'] = $vals;
-            $t['bits'] = $s[12];
+            $t.vals = (<Array<number>> <Array<any>> $vals);
+            $t.bits = tmp[12];
 
             // expand bits to 8 bits if some are missing
-            if($t['bits'].length < 8) {
-                $t['bits'] += '0x' + (8 - $t['bits'].length);
+            if($t.bits.length < 8) {
+                $t.bits += '0x' + (8 - $t.bits.length);
             }
         } else {
-            this.addError($rh, 'tlm_inv');
-            return 0;
+            return this.addError($rh, 'tlm_inv');
         }
 
-        $rh['telemetry'] = $t;
+        $rh.telemetry = $t;
 
         //warn 'ok: ' . Dumper(\%t);
-        return 1;
-        */
-
-        return null;
+        return $rh;
     }
 
     /**

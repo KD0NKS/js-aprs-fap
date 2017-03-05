@@ -42,7 +42,7 @@ imporove performance.
 To see how to use this module, please refer to the tests for now.
 
 ## Optimizations Needed
-- Quit leaking arguments (modifying them), explicitly return the $rethash value.  Any errors thrown, should be done so explicitly.
+- Quit leaking arguments (modifying them), explicitly return the $rethash value.  Any errors thrown, should also be done explicitly.
 
 ## Unit Tests Needed
 - distance

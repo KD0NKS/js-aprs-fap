@@ -1770,7 +1770,7 @@ export default class aprsParser {
                 // then, decode the 8 bits of telemetry
                 let $bitstr = ($bitint << 7).toString(2)
 
-                $rethash.telemetry.bits = '00000000'.substring(0, 8 - $bitstr.length) + $bitint; //unpack('b8', pack('C', $bitint));
+                $rethash.telemetry.bits = '00000000'.substring(0, 8 - $bitstr.length) + $bitstr; //unpack('b8', pack('C', $bitint));
             }
 
             return $1 + $9;
@@ -2928,7 +2928,6 @@ export default class aprsParser {
      * Parses a telemetry packet.
      */
     private _telemetry_parse($s: string, $rh: aprsPacket): aprsPacket {
-
         let $t: telemetry = new telemetry();
         let tmp: string[];
 

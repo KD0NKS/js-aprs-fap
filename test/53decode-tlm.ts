@@ -15,7 +15,6 @@ describe('FAP - Telemetry packet parsing', function() {
         let $aprspacket = $srccall + '>' + $dstcall + ':T#324,000,038,257,255,50.12,01000001';
 
         let $retval: aprsPacket = parser.parseaprs($aprspacket);
-        console.log($retval);
 
         it('Should return a result code: null', function() {
             assert.equal(null, $retval.resultCode);

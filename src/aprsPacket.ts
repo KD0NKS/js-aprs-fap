@@ -10,6 +10,7 @@ export default class aprsPacket {
     public body?: string;
     public comment?: string;
     public course?: number;
+    public daodatumbyte?: string;
     public destCallsign?: string;
     public destination?: string;
     public digipeaters?: digipeater[];

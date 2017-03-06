@@ -1690,9 +1690,10 @@ export default class aprsParser {
 
         // Check for !DAO!, take the last occurrence (per recommendation)
         if((tmprest = $rest.match(/^(.*)\!([\x21-\x7b][\x20-\x7b]{2})\!(.*?)$/))) {
-            $rethash = this._dao_parse(tmprest[2], $srccallsign, $rethash);
+            let found = false;
+            [ $rethash, found ] = this._dao_parse(tmprest[2], $srccallsign, $rethash);
 
-            if($rethash.resultCode == undefined && !$rethash.resultCode) {
+            if(found === true) {
                 $rest = tmprest[1] + tmprest[3];
             }
         }
@@ -2254,9 +2255,10 @@ export default class aprsParser {
 
             // Check for !DAO!, take the last occurrence (per recommendation)
             if((tmp = $rest.match(/^(.*)\!([\x21-\x7b][\x20-\x7b]{2})\!(.*?)$/))) {
-                let $daofound = this._dao_parse(tmp[2], $srccallsign, $rethash);
+                let $daofound = false;
+                [ $rethash, $daofound ] = this._dao_parse(tmp[2], $srccallsign, $rethash);
 
-                if($daofound == 1) {
+                if($daofound === true) {
                     $rest = tmp[1] + tmp[3];
                 }
             }
@@ -2382,8 +2384,7 @@ export default class aprsParser {
      * Only the "DAO" should be passed as the candidate parameter,
      * not the delimiting exclamation marks.
      */
-    private _dao_parse($daocandidate: string, $srccallsign: string, $rethash: aprsPacket): aprsPacket {
-        /*
+    private _dao_parse($daocandidate: string, $srccallsign: string, $rethash: aprsPacket): [ aprsPacket, boolean ] {
         // datum character is the first character and also
         // defines how the rest is interpreted
         let $latoff;
@@ -2392,54 +2393,45 @@ export default class aprsParser {
 
         if((tmp = $daocandidate.match(/^([A-Z])(\d)(\d)$/))) {
             // human readable (datum byte A...Z)
-            $rethash['daodatumbyte'] = tmp[1];
-            $rethash['posresolution'] = this._get_posresolution(3);
+            $rethash.posresolution = this.get_posresolution(3);
+            $rethash.daodatumbyte = tmp[1];
 
             $latoff = parseInt(tmp[2]) * 0.001 / 60;
             $lonoff = parseInt(tmp[3]) * 0.001 / 60;
         } else if((tmp = $daocandidate.match(/^([a-z])([\x21-\x7b])([\x21-\x7b])$/))) {
             // base-91 (datum byte a...z)
             // store the datum in upper case, still
-            $rethash['daodatumbyte'] = tmp[1].toUpperCase();
+            $rethash.daodatumbyte = tmp[1].toUpperCase();
 
             // close enough.. not exact:
-            $rethash['posresolution'] = this._get_posresolution(4);
+            $rethash.posresolution = this.get_posresolution(4);
 
             // do proper scaling of base-91 values
             $latoff = (tmp[2].charCodeAt(0) - 33) / 91 * 0.01 / 60;
             $lonoff = (tmp[3].charCodeAt(0) - 33) / 91 * 0.01 / 60;
         } else if((tmp = $daocandidate.match(/^([\x21-\x7b])\s\s$/))) {
             // only datum information, no lat/lon digits
-            let $daodatumbyte = tmp[1];
+            $rethash.daodatumbyte = tmp[1].toUpperCase();
 
-            if(/^[a-z]$/.test($daodatumbyte)) {
-                $daodatumbyte = $daodatumbyte.toUpperCase();
-            }
-
-            $rethash['daodatumbyte'] = $daodatumbyte;
-
-            return 1;
+            return [ $rethash, true ];
         } else {
-            return 0;
+            return [ $rethash, false ];
         }
 
         // check N/S and E/W
-        if($rethash['latitude'] < 0) {
-            $rethash['latitude'] -= $latoff;
+        if($rethash.latitude < 0) {
+            $rethash.latitude -= $latoff;
         } else {
-            $rethash['latitude'] += $latoff;
+            $rethash.latitude += $latoff;
         }
 
-        if($rethash['longitude'] < 0) {
-            $rethash['longitude'] -= $lonoff;
+        if($rethash.longitude < 0) {
+            $rethash.longitude -= $lonoff;
         } else {
-            $rethash['longitude'] += $lonoff;
+            $rethash.longitude += $lonoff;
         }
 
-        return 1;
-        */
-
-        return null;
+        return [ $rethash, true ];
     }
 
     /**

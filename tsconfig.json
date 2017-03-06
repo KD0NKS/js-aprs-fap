@@ -12,7 +12,8 @@
         "declaration": true
     },
     "include": [
-        "src/**/*"
+        "index.ts"
+        , "src/**/*"
         , "test/**/*"
     ],
     "exclude": [ "bin", "node_modules" ],

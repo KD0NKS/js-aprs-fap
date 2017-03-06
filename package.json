@@ -1,8 +1,9 @@
 {
-  "name": "js-aprs-is",
+  "name": "js-aprs-fap",
   "version": "1.0.0",
   "description": "NodeJs library for connecting to an APRS-IS server.",
-  "main": "index.js",
+  "main": "./build/dist/index.js",
+  "types": "./build/dist/index.d.ts",
   "scripts": {
     "tsc": "tsc",
     "prepublish": "./node_modules/typescript/bin/tsc src/*.ts --module commonjs --moduleResolution node --target esnext",

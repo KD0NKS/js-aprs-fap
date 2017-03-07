@@ -171,7 +171,8 @@ export default class aprsParser {
         packet.resultCode = errorCode;
 
         packet.resultMessage = ((RESULT_MESSAGES[errorCode]) ? RESULT_MESSAGES[errorCode] : errorCode)
-                + ((value !== undefined && value) ? value : value);
+                + `: ${value}`;
+                //+ ((value !== undefined && value) ? value : value);
 
         return packet;
     }
@@ -517,7 +518,7 @@ export default class aprsParser {
 
                     this._wx_parse_peet_logging(body.substr(1), srcCallsign, retVal);
                 } else {
-                    this.addError(retVal, 'packet_invalid');
+                    return this.addError(retVal, 'packet_invalid');
                 }
             } else {
                 return this.addError(retVal, 'packet_short', 'location');
@@ -611,40 +612,38 @@ export default class aprsParser {
         // occur anywhere within the 40 first characters according
         // to the spec.
         } else {
-            /*
-            let $pos = $body.indexOf('!');
+            let $pos = body.indexOf('!');
 
             if($pos >= 0 && $pos <= 39) {
-                $rethash.type = 'location';
-                $rethash['messaging'] = false;
+                retVal.type = 'location';
+                retVal.messaging = false;
 
-                let $pchar = $body.substr($pos + 1, 1);
+                let $pchar = body.substr($pos + 1, 1);
 
                 if(/^[\/\\A-Za-j]$/.test($pchar)) {
                     // compressed position
-                    if($body.length >= ($pos + 1 + 13)) {
-                        this._compressed_to_decimal($body.substr($pos + 1, 13), $srccallsign, $rethash);
+                    if(body.length >= ($pos + 1 + 13)) {
+                        retVal = this._compressed_to_decimal(body.substr($pos + 1, 13), srcCallsign, retVal);
 
                         // check the APRS data extension and comment,
                         // if not weather data
-                        if($retval == 1 && $rethash['symbolcode'] != '_') {
-                            this._comments_to_decimal($body.substr($pos + 14), $srccallsign, $rethash);
+                        if(retVal.resultCode === undefined && !retVal.resultCode && retVal.symbolcode != '_') {
+                            retVal = this._comments_to_decimal(body.substr($pos + 14), srcCallsign, retVal);
                         }
                     }
                 } else if(/^\d$/i.test($pchar)) {
                     // normal uncompressed position
-                    if($body.length >= ($pos + 1 + 19)) {
-                        this._normalpos_to_decimal($body.substr($pos + 1), $srccallsign, $rethash);
+                    if(body.length >= ($pos + 1 + 19)) {
+                        retVal = this._normalpos_to_decimal(body.substr($pos + 1), srcCallsign, retVal);
 
                         // check the APRS data extension and comment,
                         // if not weather data
-                        if(!$retval['resultmsg'] && $rethash['symbolcode'] != '_') {
-                            this._comments_to_decimal($body.substr($pos + 20), $srccallsign, $rethash);
+                        if(!retVal.resultMessage && retVal.symbolcode != '_') {
+                            retVal =  this._comments_to_decimal(body.substr($pos + 20), srcCallsign, retVal);
                         }
                     }
                 }
             }
-            */
         }
 
         // Return packet regardless of if there were errors or not
@@ -1632,7 +1631,7 @@ export default class aprsParser {
      * Parse the possible APRS data extension
      * as well as comment
      */
-    private _comments_to_decimal($rest: string, $srccallsign: string, $rethash: aprsPacket) {
+    private _comments_to_decimal($rest: string, $srccallsign: string, $rethash: aprsPacket): aprsPacket {
         let tmprest;
 
         // First check the possible APRS data extension,

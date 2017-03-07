@@ -10,7 +10,6 @@ import aprsParser from '../src/parser';
 
 
 describe('FAP - test bad packets', function() {
-    /*
     let parser = new aprsParser();
 
     describe('#parseaprs - corrupted uncompressed packet', function() {
@@ -49,6 +48,7 @@ describe('FAP - test bad packets', function() {
             should.not.exist(parsed.longitude);
         });
     });
+
 /*
     describe('#parseaprs - bad source call', function() {
         let $aprspacket = `K6IFR_S>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
@@ -56,15 +56,15 @@ describe('FAP - test bad packets', function() {
         let parsed = parser.parseaprs($aprspacket);
 
         it('Should return a resultcode: srccall_badchars', function() {
-            assert.equal('srccall_badchars', parsed['resultcode']);
+            assert.equal('srccall_badchars', parsed.resultcode);
         });
 
         it('Should return a resultmsg: "Source callsign contains bad characters: undefined"', function() {
-            assert.equal('Source callsign contains bad characters: undefined', parsed['resultmsg']);
+            assert.equal('Source callsign contains bad characters: undefined', parsed.resultmsg);
         });
 
         it('Should not return a type', function() {
-            should.not.exist(parsed['type']);
+            should.not.exist(parsed.type);
         });
     });
 
@@ -74,15 +74,15 @@ describe('FAP - test bad packets', function() {
         let parsed = parser.parseaprs($aprspacket);
 
         it('Should return a resultcode: digicall_badchars', function() {
-            assert.equal('digicall_badchars', parsed['resultcode']);
+            assert.equal('digicall_badchars', parsed.resultcode);
         });
 
         it('Should return a resultmsg: "Digipeater callsign contains bad characters: undefined"', function() {
-            assert.equal('Digipeater callsign contains bad characters: undefined', parsed['resultmsg']);
+            assert.equal('Digipeater callsign contains bad characters: undefined', parsed.resultmsg);
         });
 
         it('Should not return a type', function() {
-            should.not.exist(parsed['type']);
+            should.not.exist(parsed.type);
         });
     });
 
@@ -92,11 +92,11 @@ describe('FAP - test bad packets', function() {
         let parsed = parser.parseaprs($aprspacket);
 
         it('Should return a resultcode: sym_inv_table', function() {
-            assert.equal('sym_inv_table', parsed['resultcode']);
+            assert.equal('sym_inv_table', parsed.resultcode);
         });
 
         it('Should return a resultmsg: "Invalid symbol table or overlay: undefined"', function() {
-            assert.equal('Invalid symbol table or overlay: undefined', parsed['resultmsg']);
+            assert.equal('Invalid symbol table or overlay: undefined', parsed.resultmsg);
         });
     });
     */

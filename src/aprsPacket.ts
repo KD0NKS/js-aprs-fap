@@ -8,6 +8,7 @@ export default class aprsPacket {
     public alive?: boolean;
     public altitude?: number;
     public body?: string;
+    public checksumok?: boolean;
     public comment?: string;
     public course?: number;
     public daodatumbyte?: string;

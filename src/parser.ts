@@ -167,7 +167,7 @@ export default class aprsParser {
      * @param {string} $val Value that caused the error.
      * @return {void}
      */
-    addError = function(packet: aprsPacket, errorCode: string, value?: string): aprsPacket {
+    addError = function(packet: aprsPacket, errorCode: string, value?: any): aprsPacket {
         packet.resultCode = errorCode;
 
         packet.resultMessage = ((RESULT_MESSAGES[errorCode]) ? RESULT_MESSAGES[errorCode] : errorCode)
@@ -327,15 +327,13 @@ export default class aprsParser {
                 srcCallsign = this.checkAX25Call($header[1].toUpperCase());
 
                 if(!srcCallsign) {
-                    this.addError(retVal, 'srccall_noax25');
-                    return retVal;
+                    return this.addError(retVal, 'srccall_noax25');
                 }
             }
         } else {
             // can't be a valid amateur radio callsign, even
             // in the extended sense of APRS-IS callsigns
-            this.addError(retVal, 'srccall_badchars');
-            return retVal;
+            return this.addError(retVal, 'srccall_badchars');
         }
 
         retVal.sourceCallsign = srcCallsign;
@@ -349,15 +347,13 @@ export default class aprsParser {
         if($isax25 == true) {
             if($pathcomponents.length > 9) {
                 // too many fields to be from AX.25
-                this.addError(retVal, 'dstpath_toomany');
-                return retVal;
+                return this.addError(retVal, 'dstpath_toomany');
             }
         }
 
         if($pathcomponents.length < 1) {
             // no destination field
-            this.addError(retVal, 'dstcall_none');
-            return retVal;
+            return this.addError(retVal, 'dstcall_none');
         }
 
 
@@ -367,8 +363,7 @@ export default class aprsParser {
         let $dstcallsign = this.checkAX25Call($pathcomponents.shift());
 
         if(!$dstcallsign) {
-            this.addError(retVal, 'dstcall_noax25');
-            return retVal;
+            return this.addError(retVal, 'dstcall_noax25');
         }
 
         retVal.destCallsign = $dstcallsign;
@@ -379,12 +374,12 @@ export default class aprsParser {
         if($isax25 == true) {
             for(let $digi of $pathcomponents) {
                 let $d;
+
                 if(($d = $digi.match(/^([A-Z0-9-]+)(\*|)$/i))) {
                     let $digitested = this.checkAX25Call($d[1].toUpperCase());
 
                     if(!$digitested) {
-                        this.addError(retVal, 'digicall_noax25');
-                        return retVal;
+                        return this.addError(retVal, 'digicall_noax25');
                     }
 
                     // add it to the digipeater array
@@ -393,8 +388,7 @@ export default class aprsParser {
                         , ($d[2] == '*')
                     ));
                 } else {
-                    this.addError(retVal, 'digicall_badchars');
-                    return retVal;
+                    return this.addError(retVal, 'digicall_badchars');
                 }
             }
         } else {
@@ -415,9 +409,7 @@ export default class aprsParser {
                     if($seen_qconstr == true && (tmp = $digi.match(/^([0-9A-F]{32})$/))) {
                         $digipeaters.push(new digipeater(tmp[1], false));
                     } else {
-                        this.addError(retVal, 'digicall_badchars');
-
-                        return retVal;
+                        return this.addError(retVal, 'digicall_badchars');
                     }
                 }
             }
@@ -504,19 +496,19 @@ export default class aprsParser {
                         // weather as comment)
                         // if the comments don't parse, don't raise an error
                         if((retVal.resultCode === undefined && !retVal.resultCode) && retVal.symbolcode != '_') {
-                            this._comments_to_decimal(body.substr(13), srcCallsign, retVal);
+                            retVal = this._comments_to_decimal(body.substr(13), srcCallsign, retVal);
                         } else {
                             // warn "maybe a weather report?\n" . substr($body, 13) . "\n";
-                            this._wx_parse(body.substr(13), retVal);
+                            retVal = this._wx_parse(body.substr(13), retVal);
                         }
                     } else {
-                        this.addError(retVal, 'packet_invalid', 'Body is too short.');
+                        return this.addError(retVal, 'packet_invalid', 'Body is too short.');
                     }
                 } else if($poschar == 33) { // '!'
                     // Weather report from Ultimeter 2000
                     retVal.type = 'wx';
 
-                    this._wx_parse_peet_logging(body.substr(1), srcCallsign, retVal);
+                    retVal = this._wx_parse_peet_logging(body.substr(1), srcCallsign, retVal);
                 } else {
                     return this.addError(retVal, 'packet_invalid');
                 }
@@ -537,24 +529,22 @@ export default class aprsParser {
             if($paclen >= 31) {
                 retVal.type = 'object';
 
-                this.objectToDecimal(options, body, srcCallsign, retVal);
+                retVal = this.objectToDecimal(options, body, srcCallsign, retVal);
             }
         // NMEA data
         } else if($packettype == '$') {
-            /*
             // don't try to parse the weather stations, require "$GP" start
-            if($body.substr(0, 3) == '$GP') {
+            if(body.substr(0, 3) == '$GP') {
                 // dstcallsign can contain the APRS symbol to use,
                 // so read that one too
-                $rethash.type = 'location';
+                retVal.type = 'location';
 
-                this._nmea_to_decimal($options, $body.substr(1), $srccallsign, $dstcallsign, $rethash);
-            } else if($body.substr(0, 5) == '$ULTW') {
-                $rethash.type = 'wx';
+                retVal = this._nmea_to_decimal(options, body.substr(1), srcCallsign, $dstcallsign, retVal);
+            } else if(body.substr(0, 5) == '$ULTW') {
+                retVal.type = 'wx';
 
-                this._wx_parse_peet_packet($body.substr(5), $srccallsign, $rethash);
+                retVal = this._wx_parse_peet_packet(body.substr(5), srcCallsign, retVal);
             }
-            */
         // Item
         } else if($packettype == ')') {
             if($paclen >= 18) {
@@ -1203,9 +1193,9 @@ export default class aprsParser {
      * @returns {float} The returned value is decimal degrees, North and East are positive.  Value is null if there's an error.
      * TODO: should this return the packet instead?
      */
-    private _nmea_getlatlon($value: string, $sign: string, $rethash: aprsPacket): number {
-        /*
+    private _nmea_getlatlon($value: string, $sign: string, $rethash: aprsPacket): [ aprsPacket, number ] {
         let tmp;
+        let retVal: number;
 
         // upcase the sign for compatibility
         $sign = $sign.toUpperCase();
@@ -1218,51 +1208,42 @@ export default class aprsParser {
             let $minutes = `${tmp[2]}.${tmp[3]}`;
 
             // javascript engines aren't smart enough to convert these to numeric form
-            $value = parseFloat(tmp[1]) + (parseFloat($minutes) / 60);
+            retVal = parseFloat(tmp[1]) + (parseFloat($minutes) / 60);
 
             // capture position resolution in meters based
             // on the amount of minute decimals present
-            $rethash['posresolution'] = this._get_posresolution(tmp[3].length);
+            $rethash.posresolution = this.get_posresolution(tmp[3].length);
         } else {
-            this.addError($rethash, 'nmea_inv_cval', $value);
-            return null;
+            return [ this.addError($rethash, 'nmea_inv_cval', $value), null ];
         }
 
         if(/^\s*[EW]\s*$/.test($sign)) {
             // make sure the value is ok
-            if($value > 179.999999) {
-                this.addError($rethash, 'nmea_large_ew', $value);
-
-                return null;
+            if(retVal > 179.999999) {
+                return [ this.addError($rethash, 'nmea_large_ew', $value), null ];
             }
 
             // west negative
             if(/^\s*W\s*$/.test($sign)) {
-                $value *= -1;
+                retVal *= -1;
             }
         } else if(/^\s*[NS]\s*$/.test($sign)) {
             // make sure the value is ok
-            if($value > 89.999999) {
-                this.addError($rethash, 'nmea_large_ns', $value);
-
-                return null;
+            if(retVal > 89.999999) {
+                return [ this.addError($rethash, 'nmea_large_ns', $value), null ];
             }
 
             // south negative
             if(/^\s*S\s*$/.test($sign)) {
-                $value *= -1;
+                retVal *= -1;
             }
         } else {
             // incorrect sign
-            this.addError($rethash, 'nmea_inv_sign', $sign);
-            return null;
+            return [ this.addError($rethash, 'nmea_inv_sign', $sign), null ];
         }
 
         // all ok
-        return $value;
-        */
-
-        return 0;
+        return [ $rethash, retVal ];
     }
 
     /**
@@ -1349,7 +1330,7 @@ export default class aprsParser {
             $printbody =~ tr/[\x00-\x1f]//d;
             warn "NMEA: from $srccallsign to $dstcallsign: $printbody\n";
         }
-        *
+        */
 
         // verify checksum first, if it is provided
         // trimRight would be preferred, but not supported in all browser engines.
@@ -1357,37 +1338,38 @@ export default class aprsParser {
 
         if((tmp = $body.match(/^([\x20-\x7e]+)\*([0-9A-F]{2})$/i))) {
             let $checksumarea = tmp[1];
-            let $checksumgiven = String.fromCharCode(tmp[2]).charCodeAt(0).toString(16);
+
+            // hex(): Interprets EXPR as a hex string and returns the corresponding numeric value.
+            let $checksumgiven: any = parseInt(tmp[2], 16).toString(10);
             let $checksumcalculated = 0;
 
             for(var $i = 0; $i < $checksumarea.length; $i++) {
-                $checksumcalculated = ($checksumcalculated ^ String.fromCharCode($i).charCodeAt(0).toString(16));
+                $checksumcalculated ^= $checksumarea.charCodeAt($i);
             }
 
-            if($checksumgiven != $checksumcalculated) {
+            if($checksumgiven != $checksumcalculated.toString()) {
                 // invalid checksum
-                this.addError($rethash, 'nmea_inv_cksum');
-                return 0;
+                return this.addError($rethash, 'nmea_inv_cksum');
             }
 
             // make a note of the existance of a checksum
-            $rethash['checksumok'] = 1;
+            $rethash.checksumok = true;
         }
 
         // checksum ok or not provided
 
-        $rethash['format'] = 'nmea';
+        $rethash.format = 'nmea';
 
         // use a dot as a default symbol if one is not defined in
         // the destination callsign
         let { $symtable, $symcode } = this._get_symbol_fromdst($dstcallsign);
 
         if(!$symtable || !$symcode) {
-            $rethash['symboltable'] = '/';
-            $rethash['symbolcode'] = '/';
+            $rethash.symboltable = '/';
+            $rethash.symbolcode = '/';
         } else {
-            $rethash['symboltable'] = $symtable;
-            $rethash['symbolcode'] = $symcode;
+            $rethash.symboltable = $symtable;
+            $rethash.symbolcode = $symcode;
         }
 
         // Split to NMEA fields
@@ -1399,15 +1381,12 @@ export default class aprsParser {
         if(nmeafields[0] == 'GPRMC') {
             // we want at least 10 fields
             if(nmeafields.length < 10) {
-                this.addError($rethash, 'gprmc_fewfields', nmeafields);
-                return 0;
+                return this.addError($rethash, 'gprmc_fewfields', nmeafields);
             }
 
             if(nmeafields[2] != 'A') {
                 // invalid position
-                this.addError($rethash, 'gprmc_nofix');
-
-                return 0;
+                return this.addError($rethash, 'gprmc_nofix');
             }
 
             // check and save the timestamp
@@ -1418,22 +1397,20 @@ export default class aprsParser {
             if((tmp = nmeafields[1].match(/^\s*(\d{2})(\d{2})(\d{2})(|\.\d+)\s*$/))) {
                 // if seconds has a decimal part, ignore it
                 // leap seconds are not taken into account...
-                if(tmp[1] > 23 || tmp[2] > 59 || tmp[3] > 59) {
-                    this.addError($rethash, 'gprmc_inv_time', nmeafields[1]);
-                    return 0;
+                if(parseInt(tmp[1]) > 23 || parseInt(tmp[2]) > 59 || parseInt(tmp[3]) > 59) {
+                    return this.addError($rethash, 'gprmc_inv_time', nmeafields[1]);
                 }
 
                 $hour = parseInt(tmp[1]);
                 $minute = parseInt(tmp[2]);
                 $second = parseInt(tmp[3]);
             } else {
-                this.addError($rethash, 'gprmc_inv_time');
-                return 0;
+                return this.addError($rethash, 'gprmc_inv_time');
             }
 
-            let $year;
-            let $month;
-            let $day;
+            let $year: number;
+            let $month: number;
+            let $day: number;
 
             if((tmp = nmeafields[9].match(/^\s*(\d{2})(\d{2})(\d{2})\s*$/))) {
                 // check the date for validity. Assume
@@ -1441,37 +1418,33 @@ export default class aprsParser {
                 // 70-99 are 20th century
                 $year = 2000 + parseInt(tmp[3]);
 
-                if(tmp[3] >= 70) {
-                    $year = 1900 + tmp[3];
+                if(parseInt(tmp[3]) >= 70) {
+                    $year = 1900 + parseInt(tmp[3]);
                 }
 
                 // check for invalid date
                 // javascript months are 0 based
-                if(!(this.check_date($year, tmp[2] - 1, parseInt(tmp[1])))) {
-                    this.addError($rethash, 'gprmc_inv_date', `${$year} ${tmp[2] - 1} ${tmp[1]}`);
-                    return 0;
+                if(!(this.checkDate($year, parseInt(tmp[2]) - 1, parseInt(tmp[1])))) {
+                    return this.addError($rethash, 'gprmc_inv_date', `${$year} ${parseInt(tmp[2]) - 1} ${tmp[1]}`);
                 }
 
                 // javascript months are 0 based
-                $month = tmp[2] - 1; // force numeric
-                $day = tmp[1];
+                $month = parseInt(tmp[2]) - 1; // force numeric
+                $day = parseInt(tmp[1]);
             } else {
-                this.addError($rethash, 'gprmc_inv_date');
-                return 0;
+                return this.addError($rethash, 'gprmc_inv_date');
             }
 
             // Date_to_Time() can only handle 32-bit unix timestamps,
             // so make sure it is not used for those years that
             // are outside that range.
             if($year >= 2038 || $year < 1970) {
-                $rethash['timestamp'] = 0;
-                this.addError($rethash, 'gprmc_date_out', $year);
-
-                return 0;
+                $rethash.timestamp = 0;
+                return this.addError($rethash, 'gprmc_date_out', $year);
             } else {
                 let d = new Date(Date.UTC($year, $month, $day, $hour, $minute, $second, 0));
 
-                $rethash['timestamp'] = d.getTime() / 1000;
+                $rethash.timestamp = d.getTime() / 1000;
             }
 
             // speed (knots) and course, make these optional
@@ -1479,7 +1452,7 @@ export default class aprsParser {
             // can't be decoded).
             if((tmp = nmeafields[7].match(/^\s*(\d+(|\.\d+))\s*$/))) {
                 // convert to km/h
-                $rethash['speed'] = tmp[1] * $knot_to_kmh;
+                $rethash.speed = parseFloat(tmp[1]) * KNOT_TO_KMH;
             }
 
             if((tmp = nmeafields[8].match(/^\s*(\d+(|\.\d+))\s*$/))) {
@@ -1494,32 +1467,34 @@ export default class aprsParser {
                     $course = 0; // invalid
                 }
 
-                $rethash['course'] = $course;
+                $rethash.course = $course;
             } else {
-                $rethash['course'] = 0; // unknown
+                $rethash.course = 0; // unknown
             }
 
             // latitude and longitude
-            let $latitude = this._nmea_getlatlon(nmeafields[3], nmeafields[4], $rethash);
+            let $latitude: number;
+            [ $rethash, $latitude ] = this._nmea_getlatlon(nmeafields[3], nmeafields[4], $rethash);
 
-            if(!$latitude) {
-                return 0;
+            if($latitude === undefined || !$latitude) {
+                return $rethash;
             }
 
-            $rethash['latitude'] = $latitude;
+            $rethash.latitude = $latitude;
 
-            let $longitude = this._nmea_getlatlon(nmeafields[5], nmeafields[6], $rethash);
+            let $longitude: number;
+            [ $rethash, $longitude ] = this._nmea_getlatlon(nmeafields[5], nmeafields[6], $rethash);
 
-            if(!$longitude) {
-                return 0;
+            if($longitude === undefined || !$longitude) {
+                return $rethash;
             }
 
-            $rethash['longitude'] = $longitude;
+            $rethash.longitude = $longitude;
 
             // we have everything we want, return
-            return 1;
-        } else if(nmeafields[0] == 'GPGGA') {
-            /*
+            return $rethash;
+        } else if(nmeafields[0] == 'GPGGA') /*{
+
             # we want at least 11 fields
             if (@nmeafields < 11) {
                 addError($rethash, 'gpgga_fewfields', scalar(@nmeafields));
@@ -1624,7 +1599,7 @@ export default class aprsParser {
         return 0;
         */
 
-        return $rethash
+        return $rethash;
     }
 
     /**

@@ -21,7 +21,6 @@ describe('FAP - Test decoding GPRMC NMEA', function() {
         let $aprspacket = `${$header}:${$body}`;
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
-        console.log(parsed);
 
         // the parser always appends an SSID - make sure the behaviour doesn't change
         $dstcall += '-0';

@@ -917,10 +917,10 @@ export default class aprsParser {
         // unless it is a weather report (we don't want erroneus
         // course/speed figures and weather in the comments..)
         if(retVal.symbolcode != '_') {
-            this._comments_to_decimal(packet.substr($locationoffset), srcCallsign, retVal);
+            retVal = this._comments_to_decimal(packet.substr($locationoffset), srcCallsign, retVal);
         } else {
             // possibly a weather object, try to parse
-            this._wx_parse(packet.substr($locationoffset), retVal);
+            retVal = this._wx_parse(packet.substr($locationoffset), retVal);
         }
 
         return retVal;
@@ -2649,12 +2649,11 @@ export default class aprsParser {
      * Parses a Peet bros Ultimeter weather packet ($ULTW header).
      */
     private _wx_parse_peet_packet($s: string, $sourcecall: string, $rethash: aprsPacket): aprsPacket {
-        /*
         // warn "\$ULTW: $s\n";
         // 0000000001FF000427C70002CCD30001026E003A050F00040000
-        let $w = {};
+        let $w = new wx();
         let $t;
-        let $vals = [];
+        let $vals: number[] = [];
 
         while(/^([0-9a-f]{4}|----)/i.test($s)) {
             $s = $s.replace(/^([0-9a-f]{4}|----)/i, function($0, $1) {
@@ -2690,27 +2689,27 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t != null) {
-            $w['wind_gust'] = ($t * $kmh_to_ms / 10).toFixed(1);
+            $w.wind_gust = ($t * KMH_TO_MS / 10).toFixed(1);
         }
 
         $t = $vals.shift();
         if($t != null) {
-            $w['wind_direction'] = (($t & 0xff) * 1.41176).toFixed(0);  // 1/255 => 1/360
+            $w.wind_direction = (($t & 0xff) * 1.41176).toFixed(0);  // 1/255 => 1/360
         }
 
         $t = $vals.shift();
         if($t != null) {
-            $w['temp'] = this._fahrenheit_to_celsius($t / 10).toFixed(1);   // 1/255 => 1/360
+            $w.temp = this.fahrenheitToCelsius($t / 10).toFixed(1);   // 1/255 => 1/360
         }
 
         $t = $vals.shift();
         if($t != null) {
-            $w['rain_midnight'] = ($t * $hinch_to_mm).toFixed(1);
+            $w.rain_midnight = ($t * HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
         if($t && $t >= 10) {
-            $w['pressure'] = ($t / 10).toFixed(1);
+            $w.pressure = ($t / 10).toFixed(1);
         }
 
         // Do we care about these?
@@ -2720,10 +2719,10 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w['humidity'] = ($t / 10).toFixed(0);    // percentage
+            $w.humidity = Math.floor($t / 10);    // .toFixed(0) percentage
 
-            if($w['humidity'] > 100 || $w['humidity'] < 1) {
-                delete $w['humidity'] ;
+            if($w.humidity > 100 || $w.humidity < 1) {
+                delete $w.humidity;
             }
         }
 
@@ -2733,28 +2732,26 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w['rain_midnight'] = ($t * $hinch_to_mm).toFixed(1);
+            $w.rain_midnight = ($t * HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
         if($t) {
-            $w['wind_speed'] = ($t * $kmh_to_ms / 10).toFixed(1);
+            $w.wind_speed = ($t * KMH_TO_MS / 10).toFixed(1);
         }
 
-        if($w['temp']
-                || ($w['wind_speed'] && $w['wind_direction'])
-                || $w['pressure']
-                || $w['humidity']
+        if($w.temp
+                || ($w.wind_speed && $w.wind_direction)
+                || $w.pressure
+                || $w.humidity
                 ) {
-            $rethash['wx'] = $w;
+            $rethash.wx = $w;
 
-            return 1;
+            //return $rethash;
         }
 
-        return 0;
-        */
-
-        return null;
+        //return 0;
+        return $rethash; // do we need to notify somehow the parsing failed?
     }
 
     /**
@@ -2763,12 +2760,11 @@ export default class aprsParser {
      * Parses a Peet bros Ultimeter weather logging frame (!! header).
      */
     private _wx_parse_peet_logging($s: string, $sourcecall: string, $rethash: aprsPacket): aprsPacket {
-        /*
         // warn "\!!: $s\n";
         // 0000000001FF000427C70002CCD30001026E003A050F00040000
-        let $w = {};
+        let $w = new wx();
         let $t;
-        let $vals = [];
+        let $vals: number[] = [];
 
         while(/^([0-9a-f]{4}|----)/i.test($s)) {
             $s = $s.replace(/^([0-9a-f]{4}|----)/i, function($0, $1) {
@@ -2799,56 +2795,56 @@ export default class aprsParser {
         }
 
         if(!$vals || $vals.length == 0) {
-            return 0;
+            return $rethash; // TODO: do we need to signal an error?
         }
 
         //0000 0066 013D 0000 2871 0166 ---- ---- 0158 0532 0120 0210
 
         $t = $vals.shift(); // instant wind speed
         if($t != null) {
-            $w['wind_speed'] = ($t * $kmh_to_ms / 10).toFixed(1);
+            $w.wind_speed = ($t * KMH_TO_MS / 10).toFixed(1);
         }
 
         $t = $vals.shift();
         if($t != null) {
-            $w['wind_direction'] = (($t & 0xff) * 1.41176).toFixed(0); // 1/255 => 1/360
+            $w.wind_direction = (($t & 0xff) * 1.41176).toFixed(0); // 1/255 => 1/360
         }
 
         $t = $vals.shift();
         if($t) {
-            $w['temp'] = this._fahrenheit_to_celsius($t / 10).toFixed(1); // 1/255 => 1/360
+            $w.temp = this.fahrenheitToCelsius($t / 10).toFixed(1); // 1/255 => 1/360
         }
 
         $t = $vals.shift();
         if($t) {
-            $w['rain_midnight'] = ($t * $hinch_to_mm).toFixed(1);
+            $w.rain_midnight = ($t * HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
         if($t && $t >= 10) {
-            $w['pressure'] = ($t / 10).toFixed(1);
+            $w.pressure = ($t / 10).toFixed(1);
         }
 
         $t = $vals.shift();
         if($t) {
-            $w['temp_in'] = this._fahrenheit_to_celsius($t / 10).toFixed(1);   // 1/255 => 1/360
+            $w.temp_in = parseFloat(this.fahrenheitToCelsius($t / 10).toFixed(1));   // 1/255 => 1/360
         }
 
         $t = $vals.shift();
         if($t) {
-            $w['humidity'] = ($t / 10).toFixed(0);    // percentage
+            $w.humidity = Math.floor($t / 10);    // .toFixed(0) percentage
 
-            if($w['humidity'] > 100 || $w['humidity'] < 1) {
-                delete $w['humidity'];
+            if($w.humidity > 100 || $w.humidity < 1) {
+                delete $w.humidity;
             }
         }
 
         $t = $vals.shift();
         if($t) {
-            $w['humidity_in'] = ($t / 10).toFixed(0); // percentage
+            $w.humidity_in = Math.floor($t / 10); // .toFixed(0) percentage
 
-            if($w['humidity'] > 100 || $w['humidity'] < 1) {
-                delete $w['humidity_in'];
+            if($w.humidity > 100 || $w.humidity < 1) {
+                delete $w.humidity_in;
             }
         }
 
@@ -2857,35 +2853,32 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w['rain_midnight'] = ($t * $hinch_to_mm).toFixed(1);
+            $w['rain_midnight'] = ($t * HINCH_TO_MM).toFixed(1);
         }
 
         // avg wind speed
         $t = $vals.shift();
         if($t) {
-            $w['wind_speed'] = ($t * $kmh_to_ms / 10).toFixed(1);
+            $w.wind_speed = ($t * KMH_TO_MS / 10).toFixed(1);
         }
 
         // if inside temperature exists but no outside, use inside
-        if($w['temp_in'] && !$w['temp']) {
-            $w['temp'] = $w['temp_in'];
+        if($w.temp_in && !$w.temp) {
+            $w.temp = $w.temp_in.toString();
         }
 
-        if($w['humidity_in'] && !$w['humidity']) {
-            $w['humidity'] = $w['humidity_in'];
+        if($w.humidity_in && !$w.humidity) {
+            $w.humidity = $w.humidity_in;
         }
 
-        if ($w['temp'] || $w['pressure'] || $w['humidity']
-                || ($w['wind_speed'] && $w['wind_direction'])) {
-            $rethash['wx'] = $w;
+        if($w.temp || $w.pressure || $w.humidity
+                || ($w.wind_speed && $w.wind_direction)) {
+            $rethash.wx = $w;
 
-            return 1;
+            //return 1;
         }
 
-        return 0;
-        */
-
-        return null;
+        return $rethash; // this originally returned 0, TODO: signal error?
     }
 
     /**

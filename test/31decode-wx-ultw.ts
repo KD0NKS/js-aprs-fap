@@ -17,8 +17,6 @@ describe('FAP - Test $ULTW wx packet parsing', function() {
         let $aprspacket = 'WC4PEM-14>APN391,WIDE2-1,qAo,K2KZ-3:$ULTW0053002D028D02FA2813000D87BD000103E8015703430010000C';
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
-        console.log(parsed);
-
         it('Should return wind direction: 64', function() {
             assert.equal(64, parsed.wx.wind_direction);
         });

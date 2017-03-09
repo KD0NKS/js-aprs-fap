@@ -155,9 +155,7 @@ const DST_SYMBOLS = {
 };
 
 export default class aprsParser {
-    constructor() {
-
-    }
+    constructor() { }
 
     /**
      * Used to add error messages to a packet.
@@ -562,14 +560,12 @@ export default class aprsParser {
 
         // Station capabilities
         } else if($packettype == '<') {
-            /*
             // at least one other character besides '<' required
             if($paclen >= 2) {
-                $rethash.type = 'capabilities';
+                retVal.type = 'capabilities';
 
-                return this._capabilities_parse($body.substr(1), $srccallsign, $rethash);
+                retVal = this._capabilities_parse(body.substr(1), srcCallsign, retVal);
             }
-            */
         // Status reports
         } else if($packettype == '>') {
             // we can live with empty status reports
@@ -585,19 +581,15 @@ export default class aprsParser {
             retVal = this._telemetry_parse(body.substr(2), retVal);
         // DX spot
         } else if(/^DX\s+de\s+(.*?)\s*[:>]\s*(.*)$/i.test(body)) {
-            /*
-            $body = $body.match(/^DX\s+de\s+(.*?)\s*[:>]\s*(.*)$/i);
+            var tmp: string[];
+            tmp = body.match(/^DX\s+de\s+(.*?)\s*[:>]\s*(.*)$/i);
 
-            $rethash.type = 'dx';
+            retVal.type = 'dx';
 
-            return this._dx_parse($body[1], $body[2], $rethash);
-            */
+            retVal = this._dx_parse(tmp[1], tmp[2], retVal);
         //# Experimental
         } else if(/^\{\{/i.test(body)) {
-            /*
-            this.addError($rethash, 'exp_unsupp');
-            return $rethash;
-            */
+            return this.addError(retVal, 'exp_unsupp');
         // When all else fails, try to look for a !-position that can
         // occur anywhere within the 40 first characters according
         // to the spec.
@@ -932,7 +924,7 @@ export default class aprsParser {
      *
      * @param {Number} $bits Three numbers 0 - 2
      * @returns {string} the message on success, null on failure.
-     */
+     *
     private mice_mbits_to_message($bits: string): aprsPacket {
         /*
         if(($bits = $bits.match(/^\s*([0-2]{3})\s*$/))) {
@@ -942,17 +934,18 @@ export default class aprsParser {
                 return mice_messagetypes[$bits];
             }
         }
-        */
+        *
 
         return null;
     }
+    */
 
     /**
      * If no parameter is given, use current time,
      * else use the unix timestamp given in the parameter.
      *
      * @returns {string} A human readable timestamp in UTC, string form.
-     */
+     *
     private _gettime(): string {
         /*
         let($sec,$min,$hour,$mday,$mon,$year,$wday,$yday);
@@ -973,12 +966,14 @@ export default class aprsParser {
             $sec);
 
         return $timestring;
-        */
+        *
 
         return null;
     }
+    */
 
     /**
+     * TODO: Move to utility class
      * Calculates the distance in kilometers between two locations
      * given in decimal degrees.  East and North positive. The calculation uses the great circle distance, it
      * is not too exact, but good enough for us.
@@ -988,7 +983,7 @@ export default class aprsParser {
      * @param {float} $lon1 The second station's longitude.
      * @param {float} $lat1 The second station's latitude.
      * @returns {float} The distance between 2 stations
-     */
+     *
     private distance($lon0: number, $lat0: number, $lon1: number, $lat1: number): number {
         /*
         // decimal to radian
@@ -1006,12 +1001,14 @@ export default class aprsParser {
         let $distance = $c * 6366.71;  // in kilometers
 
         return $distance;
-        */
+        *
 
         return null;
     }
+    */
 
     /**
+     * TODO: Move to utility class
      * Returns the initial great circle direction in degrees
      * from lat0/lon0 to lat1/lon1. Locations are input
      * in decimal degrees, north and east positive.
@@ -1021,7 +1018,7 @@ export default class aprsParser {
      * @param {float} $lon1 Longitude of the second station.
      * @param {float} $lat1 Latitude of the second station.
      * @return {float} The initial great circle direction in degrees from lat0/lon0 to lat1/lon1.
-     */
+     *
     private direction = function($lon0: number, $lat0: number, $lon1: number, $lat1: number): number {
         /*
         $lon0 = this.deg2rad($lon0);
@@ -1039,12 +1036,15 @@ export default class aprsParser {
         }
 
         return this.rad2deg($direction);
-        */
+        *
 
         return null;
     }
+    */
 
     /**
+     * TODO: Move to utility class
+     *
      * Count the number of digipeated hops in a (KISS) packet and return it. Returns -1 in case of error.
      * The header parameter can contain the full packet or just the header
      * in TNC2 format. All callsigns in the header must be AX.25 compatible
@@ -1053,7 +1053,7 @@ export default class aprsParser {
      *
      * @param {string} $header Full APRS packet or just the header of the packet
      * @returns {Number} The number of digipeated hops in the KISS packet.
-     */
+     *
     private count_digihops($header: string): number {
         let tmp;
 
@@ -1163,10 +1163,11 @@ export default class aprsParser {
         }
 
         return $hopcount;
-        */
+        *
 
         return null;
     }
+    */
 
     /**
      * Returns position resolution in meters based on the number
@@ -2416,12 +2417,12 @@ export default class aprsParser {
      * dxcall (DX callsign) and dxinfo (info string).
      */
     private _dx_parse($sourcecall: string, $info: string, $rethash: aprsPacket): aprsPacket {
-        /*
+
         if(!this.checkAX25Call($sourcecall)) {
-            this.addError($rethash, 'dx_inv_src', $sourcecall);
-            return 0;
+            return this.addError($rethash, 'dx_inv_src', $sourcecall);
         }
 
+        /*
         $rethash['dxsource'] = $sourcecall;
 
         $info = $info.replace(/^\s*(.*?)\s*$/, $1); // strip whitespace
@@ -2451,7 +2452,7 @@ export default class aprsParser {
         return 1;
         */
 
-        return null;
+        return $rethash;
     }
 
     /**
@@ -2934,7 +2935,7 @@ export default class aprsParser {
      * @param {string} $callsign Station callsign to validate
      *
      * @returns {string} null on invalid callsign or callsign + ssid
-     */
+     *
     private _kiss_checkcallsign($callsign: string): string {
         /*
         //if((a = a.match(/[a-zA-Z]+/g))) {
@@ -2948,11 +2949,12 @@ export default class aprsParser {
 
             return $callsign[1] + $callsign[2];
         }
-        */
+        *
 
         // no match
         return null;
     }
+    */
 
     /**
      * =item kiss_to_tnc2($kissframe)
@@ -2963,7 +2965,7 @@ export default class aprsParser {
      * must not be done before calling this function. Returns
      * a string containing the TNC-2 frame (no CR and/or LF)
      * or undef on error.
-     */
+     *
     private kiss_to_tnc2($kissframe: string): string {
         /*
         let $asciiframe = '';
@@ -3119,10 +3121,11 @@ export default class aprsParser {
 
         # Ok, return whole frame
         return $asciiframe;
-        */
+        *
 
         return null;
     }
+    */
 
     /**
      * =item tnc2_to_kiss($tnc2frame)
@@ -3130,7 +3133,7 @@ export default class aprsParser {
      * frame (single port KISS TNC). The frame will be complete,
      * i.e. it has byte stuffing done and FEND (0xC0) characters
      * on both ends. If conversion fails, return undef.
-     */
+     *
     private tnc2_to_kiss($gotframe: string): string {
         let $kissframe = 0x00; // kiss frame starts with byte 0x00
         /*
@@ -3271,10 +3274,11 @@ export default class aprsParser {
         *
 
         return $kissframe;
-        */
+        *
 
         return null;
     }
+    */
 
     /**
      * =item aprs_duplicate_parts($packet)
@@ -3286,7 +3290,7 @@ export default class aprsParser {
      * information from the innermost data. Also removes
      * possible trailing spaces to improve detection
      * (e.g. aprsd replaces trailing CRs or LFs in a packet with a space).
-     */
+     *
     private aprs_duplicate_parts($packet: string): any {
         /*
         # If this is a third party packet format,
@@ -3316,12 +3320,15 @@ export default class aprsParser {
             $body =~ s/\s+$//;
             return ($source, $destination, $body);
         }
-        */
+        *
 
         return null;
     }
+    */
 
     /**
+     * TODO: Move to factory class
+     *
      * =item make_object($name, $tstamp, $lat, $lon, $symbols, $speed, $course, $altitude, $alive, $usecompression, $posambiguity, $comment)
      * Creates an APRS object. Returns a body of an APRS object, i.e. ";OBJECTNAM*DDHHMM/DDMM.hhN/DDDMM.hhW$CSE/SPDcomments..."
      * or undef on error.
@@ -3341,7 +3348,7 @@ export default class aprsParser {
      * Note: Course/speed/altitude/compression is not implemented.
      * This function API will probably change in the near future. The long list of
      * parameters should be changed to hash with named parameters.
-     */
+     *
     private make_object($name: string, $tstamp: number, $lat: number, $lon: number, $symbols:string
             , $speed: number, $course: number, $altitude: number, $alive: boolean
             , $usecompression: boolean, $posambiguity: number, $comment: string): string {
@@ -3388,18 +3395,21 @@ export default class aprsParser {
         $packetbody .= $comment;
 
         return $packetbody;
-        */
+        *
         return null;
     }
+    */
 
     /**
+     * TODO: Move to factory class
+     *
      * =item make_timestamp($timestamp, $format)
      * Create an APRS (UTC) six digit (DHM or HMS) timestamp from a unix timestamp.
      * The first parameter is the unix timestamp to use, or zero to use
      * current time. Second parameter should be one for
      * HMS format, zero for DHM format.
      * Returns a 7-character string (e.g. "291345z") or undef on error.
-     */
+     *
     private make_timestamp($tstamp: number, $tformat: number): string {
         /*
         if($tstamp == 0) {
@@ -3432,12 +3442,15 @@ export default class aprsParser {
         }
 
         return $tstring;
-        */
+        *
 
         return null;
     }
+    */
 
     /**
+     * TODO: Move to factory class
+     *
      * =item make_position($lat, $lon, $speed, $course, $altitude, $symbols, $usecompression, $posambiguity)
      * Creates an APRS position for position/object/item. Parameters:
      *  1st: latitude in decimal degrees
@@ -3453,7 +3466,7 @@ export default class aprsParser {
      * Please note: course/speed/altitude are not supported yet, and neither is compressed format or position ambiguity.
      * This function API will probably change in the near future. The long list of
      * parameters should be changed to hash with named parameters.
-     */
+     *
     private make_position($lat: number, $lon: number, $speed: number, $course: number
             , $altitude: number, $symbols: string, $usecompression: boolean, $posambiguity: number) {
 
@@ -3599,6 +3612,7 @@ export default class aprsParser {
             }
             return $retstring;
         }
-        */
+        *
     }
+    */
 }

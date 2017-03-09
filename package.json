@@ -8,7 +8,7 @@
     "tsc": "tsc",
     "prepublish": "./node_modules/typescript/bin/tsc src/*.ts --module commonjs --moduleResolution node --target esnext",
     "pretest": "./node_modules/typescript/bin/tsc test/*.ts --module commonjs --moduleResolution node --target esnext",
-    "test": "./node_modules/mocha/bin/mocha"
+    "test": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha"
   },
   "repository": {
     "type": "git",
@@ -28,6 +28,7 @@
     "@types/mocha": "^2.2.39",
     "@types/node": "^7.0.5",
     "chai": "^3.5.0",
+    "istanbul": "^0.4.5",
     "mocha": "^3.2.0"
   },
   "dependencies": {

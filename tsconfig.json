@@ -16,6 +16,6 @@
         , "src/**/*"
         , "test/**/*"
     ],
-    "exclude": [ "bin", "node_modules" ],
+    "exclude": [ "bin", "coverage", "node_modules" ],
     "atom": { "rewriteTsconfig": false }
 }

@@ -5,7 +5,15 @@ APRS is a registered trademark Bob Bruninga, WB4APR.
 This is an APRS parser based on [Ham::APRS::FAP](https://github.com/hessu/perl-aprs-fap) rewritten in JavaScript.  Therefore, much of what
 is listed here is directly copied from the original repository.
 
-## Implemented features - parses
+## Goals - work in progress
+- Be lightweight
+  - Consuming world stream with Celeron 900 processor, 4GB ram, while utilizing the machine for development.
+- Parse all message types
+- Respond appropriately to all queries
+- Implement full APRS spec
+- Full code coverage with unit tests
+
+## Implemented features - parse
 - normal
 - mic-e and compressed location packets
 - NMEA location packets
@@ -15,7 +23,9 @@ is listed here is directly copied from the original repository.
 - telemetry
 - weather packets
 
-The goal is to get this module stable and fast enough to parse the world APRS-IS stream in real time.
+## Needs test cases to implement
+- DX
+- Capabilities
 
 ## Additional Information
 As of right now, this module's goal of functionality and behavior is to be similar to the original library.  However, upon complete conversion, the code base and functionality will probably begin to diverge to better meet the JavaScript paradigm.  Also optimizations will be made to try to

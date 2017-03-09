@@ -9,6 +9,7 @@ const MPH_TO_KMH = 1.609344; // miles per hour to kilometers per hour
 const KMH_TO_MS = 10 / 36;   // kilometers per hour to meters per second
 const MPH_TO_MS = MPH_TO_KMH * KMH_TO_MS;  // miles per hour to meters per second
 const HINCH_TO_MM = 0.254;   // hundredths of an inch to millimeters
+const FEET_TO_METERS = 0.3048;
 
 const RESULT_MESSAGES: any = {
     'unknown': 'Unsupported packet format'
@@ -1656,7 +1657,7 @@ export default class aprsParser {
         // take the first occurrence
         if((tmprest = $rest.match(/^(.*?)\/A=(-\d{5}|\d{6})(.*)$/))) {
             // convert to meters as well
-            $rethash.altitude = parseFloat(tmprest[2]) * 0.3048;
+            $rethash.altitude = parseFloat(tmprest[2]) * FEET_TO_METERS;
             $rest = tmprest[1] + tmprest[3];
         }
 
@@ -2331,7 +2332,7 @@ export default class aprsParser {
             // cs is altitude
             let $cs = $c1 * 91 + $s1;
             // convert directly to meters
-            $rethash.altitude = Math.pow(1.002, $cs) * 0.3048;
+            $rethash.altitude = Math.pow(1.002, $cs) * FEET_TO_METERS;
         } else if($c1 >= 0 && $c1 <= 89) {
             if($c1 == 0) {
                 // special case of north, APRS spec
@@ -3384,7 +3385,7 @@ export default class aprsParser {
         }
 
         # actual position
-        my $posstring = make_position($lat, $lon, $speed, $course, $altitude, $symbols, $usecompression, $posambiguity);
+        my $posstring = make_position($lat, $lon, $speed, $course, $altitude, $symbols, $optionref);
         if (not(defined($posstring))) {
             return undef;
         } else {

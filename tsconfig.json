@@ -14,8 +14,7 @@
     "include": [
         "index.ts"
         , "src/**/*"
-        , "test/**/*"
     ],
-    "exclude": [ "bin", "coverage", "node_modules" ],
+    "exclude": [ "bin", "coverage", "node_modules", "test" ],
     "atom": { "rewriteTsconfig": false }
 }

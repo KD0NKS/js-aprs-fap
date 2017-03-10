@@ -4,15 +4,16 @@ import * as chai from 'chai';
 
 const assert = require('assert');
 const should = chai.should();
+const expect = chai.expect;
 
 import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
 
 
-describe('FAP - test bad packets', function() {
+describe('FAP - test bad packets', () => {
     let parser = new aprsParser();
 
-    describe('#parseaprs - corrupted uncompressed packet', function() {
+    describe('#parseaprs - corrupted uncompressed packet', () => {
         let $srccall = "OH2RDP-1";
         let $dstcall = "BEACON-15";
 
@@ -20,83 +21,106 @@ describe('FAP - test bad packets', function() {
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
-        it('Should return a resultcode: loc_inv', function() {
+        it('Should return a resultcode: loc_inv', () => {
             assert.equal('loc_inv', parsed.resultCode);
         });
 
-        it('Should return a resultmsg: "Invalid uncompressed location: undefined"', function() {
+        it('Should return a resultmsg: "Invalid uncompressed location: undefined"', () => {
             assert.equal('Invalid uncompressed location: undefined', parsed.resultMessage);
         });
 
-        it('Should return a type: location', function() {
+        it('Should return a type: location', () => {
             assert.equal('location', parsed.type);
         });
 
-        it('Should return the source call sign: ' + $srccall, function() {
+        it('Should return the source call sign: ' + $srccall, () => {
             assert.equal($srccall, parsed.sourceCallsign);
         });
 
-        it('Should return the destination call sign: ' + $dstcall, function() {
+        it('Should return the destination call sign: ' + $dstcall, () => {
             assert.equal($dstcall, parsed.destCallsign);
         });
 
-        it('Should not return latitude', function() {
+        it('Should not return latitude', () => {
             should.not.exist(parsed.latitude);
         });
 
-        it('Should not return longitude', function() {
+        it('Should not return longitude', () => {
             should.not.exist(parsed.longitude);
         });
     });
 
-    describe('#parseaprs - bad source call', function() {
+    describe('#parseaprs - bad source call', () => {
         let $aprspacket = `K6IFR_S>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
-        console.log(parsed);
 
-        it('Should return a resultcode: srccall_badchars', function() {
+        it('Should return a resultcode: srccall_badchars', () => {
             assert.equal('srccall_badchars', parsed.resultCode);
         });
 
-        it('Should return a resultmsg: "Source callsign contains bad characters: undefined"', function() {
+        it('Should return a resultmsg: "Source callsign contains bad characters: undefined"', () => {
             assert.equal('Source callsign contains bad characters: undefined', parsed.resultMessage);
         });
 
-        it('Should not return a type', function() {
+        it('Should not return a type', () => {
             should.not.exist(parsed.type);
         });
     });
 
-    describe('#parseaprs - bad digipeater call', function() {
+    describe('#parseaprs - bad digipeater call', () => {
         let $aprspacket = `SV2BRF-6>APU25N,TCPXX*,qAX,SZ8L_GREE:=/:\$U#T<:G- BVagelis, qrv:434.350, tsq:77 {UIV32N}`;
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
-        it('Should return a resultcode: digicall_badchars', function() {
+        it('Should return a resultcode: digicall_badchars', () => {
             assert.equal('digicall_badchars', parsed.resultCode);
         });
 
-        it('Should return a resultmsg: "Digipeater callsign contains bad characters: undefined"', function() {
+        it('Should return a resultmsg: "Digipeater callsign contains bad characters: undefined"', () => {
             assert.equal('Digipeater callsign contains bad characters: undefined', parsed.resultMessage);
         });
 
-        it('Should not return a type', function() {
+        it('Should not return a type', () => {
             should.not.exist(parsed.type);
         });
     });
 
-    describe('#parseaprs - bad symbol table', function() {
+    describe('#parseaprs - bad symbol table', () => {
         let $aprspacket = `ASDF>DSALK,OH2RDG*,WIDE:!6028.51N,02505.68E#`;
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
-        it('Should return a resultcode: sym_inv_table', function() {
+        it('Should return a resultcode: sym_inv_table', () => {
             assert.equal('sym_inv_table', parsed.resultCode);
         });
 
-        it('Should return a resultmsg: "Invalid symbol table or overlay: undefined"', function() {
+        it('Should return a resultmsg: "Invalid symbol table or overlay: undefined"', () => {
             assert.equal('Invalid symbol table or overlay: undefined', parsed.resultMessage);
+        });
+    });
+
+    describe('#parsepars - no packet', () => {
+        let parsed: aprsPacket = parser.parseaprs(undefined);
+
+        it('Should return a resultCode: "packet_no"', () => {
+            expect(parsed.resultCode).to.equal('packet_no');
+        });
+    });
+
+    describe('#parseaprs - packet too short', () => {
+        let parsed: aprsPacket = parser.parseaprs('');
+
+        it('Should return a resultCode: "packet_short"', () => {
+            expect(parsed.resultCode).to.equal('packet_short');
+        });
+    });
+
+    describe('#parseaprs - packet no body', () => {
+        let parsed: aprsPacket = parser.parseaprs('!6028.51N,02505.68E#');
+
+        it('Should return a resultCode: "packet_nobody"', () => {
+            expect(parsed.resultCode).to.equal('packet_nobody');
         });
     });
 });

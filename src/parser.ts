@@ -294,11 +294,11 @@ export default class aprsParser {
         // save the original packet
         retVal.origpacket = packet;
 
-        if(!packet) {
+        if(packet === undefined) {
             return this.addError(retVal, 'packet_no');;
         }
 
-        if(packet.length < 1) {
+        if(!packet || packet.length < 1) {
             return this.addError(retVal, 'packet_short');
         }
 
@@ -814,7 +814,8 @@ export default class aprsParser {
         let tmp;
 
         // Check format
-        if((tmp = packet.match(/^:([A-Za-z0-9_ -]{9}):([\x20-\x7e\x80-\xfe]+)$/))) {
+        // x20 - x7e, x80 - xfe
+        if((tmp = packet.match(/^:([A-Za-z0-9_ -]{9}):([ -~]+)$/))) { // match all ascii printable characters for now
             let $message = tmp[2];
             retVal.destination = tmp[1].trim();
 
@@ -824,16 +825,10 @@ export default class aprsParser {
                 // broken software insert them..
                 retVal.messageAck = tmp[1];
                 return retVal;
-            }
-
-            // check whether this is a message reject
-            if((tmp = $message.match(/^rej([A-Za-z0-9}]{1,5})\s*$/))) {
+            } else if((tmp = $message.match(/^rej([A-Za-z0-9}]{1,5})\s*$/))) {  // check whether this is a message reject
                 retVal.messageReject = tmp[1];
                 return retVal;
-            }
-
-            // separate message-id from the body, if present
-            if((tmp = $message.match(/^([^{]*)\{([A-Za-z0-9}]{1,5})\s*$/))) {
+            } else if((tmp = $message.match(/^([^{]*)\{([A-Za-z0-9}]{1,5})\s*$/))) {   // separate message-id from the body, if present
                 retVal.message = tmp[1];
                 retVal.messageId = tmp[2];
             } else {
@@ -845,12 +840,15 @@ export default class aprsParser {
                 retVal.type = 'telemetry-message';
             }
 
+            // messages cannot contain |, ~, or {
+            if(/[|~{]+/.test(retVal.message)) {
+                return this.addError(retVal, 'msg_inv');
+            }
+
             return retVal;
         }
 
-        this.addError(retVal, 'msg_inv');
-
-        return retVal;
+        return this.addError(retVal, 'msg_inv');
     }
 
     /**

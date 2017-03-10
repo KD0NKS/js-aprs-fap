@@ -55,10 +55,7 @@ To see how to use this module, please refer to the tests for now.
 - Quit leaking arguments (modifying them), explicitly return the $rethash value.  Any errors thrown, should also be done explicitly.
 
 ## Unit Tests Needed
-- distance
-- _gettime
-- direction
-- count_digihops
+- packet that causes a result code: srccall_noax25
 
 ## May have issues
 - _wx_parse

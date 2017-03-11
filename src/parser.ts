@@ -169,7 +169,7 @@ export default class aprsParser {
     addError = function(packet: aprsPacket, errorCode: string, value?: any): aprsPacket {
         packet.resultCode = errorCode;
 
-        packet.resultMessage = ((RESULT_MESSAGES[errorCode]) ? RESULT_MESSAGES[errorCode] : errorCode)
+        packet.resultMessage = ((RESULT_MESSAGES[errorCode] !== undefined) ? RESULT_MESSAGES[errorCode] : errorCode)
                 + `: ${value}`;
                 //+ ((value !== undefined && value) ? value : value);
 

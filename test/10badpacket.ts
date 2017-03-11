@@ -9,7 +9,6 @@ const expect = chai.expect;
 import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
 
-
 describe('FAP - test bad packets', () => {
     let parser = new aprsParser();
 
@@ -121,6 +120,22 @@ describe('FAP - test bad packets', () => {
 
         it('Should return a resultCode: "packet_nobody"', () => {
             expect(parsed.resultCode).to.equal('packet_nobody');
+        });
+    });
+
+    describe('#parseaprs - packet with invalid destCallsign', () => {
+        let parsed: aprsPacket = parser.parseaprs('None>None,qAR,TACO:!3751.90NS12213.23W#PHG7500/W2,NCAn, WA6TLW, Berkeley, CA A=001720');
+
+        it('Should return a resultCode: "dstcall_noax25"', () => {
+            expect(parsed.resultCode).to.equal('dstcall_noax25');
+        });
+    });
+
+    describe('Test trying to parse an invalid location packet', () => {
+        let parsed: aprsPacket = parser.parseaprs('PY5LF-13>APTT4,WIDE1-1,WIDE2-1,qAR,PU5SZN-2:! Weather Station ISS Davis CURITIBA - PR');
+
+        it('Should return a resultCode: "packet_invalid"', () => {
+            expect(parsed.resultCode).to.equal('packet_invalid');
         });
     });
 });

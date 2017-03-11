@@ -2,15 +2,19 @@
 # a basic uncompressed packet decoding test
 # Mon Dec 10 2007, Hessu, OH7LZB
  */
+import * as chai from 'chai';
+
 const assert = require('assert');
+const should = chai.should();
+const expect = chai.expect;
 
 import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
 
-describe('FAP - Test decoding uncompressed packets', function() {
+describe('FAP - Test decoding uncompressed packets', () => {
     let parser = new aprsParser();
 
-    describe('#parseaprs - Test parsing uncompressed packet', function() {
+    describe('#parseaprs - Test parsing uncompressed packet', () => {
         let $srccall = "OH2RDP-1";
         let $dstcall = "BEACON-15";
         let $comment = "RELAY,WIDE, OH2AP Jarvenpaa";
@@ -20,41 +24,41 @@ describe('FAP - Test decoding uncompressed packets', function() {
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
-        it('Should return a format type: uncompressed', function() {
+        it('Should return a format type: uncompressed', () => {
             assert.equal('uncompressed', parsed.format);
         });
 
-        it('Should return the source call sign: ' + $srccall, function() {
+        it('Should return the source call sign: ' + $srccall, () => {
             assert.equal($srccall, parsed.sourceCallsign);
         });
 
-        it('Should return the destination call sign: ' + $dstcall, function() {
+        it('Should return the destination call sign: ' + $dstcall, () => {
             assert.equal($dstcall, parsed.destCallsign);
         });
 
         // check for undefined value, when there is no such data in the packet
-        it('Should return latitude value, that when rounded should equal: 60.4752', function() {
+        it('Should return latitude value, that when rounded should equal: 60.4752', () => {
             assert.equal(60.4752, parsed.latitude.toFixed(4));
         });
 
-        it('Should return longitude value, that when rounded should equal: 25.0947', function() {
+        it('Should return longitude value, that when rounded should equal: 25.0947', () => {
             assert.equal(25.0947, parsed.longitude.toFixed(4));
         });
 
-        it('Should return position resolution: 18.52', function() {
+        it('Should return position resolution: 18.52', () => {
             assert.equal(18.52, parsed.posresolution);
         });
 
-        it('Should return phg: ' + $phg, function() {
+        it('Should return phg: ' + $phg, () => {
             assert.equal($phg, parsed.phg);
         });
 
-        it('Should return comment: ' + $comment, function() {
+        it('Should return comment: ' + $comment, () => {
             assert.equal($comment, parsed.comment);
         });
 
         // If 1 fails, most likely they will all fail.
-        it('Should return 2 valid digis', function() {
+        it('Should return 2 valid digis', () => {
             assert.equal(2, parsed.digipeaters.length);
 
             assert.equal('OH2RDG', parsed.digipeaters[0].callsign);
@@ -65,7 +69,7 @@ describe('FAP - Test decoding uncompressed packets', function() {
         });
     });
 
-    describe('#parseaprs - Test parsing uncompressed packet (same, southwestern)', function() {
+    describe('#parseaprs - Test parsing uncompressed packet (same, southwestern)', () => {
         let $srccall = "OH2RDP-1";
         let $dstcall = "BEACON-15";
         let $comment = "RELAY,WIDE, OH2AP Jarvenpaa";
@@ -76,20 +80,20 @@ describe('FAP - Test decoding uncompressed packets', function() {
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
-        it('Should return latitude value, that when rounded should equal: -60.4752', function() {
+        it('Should return latitude value, that when rounded should equal: -60.4752', () => {
             assert.equal(-60.4752, parsed.latitude.toFixed(4));
         });
 
-        it('Should return longitude value, that when rounded should equal: -25.0947', function() {
+        it('Should return longitude value, that when rounded should equal: -25.0947', () => {
             assert.equal(-25.0947, parsed.longitude.toFixed(4));
         });
 
-        it('Should return position resolution: 18.52', function() {
+        it('Should return position resolution: 18.52', () => {
             assert.equal(18.52, parsed.posresolution);
         });
     });
 
-    describe('#parseaprs - Test parsing uncompressed packet (same, with pos ambiguity)', function() {
+    describe('#parseaprs - Test parsing uncompressed packet (same, with pos ambiguity)', () => {
         let $srccall = "OH2RDP-1";
         let $dstcall = "BEACON-15";
         let $comment = "RELAY,WIDE, OH2AP Jarvenpaa";
@@ -100,24 +104,24 @@ describe('FAP - Test decoding uncompressed packets', function() {
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
-        it('Should return latitude value, that when rounded should equal: -60.4167', function() {
+        it('Should return latitude value, that when rounded should equal: -60.4167', () => {
             assert.equal(-60.4167, parsed.latitude.toFixed(4));
         });
 
-        it('Should return longitude value, that when rounded should equal: -25.0833', function() {
+        it('Should return longitude value, that when rounded should equal: -25.0833', () => {
             assert.equal(-25.0833, parsed.longitude.toFixed(4));
         });
 
-        it('Should return position ambiguity: 3', function() {
+        it('Should return position ambiguity: 3', () => {
             assert.equal(3, parsed.posambiguity);
         });
 
-        it('Should return position resolution: 18520', function() {
+        it('Should return position resolution: 18520', () => {
             assert.equal(18520, parsed.posresolution);
         });
     });
 
-    describe('#parseaprs - Test parsing uncompressed packet (same, with even more ambiguity)', function() {
+    describe('#parseaprs - Test parsing uncompressed packet (same, with even more ambiguity)', () => {
         let $srccall = "OH2RDP-1";
         let $dstcall = "BEACON-15";
         let $comment = "RELAY,WIDE, OH2AP Jarvenpaa";
@@ -128,24 +132,24 @@ describe('FAP - Test decoding uncompressed packets', function() {
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
-        it('Should return latitude value, that when rounded should equal: -60.5000', function() {
+        it('Should return latitude value, that when rounded should equal: -60.5000', () => {
             assert.equal(-60.5000, parsed.latitude.toFixed(4));
         });
 
-        it('Should return longitude value, that when rounded should equal: -25.5000', function() {
+        it('Should return longitude value, that when rounded should equal: -25.5000', () => {
             assert.equal(-25.5000, parsed.longitude.toFixed(4));
         });
 
-        it('Should return position ambiguity: 4', function() {
+        it('Should return position ambiguity: 4', () => {
             assert.equal(4, parsed.posambiguity);
         });
 
-        it('Should return position resolution: 111120', function() {
+        it('Should return position resolution: 111120', () => {
             assert.equal(111120, parsed.posresolution);
         });
     });
 
-    describe('#parseaprs - Test parsing uncompressed packet (same with "last resort" !-location parsing)', function() {
+    describe('#parseaprs - Test parsing uncompressed packet (same with "last resort" !-location parsing)', () => {
         let $srccall = "OH2RDP-1";
         let $dstcall = "BEACON-15";
         let $comment = "RELAY,WIDE, OH2AP Jarvenpaa";
@@ -156,87 +160,93 @@ describe('FAP - Test decoding uncompressed packets', function() {
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
-        it('Should return latitude value, that when rounded should equal: -60.4752', function() {
+        it('Should return latitude value, that when rounded should equal: -60.4752', () => {
             assert.equal(-60.4752, parsed.latitude.toFixed(4));
         });
 
-        it('Should return longitude value, that when rounded should equal: -25.0947', function() {
+        it('Should return longitude value, that when rounded should equal: -25.0947', () => {
             assert.equal(-25.0947, parsed.longitude.toFixed(4));
         });
 
-        it('Should return position resolution: 18.52', function() {
+        it('Should return position resolution: 18.52', () => {
             assert.equal(18.52, parsed.posresolution);
         });
 
-        it('Should return comment: ' + $comment, function() {
+        it('Should return comment: ' + $comment, () => {
             assert.equal($comment, parsed.comment);
         });
     });
 
     describe('#parseaprs - Test parsing uncompressed packet with comment on a station with a WX symbol. The comment is ignored, because it easily gets confused with weather data.'
-            , function() {
+            , () => {
         let $aprspacket = 'A0RID-1>KC0PID-7,WIDE1,qAR,NX0R-6:=3851.38N/09908.75W_Home of KA0RID';
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
-        it('Should return latitude value, that when rounded should equal: 38.8563', function() {
+        it('Should return latitude value, that when rounded should equal: 38.8563', () => {
             assert.equal(38.8563, parsed.latitude.toFixed(4));
         });
 
-        it('Should return longitude value, that when rounded should equal: -99.1458', function() {
+        it('Should return longitude value, that when rounded should equal: -99.1458', () => {
             assert.equal(-99.1458, parsed.longitude.toFixed(4));
         });
 
-        it('Should return position resolution: 18.52', function() {
+        it('Should return position resolution: 18.52', () => {
             assert.equal(18.52, parsed.posresolution);
         });
 
-        it('Should return comment: null', function() {
+        it('Should return comment: null', () => {
             assert.equal(null, parsed.comment);
         });
     });
 
-    describe('#parseaprs - Test parsing packet position with timestamp and altitude.', function() {
+    describe('#parseaprs - Test parsing packet position with timestamp and altitude.', () => {
         let $aprspacket = 'YB1RUS-9>APOTC1,WIDE2-2,qAS,YC0GIN-1:/180000z0609.31S/10642.85E>058/010/A=000079 13.8V 15CYB1RUS-9 Mobile Tracker';
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
-        it('Should return latitude value, that when rounded should equal: -6.15517', function() {
+        it('Should return latitude value, that when rounded should equal: -6.15517', () => {
             assert.equal(-6.15517, parsed.latitude.toFixed(5));
         });
 
-        it('Should return longitude value, that when rounded should equal: 106.71417', function() {
+        it('Should return longitude value, that when rounded should equal: 106.71417', () => {
             assert.equal(106.71417, parsed.longitude.toFixed(5));
         });
 
-        it('Should return altitude: 24.07920', function() {
+        it('Should return altitude: 24.07920', () => {
             assert.equal(24.07920, parsed.altitude);
         });
     });
 
-    describe('#parseaprs - Test parsing position with timestamp and altitude', function() {
+    describe('#parseaprs - Test parsing position with timestamp and altitude', () => {
         let $aprspacket = 'YB1RUS-9>APOTC1,WIDE2-2,qAS,YC0GIN-1:/180000z0609.31S/10642.85E>058/010/A=-00079 13.8V 15CYB1RUS-9 Mobile Tracker';
 
         let parsed = parser.parseaprs($aprspacket);
 
-        it('Should return altitude: -24.07920', function() {
+        it('Should return altitude: -24.07920', () => {
             assert.equal(-24.07920, parsed.altitude);
         });
     });
 
-    describe('#parseaprs - Test parsing a rather basic position packet', function() {
+    describe('#parseaprs - Test parsing a rather basic position packet', () => {
         let $aprspacket = 'YC0SHR>APU25N,TCPIP*,qAC,ALDIMORI:=0606.23S/10644.61E-GW SAHARA PENJARINGAN JAKARTA 147.880 MHz';
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
-        it('Should return latitude value, that when rounded should equal: -6.10383', function() {
+        it('Should return latitude value, that when rounded should equal: -6.10383', () => {
             assert.equal(-6.10383, parsed.latitude.toFixed(5));
         });
 
-        it('Should return longitude value, that when rounded should equal: 106.74350', function() {
+        it('Should return longitude value, that when rounded should equal: 106.74350', () => {
             assert.equal(106.74350, parsed.longitude.toFixed(5));
+        });
+    });
+
+    describe('Test parsing a location packet that is too short', () => {
+        let packet: aprsPacket = parser.parseaprs("DB0GV>APNU19,WIDE1-1,WIDE3-3,DB0ZAV-1,IGATE,qAS,DB0ZAV-1:!5007.86700", () => {
+            expect(packet.resultCode).to.equal("packet_short");
         });
     });
 });

@@ -102,7 +102,7 @@ const MICE_MESSAGE_TYPES = {
  * to APRS symbols. Overlay characters (z) are
  * not handled here
  */
-const DST_SYMBOLS = {
+const DST_SYMBOLS: any = {
     'BB': '/!', 'BC': '/"', 'BD': '/#',  'BE': '/$', 'BF': '/%', 'BG': '/&', 'BH': '/\'', 'BI': '/(!'
     , 'BJ': '/)', 'BK': '/*', 'BL': '/+',  'BM': '/,)' , 'BN': '/-', 'BO': '/.', 'BP': '//'
     , 'P0': '/0', 'P1': '/1', 'P2': '/2', 'P3': '/3'
@@ -998,71 +998,67 @@ export default class aprsParser {
      * the symbol table id (or overlay) and second
      * containing symbol id. return undef in error
      */
-    private _get_symbol_fromdst($dstcallsign: string): any {
-        /*
+    private _get_symbol_fromdst($dstcallsign: string): [ string, string] {
         let $table;
         let $code;
+        let tmp;
 
-        if ($dstcallsign =~ /^(GPS|SPC)([A-Z0-9]{2,3})/o) {
-            my $leftoverstring = $2;
-            my $type = substr($leftoverstring, 0, 1);
-            my $sublength = length($leftoverstring);
-            if ($sublength == 3) {
-                if ($type eq 'C' || $type eq 'E') {
-                    my $numberid = substr($leftoverstring, 1, 2);
-                    if ($numberid =~ /^(\d{2})$/o &&
-                        $numberid > 0 &&
-                        $numberid < 95) {
-                        $code = chr($1 + 32);
-                        if ($type eq 'C') {
+        if(tmp = $dstcallsign.match(/^(GPS|SPC)([A-Z0-9]{2,3})/o)) {
+            let $leftoverstring = tmp[2];
+            let $type = $leftoverstring.substr(0, 1);
+            let $sublength = $leftoverstring.length;
+
+            if($sublength === 3) {
+                if($type === 'C' || $type === 'E') {
+                    let $numberid = $leftoverstring.substr(1, 2);
+
+                    if((tmp = $numberid.match(/^(\d{2})$/o)) && parseInt($numberid) > 0 && parseInt($numberid) < 95) {
+                        $code = String.fromCharCode(parseInt(tmp[1]) + 32);
+
+                        if($type === 'C') {
                             $table = '/';
                         } else {
                             $table = "\\";
                         }
-                        return { $table, $code };
+
+                        return [ $table, $code ];
                     } else {
-                        return undef;
+                        return [ null, null ];
                     }
                 } else {
-                    # secondary symbol table, with overlay
-                    # Check first that we really are in the
-                    # secondary symbol table
-                    my $dsttype = substr($leftoverstring, 0, 2);
-                    my $overlay = substr($leftoverstring, 2, 1);
-                    if (($type eq 'O' ||
-                        $type eq 'A' ||
-                        $type eq 'N' ||
-                        $type eq 'D' ||
-                        $type eq 'S' ||
-                        $type eq 'Q') && $overlay =~ /^[A-Z0-9]$/o) {
-                        if (defined(dstsymbol{$dsttype})) {
-                            $code = substr(dstsymbol{$dsttype}, 1, 1);
-                            return { $overlay, $code };
+                    // secondary symbol table, with overlay
+                    // Check first that we really are in the
+                    // secondary symbol table
+                    let $dsttype = $leftoverstring.substr(0, 2);
+                    let $overlay = $leftoverstring.substr(2, 1);
+
+                    if(($type === 'O' || $type === 'A' || $type === 'N'
+                            || $type === 'D' || $type === 'S' || $type === 'Q')
+                            && (/^[A-Z0-9]$/o).test($overlay)) {
+                        if($dsttype in DST_SYMBOLS) {
+                            $code = DST_SYMBOLS[$dsttype].substr(1, 1);
+                            return [ $overlay, $code ];
                         } else {
-                            return undef;
+                            return [ null, null ];
                         }
                     } else {
-                        return undef;
+                        return [ null, null ];
                     }
                 }
             } else {
-                # primary or secondary symbol table, no overlay
-                if (defined(dstsymbol{$leftoverstring})) {
-                    $table = substr(dstsymbol{$leftoverstring}, 0, 1);
-                    $code = substr(dstsymbol{$leftoverstring}, 1, 1);
-                    return { $table, $code };
+                // primary or secondary symbol table, no overlay
+                if($leftoverstring in DST_SYMBOLS) {
+                    let dstsymbol = DST_SYMBOLS[$leftoverstring];
+                    $table = dstsymbol.substr(0, 1);
+                    $code = dstsymbol.substr(1, 1);
+                    return [ $table, $code ];
                 } else {
-                    return undef;
+                    return [ null, null ];
                 }
             }
         } else {
-            return undef;
+            return [ null, null ];
         }
-        */
-
-        // failsafe catch-all
-        // when returning a deconstructable set of values, null cannot be returned
-        return {};
     }
 
     /**
@@ -1109,7 +1105,7 @@ export default class aprsParser {
 
         // use a dot as a default symbol if one is not defined in
         // the destination callsign
-        let { $symtable, $symcode } = this._get_symbol_fromdst($dstcallsign);
+        let [ $symtable, $symcode ] = this._get_symbol_fromdst($dstcallsign);
 
         if(!$symtable || !$symcode) {
             $rethash.symboltable = '/';

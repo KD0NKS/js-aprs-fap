@@ -166,7 +166,7 @@ export default class aprsParser {
      * @param {string} $val Value that caused the error.
      * @return {void}
      */
-    addError = function(packet: aprsPacket, errorCode: string, value?: any): aprsPacket {
+    addError(packet: aprsPacket, errorCode: string, value?: any): aprsPacket {
         packet.resultCode = errorCode;
 
         packet.resultMessage = ((RESULT_MESSAGES[errorCode] !== undefined) ? RESULT_MESSAGES[errorCode] : errorCode)
@@ -184,7 +184,7 @@ export default class aprsParser {
      * @param {string} $val Value that caused the warning.
      * @return {void}
      */
-    addWarning = function(packet: aprsPacket, errorCode: string, value?: string): aprsPacket {
+    addWarning(packet: aprsPacket, errorCode: string, value?: string): aprsPacket {
         if(packet.warningCodes == undefined || !packet.warningCodes) {
             packet.warningCodes = [];
         }
@@ -287,7 +287,7 @@ export default class aprsParser {
      * my $ret = parseaprs("OH2XYZ>APRS,RELAY*,WIDE:!2345.56N/12345.67E-PHG0123 hi",
      * \%hash, 'isax25' => 0, 'accept_broken_mice' => 0);
      */
-    parseaprs = function(packet: string, options?: any) {
+    parseaprs(packet: string, options?: any) {
         let retVal: aprsPacket = new aprsPacket();
         let $isax25 = (options && options['isax25'] != undefined) ? options['isax25'] : false;
 
@@ -902,6 +902,11 @@ export default class aprsParser {
             return this.addError(retVal, 'obj_dec_err');
         }
 
+        // check to see if another function returned an error... explicit error throwing might cut out a lot of manual work here...
+        if(retVal.resultCode != undefined && retVal.resultCode) {
+            return retVal;
+        }
+
         // Check the APRS data extension and possible comments,
         // unless it is a weather report (we don't want erroneus
         // course/speed figures and weather in the comments..)
@@ -1003,7 +1008,7 @@ export default class aprsParser {
         let $code;
         let tmp;
 
-        if(tmp = $dstcallsign.match(/^(GPS|SPC)([A-Z0-9]{2,3})/o)) {
+        if(tmp = $dstcallsign.match(/^(GPS|SPC)([A-Z0-9]{2,3})/)) {
             let $leftoverstring = tmp[2];
             let $type = $leftoverstring.substr(0, 1);
             let $sublength = $leftoverstring.length;
@@ -1012,7 +1017,7 @@ export default class aprsParser {
                 if($type === 'C' || $type === 'E') {
                     let $numberid = $leftoverstring.substr(1, 2);
 
-                    if((tmp = $numberid.match(/^(\d{2})$/o)) && parseInt($numberid) > 0 && parseInt($numberid) < 95) {
+                    if((tmp = $numberid.match(/^(\d{2})$/)) && parseInt($numberid) > 0 && parseInt($numberid) < 95) {
                         $code = String.fromCharCode(parseInt(tmp[1]) + 32);
 
                         if($type === 'C') {
@@ -1540,6 +1545,7 @@ export default class aprsParser {
             return this.addError($rethash, 'item_dec_err');
         }
 
+        // check to see if another function returned an error... explicit error throwing might cut out a lot of manual work here...
         if($rethash.resultCode !== undefined && $rethash.resultCode) {
             return $rethash;
         }

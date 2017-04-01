@@ -245,8 +245,54 @@ describe('FAP - Test decoding uncompressed packets', () => {
     });
 
     describe('Test parsing a location packet that is too short', () => {
-        let packet: aprsPacket = parser.parseaprs("DB0GV>APNU19,WIDE1-1,WIDE3-3,DB0ZAV-1,IGATE,qAS,DB0ZAV-1:!5007.86700", () => {
+        let packet: aprsPacket = parser.parseaprs("DB0GV>APNU19,WIDE1-1,WIDE3-3,DB0ZAV-1,IGATE,qAS,DB0ZAV-1:!5007.86700");
+
+        it('Should return a packet with a result code: packet_short', () => {
             expect(packet.resultCode).to.equal("packet_short");
         });
     });
+
+    describe('Test parsing a location packet that is too short', () => {
+        let packet: aprsPacket = parser.parseaprs("DB0ZEH>APNDBB,DB0LDS*,WIDE3-2,qAR,DB0ZEH:;800-ZEH  *111111z5258.75N/01319.9");
+
+        it('Should return a packet with a result code: loc_short', () => {
+            expect(packet.resultCode).to.equal("loc_short");
+        });
+    });
+
+    describe('Test parsing an uncompressed packet where the location is too large', () => {
+        let packet: aprsPacket = parser.parseaprs("N6BMW-1>APRS,DMR*,qAS,n3fe-10:=3426.19N/24051.47E[Dan - Ojai CA");
+
+        it('Should return a packet with a result code: loc_large', () => {
+            expect(packet.resultCode).to.equal("loc_large");
+        });
+    });
+
+    describe('Test parsing a location packet that is too large', () => {
+        let packet: aprsPacket = parser.parseaprs("N6BMW-1>APRS,DMR*,qAS,n3fe-10:=3426.19N/24051.47E[Dan - Ojai CA");
+
+        it('Should return a packet with a result code: loc_large', () => {
+            expect(packet.resultCode).to.equal("loc_large");
+        });
+    });
+
+    describe('Test parsing a packet where the location where the decimals are not used and is ambiguous', () => {
+        let packet: aprsPacket = parser.parseaprs("SPBLTZ>APRS,TCPIP*,qAC,T2POLAND:;SPBLTZ   *112050z5210.  N/021  .  E? Informacje burzowe, op. Pawel SP5MNC");
+
+        it('Should return a packet with a result code: loc_amb_inv', () => {
+            expect(packet.resultCode).to.equal("loc_amb_inv");
+        });
+
+        it('Should return a packet with a result message: Invalid position ambiguity: lat/lon 2', () => {
+            expect(packet.resultMessage).to.equal("Invalid position ambiguity: lat/lon 2");
+        });
+    });
+
+    /* TODO:
+     * no pos amb with err
+     * pos amb 1 w/wo err
+     * pos amb 2 w/wo err
+     * pos amb 3 w/err
+     * try to hit scenario where pos falls through all scenarios
+     */
 });

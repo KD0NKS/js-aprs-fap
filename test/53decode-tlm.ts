@@ -52,4 +52,13 @@ describe('FAP - Telemetry packet parsing', function() {
             assert.equal('50.12', $retval.telemetry.vals[4]);
         });
     });
+
+    describe('Invalid telemetry parse test', function() {
+        let $aprspacket = 'E27BXY-1>APESPG,TCPIP*,qAC,APRSTH:T#002,18,164,6,-76,NAPA SAMPHAN,00000000';
+        let $retval: aprsPacket = parser.parseaprs($aprspacket);
+
+        it('Should return a result code: tlm_inv', function() {
+            assert.equal('tlm_inv', $retval.resultCode);
+        });
+    });
 });

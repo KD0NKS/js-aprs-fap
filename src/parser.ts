@@ -902,10 +902,6 @@ export default class aprsParser {
             return this.addError(retVal, 'obj_dec_err');
         }
 
-        if(retVal.resultCode != undefined && retVal.resultCode) {
-            return retVal;
-        }
-
         // Check the APRS data extension and possible comments,
         // unless it is a weather report (we don't want erroneus
         // course/speed figures and weather in the comments..)
@@ -2657,8 +2653,7 @@ export default class aprsParser {
                 }
 
                 if(parseFloat($vals[$i]) >= 999999 || parseFloat($vals[$i]) <= -999999) {
-                    this.addError($rh, 'tlm_large');
-                    return 0;
+                    return this.addError($rh, 'tlm_large');
                 }
             }
 

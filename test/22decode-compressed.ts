@@ -6,6 +6,7 @@ import * as chai from 'chai';
 
 const assert = require('assert');
 const should = chai.should();
+const expect = chai.expect;
 
 import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
@@ -243,4 +244,13 @@ describe('FAP - Test decoding compressed packets', function() {
             assert.equal(1007.3, parsed.wx.pressure);
         });
     });
+
+    describe('Test parsing an invalid compressed location packet', () => {
+        let packet: aprsPacket = parser.parseaprs("SR3NRI>APNW01,SR3NJE*,qAR,SR3NDG:/111959zNEW SOFT WX3In1+ TEST");
+
+        it('Should return a packet with a result code: comp_inv', () => {
+            expect(packet.resultCode).to.equal("comp_inv");
+        });
+    });
+
 });

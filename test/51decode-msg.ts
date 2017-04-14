@@ -52,7 +52,7 @@ describe('Test parsing messages', function() {
             let packet = parser.parseaprs(aprspacke);
 
             it('Should return a result code: null', function() {
-                assert.equal(null, packet.resultcode);
+                assert.equal(null, packet.resultCode);
             });
 
             it('Should return a type: message', function() {
@@ -78,7 +78,7 @@ describe('Test parsing messages', function() {
             let packet = parser.parseaprs(aprspacke);
 
             it('Should return a result code: undefined', function() {
-                assert.equal(undefined, packet.resultcode);
+                assert.equal(undefined, packet.resultCode);
             });
 
             it('Should return a type: message', function() {

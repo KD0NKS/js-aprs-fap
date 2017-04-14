@@ -1039,7 +1039,7 @@ export default class aprsParser {
 
                     if(($type === 'O' || $type === 'A' || $type === 'N'
                             || $type === 'D' || $type === 'S' || $type === 'Q')
-                            && (/^[A-Z0-9]$/o).test($overlay)) {
+                            && (/^[A-Z0-9]$/).test($overlay)) {
                         if($dsttype in DST_SYMBOLS) {
                             $code = DST_SYMBOLS[$dsttype].substr(1, 1);
                             return [ $overlay, $code ];

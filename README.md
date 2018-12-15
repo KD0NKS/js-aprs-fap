@@ -40,7 +40,7 @@ imporove performance.
 - user defined data formats
 
 ## Requirements
-- "node": ">= 6.6.0" - (requires ES6 support)
+- "node": ">= 9.11.1" - (requires ES6 support)
 
 ## Requirements - Development
 - mocha globally installed to run unit tests

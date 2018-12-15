@@ -2433,7 +2433,7 @@ export default class aprsParser {
         }
 
         if(!$vals || $vals.length == 0) {
-            return 0;
+            return null;
         }
 
         $t = $vals.shift();

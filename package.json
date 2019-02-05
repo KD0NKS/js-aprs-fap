@@ -2,8 +2,8 @@
   "name": "js-aprs-fap",
   "version": "1.0.0",
   "description": "NodeJs library for connecting to an APRS-IS server.",
-  "main": "./build/dist/index.js",
-  "types": "./build/dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "tsc": "./node_modules/.bin/tsc",
     "build": "tsc",

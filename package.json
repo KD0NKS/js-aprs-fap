@@ -5,9 +5,12 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "tsc": "./node_modules/.bin/tsc",
     "build": "tsc",
-    "test": "npm run build && nyc --reporter=text --reporter=lcov mocha dist/test/**/*.test.js"
+    "setup": "npm install",
+    "test": "npm run build && nyc --reporter=text --reporter=lcov mocha dist/test/**/*.test.js",
+    "test-only": "mocha dist/test/**/*.test.js",
+    "test-report": "nyc npm run test-only && nyc report --reporter=text-lcov | coveralls",
+    "tsc": "./node_modules/.bin/tsc"
   },
   "repository": {
     "type": "git",
@@ -28,9 +31,7 @@
     "@types/node": "^11.11.3",
     "chai": "^4.2.0",
     "istanbul": "^0.4.5",
-    "mocha": "^6.0.2"
-  },
-  "dependencies": {
+    "mocha": "^6.0.2",
     "typescript": "^3.3.3333"
   }
 }

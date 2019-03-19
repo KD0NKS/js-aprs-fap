@@ -1,5 +1,4 @@
 # js-aprs-fap
-
 APRS is a registered trademark Bob Bruninga, WB4APR.
 
 This is an APRS parser based on [Ham::APRS::FAP](https://github.com/hessu/perl-aprs-fap) rewritten in JavaScript.  Therefore, much of what
@@ -62,17 +61,11 @@ To see how to use this module, please refer to the tests for now.
   - comments/software - trimming may not be accurate
 
 ## SEE ALSO
-
 * [perl-aprs-fap](https://github.com/hessu/perl-aprs-fap)
 * [C library port of Ham::APRS::FAP](http://pakettiradio.net/libfap/)
 * [Python bindings for libfap](http://github.com/kd7lxl/python-libfap)
 
-## COPYRIGHT AND LICENCE
-
-Copyright(c) 2017 Andrew Fairhurst
-
-### ORIGINAL COPYRIGHT
-
+# ORIGINAL COPYRIGHT
 * Copyright (C) 2005-2012 Tapio Sokura
 * Copyright (C) 2007-2012 Heikki Hannikainen
 

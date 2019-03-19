@@ -1,5 +1,4 @@
-# js-aprs-fap
-
+# js-aprs-fap [![Build Status](https://travis-ci.org/KD0NKS/js-aprs-fap.svg?branch=master)](https://travis-ci.org/KD0NKS/js-aprs-fap)[![Coverage Status](https://coveralls.io/repos/github/KD0NKS/js-aprs-fap/badge.svg?branch=2019-03-18_CIIntegrations)](https://coveralls.io/github/KD0NKS/js-aprs-fap?branch=2019-03-18_CIIntegrations)
 APRS is a registered trademark Bob Bruninga, WB4APR.
 
 This is an APRS parser based on [Ham::APRS::FAP](https://github.com/hessu/perl-aprs-fap) rewritten in JavaScript.  Therefore, much of what
@@ -62,17 +61,11 @@ To see how to use this module, please refer to the tests or https://github.com/K
   - comments/software - trimming may not be accurate
 
 ## SEE ALSO
-
 * [perl-aprs-fap](https://github.com/hessu/perl-aprs-fap)
 * [C library port of Ham::APRS::FAP](http://pakettiradio.net/libfap/)
 * [Python bindings for libfap](http://github.com/kd7lxl/python-libfap)
 
-## COPYRIGHT AND LICENCE
-
-Copyright(c) 2019 Andrew Fairhurst
-
-### ORIGINAL COPYRIGHT
-
+# ORIGINAL COPYRIGHT
 * Copyright (C) 2005-2012 Tapio Sokura
 * Copyright (C) 2007-2012 Heikki Hannikainen
 

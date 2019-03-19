@@ -1,4 +1,4 @@
-# js-aprs-fap
+# js-aprs-fap [![Build Status](https://travis-ci.org/KD0NKS/js-aprs-fap.svg?branch=master)](https://travis-ci.org/KD0NKS/js-aprs-fap)[![Coverage Status](https://coveralls.io/repos/github/KD0NKS/js-aprs-fap/badge.svg?branch=2019-03-18_CIIntegrations)](https://coveralls.io/github/KD0NKS/js-aprs-fap?branch=2019-03-18_CIIntegrations)
 APRS is a registered trademark Bob Bruninga, WB4APR.
 
 This is an APRS parser based on [Ham::APRS::FAP](https://github.com/hessu/perl-aprs-fap) rewritten in JavaScript.  Therefore, much of what

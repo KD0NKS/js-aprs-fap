@@ -39,7 +39,7 @@ imporove performance.
 - user defined data formats
 
 ## Requirements
-- "node": ">= 9.11.1" - (requires ES6 support)
+- "node": ">= 10.15.3" - (requires ES6 support)
 
 ## Requirements - Development
 - mocha globally installed to run unit tests
@@ -48,7 +48,7 @@ imporove performance.
 - eslint - keep the code clean and properly formatted
 
 ## Examples
-To see how to use this module, please refer to the tests for now.
+To see how to use this module, please refer to the tests or https://github.com/KD0NKS/aprs-is-demo.
 
 ## Optimizations Needed
 - Quit leaking arguments (modifying them), explicitly return the $rethash value.  Any errors thrown, should also be done explicitly.

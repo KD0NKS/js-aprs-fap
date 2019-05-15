@@ -1,8 +1,15 @@
 language: node_js
 node_js:
 - "stable"
+after_script: greenkeeper-lockfile-upload
+cache: npm
+before_install:
+- '[[ $(node -v) =~ ^v10.*$ ]] || npm install -g npm@latest'
+- npm install -g greenkeeper-lockfile
 before_script:
 - npm run setup
 - npm run build
+- greenkeeper-lockfile-update
+install: npm install
 script:
 - npm run test-report

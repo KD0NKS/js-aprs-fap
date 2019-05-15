@@ -933,7 +933,7 @@ export default class aprsParser {
      * @returns {Number} Position resolution in meters based on the number of minute decimal digits.
      */
     private get_posresolution(dec: number): number {
-        return KNOT_TO_KMH * (dec <= -2 ? 600 : 1000) * Math.pow(10, (-1 * dec));
+        return parseFloat((KNOT_TO_KMH * (dec <= -2 ? 600 : 1000) * Math.pow(10, (-1 * dec))).toFixed(4));
     }
 
     /**

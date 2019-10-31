@@ -38,15 +38,6 @@ imporove performance.
 - status reports (partially)
 - user defined data formats
 
-## Requirements
-- "node": ">= 10.15.3" - (requires ES6 support)
-
-## Requirements - Development
-- mocha globally installed to run unit tests
-- chai - more unit testing stuff
-- istanbul - code coverage metrics on unit tests
-- eslint - keep the code clean and properly formatted
-
 ## Examples
 To see how to use this module, please refer to the tests or https://github.com/KD0NKS/aprs-is-demo.
 

@@ -1,15 +1,8 @@
 import aprsPacket from './aprsPacket';
+import ConversionConstntEnum from './ConversionConstantEnum';
 import digipeater from './digipeater';
 import telemetry from './telemetry';
 import wx from './wx';
-
-// conversion constants
-const KNOT_TO_KMH = 1.852;   // nautical miles per hour to kilometers per hour
-const MPH_TO_KMH = 1.609344; // miles per hour to kilometers per hour
-const KMH_TO_MS = 10 / 36;   // kilometers per hour to meters per second
-const MPH_TO_MS = MPH_TO_KMH * KMH_TO_MS;  // miles per hour to meters per second
-const HINCH_TO_MM = 0.254;   // hundredths of an inch to millimeters
-const FEET_TO_METERS = 0.3048;
 
 const RESULT_MESSAGES: any = {
     'unknown': 'Unsupported packet format'
@@ -72,29 +65,6 @@ const RESULT_MESSAGES: any = {
     , 'tlm_unsupp': 'Unsupported telemetry'
     , 'exp_unsupp': 'Unsupported experimental'
     , 'sym_inv_table': 'Invalid symbol table or overlay'
-};
-
-/**
- * message bit types for mic-e
- * from left to right, bits a, b and c
- * standard one bit is 1, custom one bit is 2
- */
-const MICE_MESSAGE_TYPES = {
-    '111': 'off duty'
-    , '222': 'custom 0'
-    , '110': 'en route'
-    , '220': 'custom 1'
-    , '101': 'in service'
-    , '202': 'custom 2'
-    , '100': 'returning'
-    , '200': 'custom 3'
-    , '011': 'committed'
-    , '022': 'custom 4'
-    , '010': 'special'
-    , '020': 'custom 5'
-    , '001': 'priority'
-    , '002': 'custom 6'
-    , '000': 'emergency'
 };
 
 /**
@@ -352,7 +322,7 @@ export default class aprsParser {
             }
         }
 
-        if($pathcomponents.length < 1) {
+        if($pathcomponents.length === 1 && $pathcomponents[0] === '') {
             // no destination field
             return this.addError(retVal, 'dstcall_none');
         }
@@ -933,7 +903,7 @@ export default class aprsParser {
      * @returns {Number} Position resolution in meters based on the number of minute decimal digits.
      */
     private get_posresolution(dec: number): number {
-        return parseFloat((KNOT_TO_KMH * (dec <= -2 ? 600 : 1000) * Math.pow(10, (-1 * dec))).toFixed(4));
+        return parseFloat((ConversionConstntEnum.KNOT_TO_KMH * (dec <= -2 ? 600 : 1000) * Math.pow(10, (-1 * dec))).toFixed(4));
     }
 
     /**
@@ -1200,7 +1170,7 @@ export default class aprsParser {
             // can't be decoded).
             if((tmp = nmeafields[7].match(/^\s*(\d+(|\.\d+))\s*$/))) {
                 // convert to km/h
-                $rethash.speed = parseFloat(tmp[1]) * KNOT_TO_KMH;
+                $rethash.speed = parseFloat(tmp[1]) * ConversionConstntEnum.KNOT_TO_KMH;
             }
 
             if((tmp = nmeafields[8].match(/^\s*(\d+(|\.\d+))\s*$/))) {
@@ -1380,7 +1350,7 @@ export default class aprsParser {
                 if((match = $speed.match(/^\d{3}$/))) {
                     // force numeric interpretation
                     // and convert to km/h
-                    $rethash.speed = parseInt($speed) * KNOT_TO_KMH;
+                    $rethash.speed = parseInt($speed) * ConversionConstntEnum.KNOT_TO_KMH;
                 }
 
                 $rest = $rest.substr(7);
@@ -1394,7 +1364,7 @@ export default class aprsParser {
                 $rest = $rest.substr(7);
             } else if((tmprest = $rest.match(/^RNG(\d{4})/))) {
                 // radio range, in miles, so convert to km
-                $rethash['radiorange'] = parseInt(tmprest[1]) * MPH_TO_KMH;
+                $rethash['radiorange'] = parseInt(tmprest[1]) * ConversionConstntEnum.MPH_TO_KMH;
                 $rest = $rest.substr(7);
             }
         }
@@ -1403,7 +1373,7 @@ export default class aprsParser {
         // take the first occurrence
         if((tmprest = $rest.match(/^(.*?)\/A=(-\d{5}|\d{6})(.*)$/))) {
             // convert to meters as well
-            $rethash.altitude = parseFloat(tmprest[2]) * FEET_TO_METERS;
+            $rethash.altitude = parseFloat(tmprest[2]) * ConversionConstntEnum.FEET_TO_METERS;
             $rest = tmprest[1] + tmprest[3];
         }
 
@@ -1927,7 +1897,7 @@ export default class aprsParser {
             }
 
             // convert speed to km/h and store
-            $rethash.speed = $speed * KNOT_TO_KMH;
+            $rethash.speed = $speed * ConversionConstntEnum.KNOT_TO_KMH;
         }
 
         // save the symbol table and code
@@ -2079,7 +2049,7 @@ export default class aprsParser {
             // cs is altitude
             let $cs = $c1 * 91 + $s1;
             // convert directly to meters
-            $rethash.altitude = Math.pow(1.002, $cs) * FEET_TO_METERS;
+            $rethash.altitude = Math.pow(1.002, $cs) * ConversionConstntEnum.FEET_TO_METERS;
         } else if($c1 >= 0 && $c1 <= 89) {
             if($c1 == 0) {
                 // special case of north, APRS spec
@@ -2091,10 +2061,10 @@ export default class aprsParser {
             }
 
             // convert directly to km/h
-            $rethash.speed = (Math.pow(1.08, $s1) - 1) * KNOT_TO_KMH;
+            $rethash.speed = (Math.pow(1.08, $s1) - 1) * ConversionConstntEnum.KNOT_TO_KMH;
         } else if($c1 == 90) {
             // convert directly to km
-            $rethash.radiorange = (2 * Math.pow(1.08, $s1)) * MPH_TO_KMH;
+            $rethash.radiorange = (2 * Math.pow(1.08, $s1)) * ConversionConstntEnum.MPH_TO_KMH;
         }
 
         return $rethash;
@@ -2275,7 +2245,7 @@ export default class aprsParser {
         }
 
         if(/^\d+$/.test($wind_gust)) {
-            $w.wind_gust = (parseFloat($wind_gust) * MPH_TO_MS).toFixed(1);
+            $w.wind_gust = (parseFloat($wind_gust) * ConversionConstntEnum.MPH_TO_MS).toFixed(1);
         }
 
         if(/^\d+$/.test($wind_dir)) {
@@ -2283,7 +2253,7 @@ export default class aprsParser {
         }
 
         if(/^\d+$/.test($wind_speed)) {
-            $w.wind_speed = (parseFloat($wind_speed) * MPH_TO_MS).toFixed(1);
+            $w.wind_speed = (parseFloat($wind_speed) * ConversionConstntEnum.MPH_TO_MS).toFixed(1);
         }
 
         if(/^-{0,1}\d+$/.test($temp)) {
@@ -2292,7 +2262,7 @@ export default class aprsParser {
 
         $s = $s.replace(/r(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w.rain_1h = (parseFloat($1) * HINCH_TO_MM).toFixed(1); // during last 1h
+                $w.rain_1h = (parseFloat($1) * ConversionConstntEnum.HINCH_TO_MM).toFixed(1); // during last 1h
             }
 
             return '';
@@ -2300,7 +2270,7 @@ export default class aprsParser {
 
         $s = $s.replace(/p(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w.rain_24h = (parseFloat($1) * HINCH_TO_MM).toFixed(1); // during last 24h
+                $w.rain_24h = (parseFloat($1) * ConversionConstntEnum.HINCH_TO_MM).toFixed(1); // during last 24h
             }
 
             return '';
@@ -2308,7 +2278,7 @@ export default class aprsParser {
 
         $s = $s.replace(/P(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w.rain_midnight = (parseFloat($1) * HINCH_TO_MM).toFixed(1); // since midnight
+                $w.rain_midnight = (parseFloat($1) * ConversionConstntEnum.HINCH_TO_MM).toFixed(1); // since midnight
             }
 
             return '';
@@ -2359,7 +2329,7 @@ export default class aprsParser {
         $s = $s.replace(/s(\d{1,3})/, function($0, $1) {
             // snowfall
             if($1) {
-                $w.snow_24h = ($1 * HINCH_TO_MM).toFixed(1);
+                $w.snow_24h = ($1 * ConversionConstntEnum.HINCH_TO_MM).toFixed(1);
             }
 
             return '';
@@ -2438,7 +2408,7 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t != null) {
-            $w.wind_gust = ($t * KMH_TO_MS / 10).toFixed(1);
+            $w.wind_gust = ($t * ConversionConstntEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2453,7 +2423,7 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t != null) {
-            $w.rain_midnight = ($t * HINCH_TO_MM).toFixed(1);
+            $w.rain_midnight = ($t * ConversionConstntEnum.HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2481,12 +2451,12 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w.rain_midnight = ($t * HINCH_TO_MM).toFixed(1);
+            $w.rain_midnight = ($t * ConversionConstntEnum.HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
         if($t) {
-            $w.wind_speed = ($t * KMH_TO_MS / 10).toFixed(1);
+            $w.wind_speed = ($t * ConversionConstntEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         if($w.temp
@@ -2551,7 +2521,7 @@ export default class aprsParser {
 
         $t = $vals.shift(); // instant wind speed
         if($t != null) {
-            $w.wind_speed = ($t * KMH_TO_MS / 10).toFixed(1);
+            $w.wind_speed = ($t * ConversionConstntEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2566,7 +2536,7 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w.rain_midnight = ($t * HINCH_TO_MM).toFixed(1);
+            $w.rain_midnight = ($t * ConversionConstntEnum.HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2602,13 +2572,13 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w['rain_midnight'] = ($t * HINCH_TO_MM).toFixed(1);
+            $w['rain_midnight'] = ($t * ConversionConstntEnum.HINCH_TO_MM).toFixed(1);
         }
 
         // avg wind speed
         $t = $vals.shift();
         if($t) {
-            $w.wind_speed = ($t * KMH_TO_MS / 10).toFixed(1);
+            $w.wind_speed = ($t * ConversionConstntEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         // if inside temperature exists but no outside, use inside

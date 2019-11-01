@@ -131,6 +131,14 @@ describe('FAP - test bad packets', () => {
         });
     });
 
+    describe('#parseaprs - packet with no destCallsign', () => {
+        let parsed: aprsPacket = parser.parseaprs('None>:!3751.90NS12213.23W#PHG7500/W2,NCAn, WA6TLW, Berkeley, CA A=001720');
+
+        it('Should return a resultCode: "dstcall_none"', () => {
+            expect(parsed.resultCode).to.equal('dstcall_none');
+        });
+    });
+
     describe('Test trying to parse an invalid location packet', () => {
         let parsed: aprsPacket = parser.parseaprs('PY5LF-13>APTT4,WIDE1-1,WIDE2-1,qAR,PU5SZN-2:! Weather Station ISS Davis CURITIBA - PR');
 

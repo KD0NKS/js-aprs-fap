@@ -27,6 +27,12 @@
     "reporter": [
       "text",
       "lcov"
+    ],
+    "include": [
+        "src/**/*.ts"
+    ],
+    "exclude": [
+        "src/ConversionConstantEnum.ts"
     ]
   },
   "scripts": {

@@ -7,7 +7,7 @@
   "description": "NodeJs library for parsing APRS packets.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/KD0NKS/js-aprs-fap.git"
+    "url": "git+https://github.com/KD0NKS/js-aprs-fap.git"
   },
   "keywords": [
     "APRS",
@@ -19,8 +19,11 @@
   "bugs": {
     "url": "https://github.com/KD0NKS/js-aprs-fap/issues"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
   "nyc": {
     "extends": "@istanbuljs/nyc-config-typescript",
     "all": true,
@@ -30,11 +33,11 @@
     ]
   },
   "scripts": {
-    "build": "tsc",
+    "tsc": "./node_modules/.bin/tsc",
     "setup": "npm install",
+    "build": "tsc",
     "test": "nyc mocha",
-    "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "tsc": "./node_modules/.bin/tsc"
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^0.1.3",

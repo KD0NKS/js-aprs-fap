@@ -38,9 +38,6 @@ imporove performance.
 - status reports (partially)
 - user defined data formats
 
-## Examples
-To see how to use this module, please refer to the tests or https://github.com/KD0NKS/aprs-is-demo.
-
 ## Optimizations Needed
 - Quit leaking arguments (modifying them), explicitly return the $rethash value.  Any errors thrown, should also be done explicitly.
 
@@ -50,6 +47,13 @@ To see how to use this module, please refer to the tests or https://github.com/K
 ## May have issues
 - _wx_parse
   - comments/software - trimming may not be accurate
+
+## USAGE
+### Demo
+[https://github.com/KD0NKS/aprs-is-demo](https://github.com/KD0NKS/aprs-is-demo)
+
+### npm
+npm install js-aprs-fap --save
 
 ## SEE ALSO
 * [perl-aprs-fap](https://github.com/hessu/perl-aprs-fap)

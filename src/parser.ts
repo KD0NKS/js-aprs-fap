@@ -259,7 +259,7 @@ export default class aprsParser {
      */
     parseaprs(packet: string, options?: any) {
         let retVal: aprsPacket = new aprsPacket();
-        let $isax25 = (options && options['isax25'] != undefined) ? options['isax25'] : false;
+        let isax25 = (options && options['isax25'] != undefined) ? options['isax25'] : false;
 
         // save the original packet
         retVal.origpacket = packet;
@@ -292,7 +292,7 @@ export default class aprsParser {
         if(($header = header.match(/^([A-Z0-9-]{1,9})>(.*)$/i))) {
             rest = $header[2];
 
-            if($isax25 == false) {
+            if(isax25 == false) {
                 srcCallsign = $header[1];
             } else {
                 srcCallsign = this.checkAX25Call($header[1].toUpperCase());
@@ -311,18 +311,18 @@ export default class aprsParser {
 
         // Get the destination callsign and digipeaters.
         // Only TNC-2 format is supported, AEA (with digipeaters) is not.
-        let $pathcomponents = rest.split(',');
+        let pathcomponents = rest.split(',');
 
         // More than 9 (dst callsign + 8 digipeaters) path components
         // from AX.25 or less than 1 from anywhere is invalid.
-        if($isax25 == true) {
-            if($pathcomponents.length > 9) {
+        if(isax25 == true) {
+            if(pathcomponents.length > 9) {
                 // too many fields to be from AX.25
                 return this.addError(retVal, 'dstpath_toomany');
             }
         }
 
-        if($pathcomponents.length === 1 && $pathcomponents[0] === '') {
+        if(pathcomponents.length === 1 && pathcomponents[0] === '') {
             // no destination field
             return this.addError(retVal, 'dstcall_none');
         }
@@ -331,54 +331,54 @@ export default class aprsParser {
         // Destination callsign. We are strict here, there
         // should be no need to use a non-AX.25 compatible
         //# destination callsigns in the APRS-IS.
-        let $dstcallsign = this.checkAX25Call($pathcomponents.shift());
+        let dstcallsign = this.checkAX25Call(pathcomponents.shift());
 
-        if(!$dstcallsign) {
+        if(!dstcallsign) {
             return this.addError(retVal, 'dstcall_noax25');
         }
 
-        retVal.destCallsign = $dstcallsign;
+        retVal.destCallsign = dstcallsign;
 
         // digipeaters
-        let $digipeaters = [];
+        let digipeaters = [];
 
-        if($isax25 == true) {
-            for(let $digi of $pathcomponents) {
-                let $d;
+        if(isax25 == true) {
+            for(let digi of pathcomponents) {
+                let d;
 
-                if(($d = $digi.match(/^([A-Z0-9-]+)(\*|)$/i))) {
-                    let $digitested = this.checkAX25Call($d[1].toUpperCase());
+                if((d = digi.match(/^([A-Z0-9-]+)(\*|)$/i))) {
+                    let digitested = this.checkAX25Call(d[1].toUpperCase());
 
-                    if(!$digitested) {
-                        return this.addError(retVal, 'digicall_noax25');
+                    if(!digitested) {
+                        return this.addError(retVal, `${digi} digicall_noax25`);
                     }
 
                     // add it to the digipeater array
-                    $digipeaters.push(new digipeater(
-                        $digitested
-                        , ($d[2] == '*')
+                    digipeaters.push(new digipeater(
+                        digitested
+                        , (d[2] == '*')
                     ));
                 } else {
                     return this.addError(retVal, 'digicall_badchars');
                 }
             }
         } else {
-            let $seen_qconstr = false;
+            let seen_qconstr = false;
             let tmp = null;
 
-            for(let $digi of $pathcomponents) {
+            for(let digi of pathcomponents) {
                 // From the internet. Apply the same checks as for
                 // APRS-IS packet originator. Allow long hexadecimal IPv6
                 // address after the Q construct.
-                if((tmp = $digi.match(/^([A-Z0-9a-z-]{1,9})(\*|)$/))) {
-                    $digipeaters.push(new digipeater(tmp[1], (tmp[2] == '*')));
+                if((tmp = digi.match(/^([A-Z0-9a-z-]{1,9})(\*|)$/))) {
+                    digipeaters.push(new digipeater(tmp[1], (tmp[2] == '*')));
 
-                    $seen_qconstr = /^q..$/.test(tmp[1]) || $seen_qconstr; // if it's already true, don't reset it to false.
+                    seen_qconstr = /^q..$/.test(tmp[1]) || seen_qconstr; // if it's already true, don't reset it to false.
                 } else {
                     //if ($seen_qconstr && $digi =~ /^([0-9A-F]{32})$/) { // This doesn't even make sense.  Unless perl does something special
                     // this condition should never be true.  Lets remove the first condition for fun.
-                    if($seen_qconstr == true && (tmp = $digi.match(/^([0-9A-F]{32})$/))) {
-                        $digipeaters.push(new digipeater(tmp[1], false));
+                    if(seen_qconstr == true && (tmp = digi.match(/^([0-9A-F]{32})$/))) {
+                        digipeaters.push(new digipeater(tmp[1], false));
                     } else {
                         return this.addError(retVal, 'digicall_badchars');
                     }
@@ -386,7 +386,7 @@ export default class aprsParser {
             }
         }
 
-        retVal.digipeaters = $digipeaters;
+        retVal.digipeaters = digipeaters;
 
         // So now we have source and destination callsigns and
         // digipeaters parsed and ok. Move on to the body.
@@ -406,7 +406,7 @@ export default class aprsParser {
             if($paclen >= 9) {
                 retVal.type = 'location';
 
-                retVal = this._mice_to_decimal(body.substr(1), $dstcallsign, srcCallsign, retVal, options);
+                retVal = this._mice_to_decimal(body.substr(1), dstcallsign, srcCallsign, retVal, options);
                 //return $rethash;
             }
         // Normal or compressed location packet, with or without
@@ -510,7 +510,7 @@ export default class aprsParser {
                 // so read that one too
                 retVal.type = 'location';
 
-                retVal = this._nmea_to_decimal(options, body.substr(1), srcCallsign, $dstcallsign, retVal);
+                retVal = this._nmea_to_decimal(options, body.substr(1), srcCallsign, dstcallsign, retVal);
             } else if(body.substr(0, 5) == '$ULTW') {
                 retVal.type = 'wx';
 
@@ -1211,7 +1211,9 @@ export default class aprsParser {
 
             // we have everything we want, return
             return $rethash;
-        } else if(nmeafields[0] == 'GPGGA') /*{
+        }
+        /*
+            else if(nmeafields[0] == 'GPGGA') {
 
             # we want at least 11 fields
             if (@nmeafields < 11) {

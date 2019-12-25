@@ -17,5 +17,11 @@
         , "src/**/*"
         , "test/**/*"
     ],
-    "exclude": [ "bin", "coverage", "node_modules", "dist", ".nyc_output" ]
+    "exclude": [
+      ".nyc_output",
+      "bin",
+      "dist",
+      "coverage",
+      "node_modules"
+    ]
 }

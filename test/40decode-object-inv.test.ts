@@ -6,7 +6,7 @@
  */
 import * as chai from 'chai';
 
-const assert = require('assert');
+const assert = chai.assert;
 const should = chai.should();
 
 import aprsPacket from '../src/aprsPacket';

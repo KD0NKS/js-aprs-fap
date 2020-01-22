@@ -32,10 +32,10 @@
       "lcov"
     ],
     "include": [
-        "src/**/*.ts"
+      "src/**/*.ts"
     ],
     "exclude": [
-        "src/ConversionConstantEnum.ts"
+      "src/ConversionConstantEnum.ts"
     ]
   },
   "scripts": {

@@ -1,10 +1,8 @@
 var assert = require('assert');
-import aprsParser from '../src/parser';
+import ConversionUtil from '../src/ConversionUtil';
 
 describe('#degToRad', function() {
-    let parser = new aprsParser();
-
     it('should return ~0.017453', function() {
-        assert.equal(0.017453292519943295, parser.degToRad(1));
+        assert.equal(0.017453292519943295, ConversionUtil.DegToRad(1));
     });
 });

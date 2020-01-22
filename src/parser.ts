@@ -1,5 +1,6 @@
 import aprsPacket from './aprsPacket';
-import ConversionConstntEnum from './ConversionConstantEnum';
+import ConversionConstantEnum from './ConversionConstantEnum';
+import ConversionUtil from './ConversionUtil';
 import digipeater from './digipeater';
 import telemetry from './telemetry';
 import wx from './wx';
@@ -167,38 +168,7 @@ export default class aprsParser {
         return packet;
     }
 
-    // Utility Functions
-    degToRad(deg: number): number {
-        return deg * (Math.PI / 180);
-    }
 
-    radToDeg(rad: number): number {
-        return rad * (180 / Math.PI);
-    }
-
-    /**
-     * Converts Degrees Fahrenheit to Celsius
-     * @param {number} degF Degrees in Fahrenheit
-     * @returns {number} Degrees in Celsius
-     */
-    fahrenheitToCelsius(degF: number): number {
-        return (degF - 32) / 1.8;
-    }
-
-    /**
-     * Utility method to replace perl's Date-Calc check_date method.
-     * Given the year, month, and day, this checks to see if it it's a valid date.
-     *
-     * @param {Number} year year for the date
-     * @param {Number} month month for the date
-     * @param {Number} day day for the date
-     * @returns {boolean} Whether or not the given date is valid
-     */
-    checkDate = function (year: number, month: number, day: number): boolean {
-        var d = new Date(year, month, day);
-
-        return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
-    }
 
     /**
      * =item checkAX25Call()
@@ -735,7 +705,7 @@ export default class aprsParser {
             let $currtstamp = null;
             let $backtstamp = null;
 
-            if(this.checkDate($cyear, $cmonth, $day)) {
+            if(ConversionUtil.CheckDate($cyear, $cmonth, $day)) {
                 if($stamptype === 'z') {
                     //$currtstamp = Date_to_Time($cyear, $cmonth, $day, $hour, $minute, 0);
                     $currtstamp = Math.floor(new Date(Date.UTC($cyear, $cmonth, $cday, $hour, $minute, 0, 0)).getTime() / 1000);
@@ -744,7 +714,7 @@ export default class aprsParser {
                 }
             }
 
-            if(this.checkDate($fwdyear, $fwdmonth, $day)) {
+            if(ConversionUtil.CheckDate($fwdyear, $fwdmonth, $day)) {
                 if($stamptype === 'z') {
                     $fwdtstamp = Math.floor(new Date(Date.UTC($fwdyear, $fwdmonth, $day, $hour, $minute, 0, 0)).getTime() / 1000);
                 } else {
@@ -752,7 +722,7 @@ export default class aprsParser {
                 }
             }
 
-            if(this.checkDate($backyear, $backmonth, $day)) {
+            if(ConversionUtil.CheckDate($backyear, $backmonth, $day)) {
                 if($stamptype === 'z') {
                     $backtstamp = Math.floor(new Date(Date.UTC($backyear, $backmonth, $day, $hour, $minute, 0, 0)).getTime() / 1000);
                 } else {
@@ -903,7 +873,7 @@ export default class aprsParser {
      * @returns {Number} Position resolution in meters based on the number of minute decimal digits.
      */
     private get_posresolution(dec: number): number {
-        return parseFloat((ConversionConstntEnum.KNOT_TO_KMH * (dec <= -2 ? 600 : 1000) * Math.pow(10, (-1 * dec))).toFixed(4));
+        return parseFloat((ConversionConstantEnum.KNOT_TO_KMH * (dec <= -2 ? 600 : 1000) * Math.pow(10, (-1 * dec))).toFixed(4));
     }
 
     /**
@@ -1142,7 +1112,7 @@ export default class aprsParser {
 
                 // check for invalid date
                 // javascript months are 0 based
-                if(!(this.checkDate($year, parseInt(tmp[2]) - 1, parseInt(tmp[1])))) {
+                if(!(ConversionUtil.CheckDate($year, parseInt(tmp[2]) - 1, parseInt(tmp[1])))) {
                     return this.addError($rethash, 'gprmc_inv_date', `${$year} ${parseInt(tmp[2]) - 1} ${tmp[1]}`);
                 }
 
@@ -1170,7 +1140,7 @@ export default class aprsParser {
             // can't be decoded).
             if((tmp = nmeafields[7].match(/^\s*(\d+(|\.\d+))\s*$/))) {
                 // convert to km/h
-                $rethash.speed = parseFloat(tmp[1]) * ConversionConstntEnum.KNOT_TO_KMH;
+                $rethash.speed = parseFloat(tmp[1]) * ConversionConstantEnum.KNOT_TO_KMH;
             }
 
             if((tmp = nmeafields[8].match(/^\s*(\d+(|\.\d+))\s*$/))) {
@@ -1352,7 +1322,7 @@ export default class aprsParser {
                 if((match = $speed.match(/^\d{3}$/))) {
                     // force numeric interpretation
                     // and convert to km/h
-                    $rethash.speed = parseInt($speed) * ConversionConstntEnum.KNOT_TO_KMH;
+                    $rethash.speed = parseInt($speed) * ConversionConstantEnum.KNOT_TO_KMH;
                 }
 
                 $rest = $rest.substr(7);
@@ -1366,7 +1336,7 @@ export default class aprsParser {
                 $rest = $rest.substr(7);
             } else if((tmprest = $rest.match(/^RNG(\d{4})/))) {
                 // radio range, in miles, so convert to km
-                $rethash['radiorange'] = parseInt(tmprest[1]) * ConversionConstntEnum.MPH_TO_KMH;
+                $rethash['radiorange'] = parseInt(tmprest[1]) * ConversionConstantEnum.MPH_TO_KMH;
                 $rest = $rest.substr(7);
             }
         }
@@ -1375,7 +1345,7 @@ export default class aprsParser {
         // take the first occurrence
         if((tmprest = $rest.match(/^(.*?)\/A=(-\d{5}|\d{6})(.*)$/))) {
             // convert to meters as well
-            $rethash.altitude = parseFloat(tmprest[2]) * ConversionConstntEnum.FEET_TO_METERS;
+            $rethash.altitude = parseFloat(tmprest[2]) * ConversionConstantEnum.FEET_TO_METERS;
             $rest = tmprest[1] + tmprest[3];
         }
 
@@ -1899,7 +1869,7 @@ export default class aprsParser {
             }
 
             // convert speed to km/h and store
-            $rethash.speed = $speed * ConversionConstntEnum.KNOT_TO_KMH;
+            $rethash.speed = $speed * ConversionConstantEnum.KNOT_TO_KMH;
         }
 
         // save the symbol table and code
@@ -2051,7 +2021,7 @@ export default class aprsParser {
             // cs is altitude
             let $cs = $c1 * 91 + $s1;
             // convert directly to meters
-            $rethash.altitude = Math.pow(1.002, $cs) * ConversionConstntEnum.FEET_TO_METERS;
+            $rethash.altitude = Math.pow(1.002, $cs) * ConversionConstantEnum.FEET_TO_METERS;
         } else if($c1 >= 0 && $c1 <= 89) {
             if($c1 == 0) {
                 // special case of north, APRS spec
@@ -2063,10 +2033,10 @@ export default class aprsParser {
             }
 
             // convert directly to km/h
-            $rethash.speed = (Math.pow(1.08, $s1) - 1) * ConversionConstntEnum.KNOT_TO_KMH;
+            $rethash.speed = (Math.pow(1.08, $s1) - 1) * ConversionConstantEnum.KNOT_TO_KMH;
         } else if($c1 == 90) {
             // convert directly to km
-            $rethash.radiorange = (2 * Math.pow(1.08, $s1)) * ConversionConstntEnum.MPH_TO_KMH;
+            $rethash.radiorange = (2 * Math.pow(1.08, $s1)) * ConversionConstantEnum.MPH_TO_KMH;
         }
 
         return $rethash;
@@ -2247,7 +2217,7 @@ export default class aprsParser {
         }
 
         if(/^\d+$/.test($wind_gust)) {
-            $w.wind_gust = (parseFloat($wind_gust) * ConversionConstntEnum.MPH_TO_MS).toFixed(1);
+            $w.wind_gust = (parseFloat($wind_gust) * ConversionConstantEnum.MPH_TO_MS).toFixed(1);
         }
 
         if(/^\d+$/.test($wind_dir)) {
@@ -2255,16 +2225,16 @@ export default class aprsParser {
         }
 
         if(/^\d+$/.test($wind_speed)) {
-            $w.wind_speed = (parseFloat($wind_speed) * ConversionConstntEnum.MPH_TO_MS).toFixed(1);
+            $w.wind_speed = (parseFloat($wind_speed) * ConversionConstantEnum.MPH_TO_MS).toFixed(1);
         }
 
         if(/^-{0,1}\d+$/.test($temp)) {
-            $w.temp = this.fahrenheitToCelsius(parseInt($temp)).toFixed(1) ;
+            $w.temp = ConversionUtil.FahrenheitToCelsius(parseInt($temp)).toFixed(1) ;
         }
 
         $s = $s.replace(/r(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w.rain_1h = (parseFloat($1) * ConversionConstntEnum.HINCH_TO_MM).toFixed(1); // during last 1h
+                $w.rain_1h = (parseFloat($1) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // during last 1h
             }
 
             return '';
@@ -2272,7 +2242,7 @@ export default class aprsParser {
 
         $s = $s.replace(/p(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w.rain_24h = (parseFloat($1) * ConversionConstntEnum.HINCH_TO_MM).toFixed(1); // during last 24h
+                $w.rain_24h = (parseFloat($1) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // during last 24h
             }
 
             return '';
@@ -2280,7 +2250,7 @@ export default class aprsParser {
 
         $s = $s.replace(/P(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w.rain_midnight = (parseFloat($1) * ConversionConstntEnum.HINCH_TO_MM).toFixed(1); // since midnight
+                $w.rain_midnight = (parseFloat($1) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // since midnight
             }
 
             return '';
@@ -2331,7 +2301,7 @@ export default class aprsParser {
         $s = $s.replace(/s(\d{1,3})/, function($0, $1) {
             // snowfall
             if($1) {
-                $w.snow_24h = ($1 * ConversionConstntEnum.HINCH_TO_MM).toFixed(1);
+                $w.snow_24h = ($1 * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
             }
 
             return '';
@@ -2410,7 +2380,7 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t != null) {
-            $w.wind_gust = ($t * ConversionConstntEnum.KMH_TO_MS / 10).toFixed(1);
+            $w.wind_gust = ($t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2420,12 +2390,12 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t != null) {
-            $w.temp = this.fahrenheitToCelsius($t / 10).toFixed(1);   // 1/255 => 1/360
+            $w.temp = ConversionUtil.FahrenheitToCelsius($t / 10).toFixed(1);   // 1/255 => 1/360
         }
 
         $t = $vals.shift();
         if($t != null) {
-            $w.rain_midnight = ($t * ConversionConstntEnum.HINCH_TO_MM).toFixed(1);
+            $w.rain_midnight = ($t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2453,12 +2423,12 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w.rain_midnight = ($t * ConversionConstntEnum.HINCH_TO_MM).toFixed(1);
+            $w.rain_midnight = ($t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
         if($t) {
-            $w.wind_speed = ($t * ConversionConstntEnum.KMH_TO_MS / 10).toFixed(1);
+            $w.wind_speed = ($t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         if($w.temp
@@ -2523,7 +2493,7 @@ export default class aprsParser {
 
         $t = $vals.shift(); // instant wind speed
         if($t != null) {
-            $w.wind_speed = ($t * ConversionConstntEnum.KMH_TO_MS / 10).toFixed(1);
+            $w.wind_speed = ($t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2533,12 +2503,12 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w.temp = this.fahrenheitToCelsius($t / 10).toFixed(1); // 1/255 => 1/360
+            $w.temp = ConversionUtil.FahrenheitToCelsius($t / 10).toFixed(1); // 1/255 => 1/360
         }
 
         $t = $vals.shift();
         if($t) {
-            $w.rain_midnight = ($t * ConversionConstntEnum.HINCH_TO_MM).toFixed(1);
+            $w.rain_midnight = ($t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2548,7 +2518,7 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w.temp_in = parseFloat(this.fahrenheitToCelsius($t / 10).toFixed(1));   // 1/255 => 1/360
+            $w.temp_in = parseFloat(ConversionUtil.FahrenheitToCelsius($t / 10).toFixed(1));   // 1/255 => 1/360
         }
 
         $t = $vals.shift();
@@ -2574,13 +2544,13 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w['rain_midnight'] = ($t * ConversionConstntEnum.HINCH_TO_MM).toFixed(1);
+            $w['rain_midnight'] = ($t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
         // avg wind speed
         $t = $vals.shift();
         if($t) {
-            $w.wind_speed = ($t * ConversionConstntEnum.KMH_TO_MS / 10).toFixed(1);
+            $w.wind_speed = ($t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         // if inside temperature exists but no outside, use inside

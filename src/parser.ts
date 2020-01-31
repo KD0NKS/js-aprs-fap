@@ -15,7 +15,7 @@ const RESULT_MESSAGES: any = {
     , 'dstpath_toomany': 'Too many destination path components to be AX.25'
     , 'dstcall_none': 'No destination field in packet'
     , 'dstcall_noax25': 'Destination callsign is not a valid AX.25 call'
-    , 'digicall_noax25': 'Digipeater callsign is not a valid AX.25 call'
+    //, 'digicall_noax25': 'Digipeater callsign is not a valid AX.25 call'  // NOT USED
     , 'digicall_badchars': 'Digipeater callsign contains bad characters'
     , 'timestamp_inv_loc': 'Invalid timestamp in location'
     , 'timestamp_inv_obj': 'Invalid timestamp in object'
@@ -394,11 +394,10 @@ export default class aprsParser {
                     // If the timestamp is invalid, it will be set to zero.
                     retVal.timestamp = this.parseTimestamp(options, body.substr(1, 7));
 
-                    /* TODO: DO WE NEED THIS?
-                    if($rethash['timestamp'] == false) {
-                        addWarning($rethash, 'timestamp_inv_loc');
+                    // TODO: this can be hit if this condition is not met: /^(\d{2})(\d{2})(\d{2})(z|h|\/)$/
+                    if(retVal.timestamp == 0) {
+                        this.addWarning(retVal, 'timestamp_inv_loc');
                     }
-                    */
 
                     body = body.substr(7);
                 }
@@ -1123,6 +1122,7 @@ export default class aprsParser {
                 return this.addError($rethash, 'gprmc_inv_date');
             }
 
+            // TODO: This isn't true for javascript - https://stackoverflow.com/questions/11526504/minimum-and-maximum-date
             // Date_to_Time() can only handle 32-bit unix timestamps,
             // so make sure it is not used for those years that
             // are outside that range.

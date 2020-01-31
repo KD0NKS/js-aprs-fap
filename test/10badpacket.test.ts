@@ -4,7 +4,6 @@ import * as chai from 'chai';
 
 const assert = require('assert');
 const should = chai.should();
-const expect = chai.expect;
 
 import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
@@ -103,7 +102,7 @@ describe('FAP - test bad packets', () => {
         let parsed: aprsPacket = parser.parseaprs(undefined);
 
         it('Should return a resultCode: "packet_no"', () => {
-            expect(parsed.resultCode).to.equal('packet_no');
+            assert.equal('packet_no', parsed.resultCode);
         });
     });
 
@@ -111,7 +110,7 @@ describe('FAP - test bad packets', () => {
         let parsed: aprsPacket = parser.parseaprs('');
 
         it('Should return a resultCode: "packet_short"', () => {
-            expect(parsed.resultCode).to.equal('packet_short');
+            assert.equal('packet_short', parsed.resultCode);
         });
     });
 
@@ -119,7 +118,7 @@ describe('FAP - test bad packets', () => {
         let parsed: aprsPacket = parser.parseaprs('!6028.51N,02505.68E#');
 
         it('Should return a resultCode: "packet_nobody"', () => {
-            expect(parsed.resultCode).to.equal('packet_nobody');
+            assert.equal('packet_nobody', parsed.resultCode);
         });
     });
 
@@ -127,7 +126,7 @@ describe('FAP - test bad packets', () => {
         let parsed: aprsPacket = parser.parseaprs('None>None,qAR,TACO:!3751.90NS12213.23W#PHG7500/W2,NCAn, WA6TLW, Berkeley, CA A=001720');
 
         it('Should return a resultCode: "dstcall_noax25"', () => {
-            expect(parsed.resultCode).to.equal('dstcall_noax25');
+            assert.equal('dstcall_noax25', parsed.resultCode);
         });
     });
 
@@ -135,7 +134,7 @@ describe('FAP - test bad packets', () => {
         let parsed: aprsPacket = parser.parseaprs('None>:!3751.90NS12213.23W#PHG7500/W2,NCAn, WA6TLW, Berkeley, CA A=001720');
 
         it('Should return a resultCode: "dstcall_none"', () => {
-            expect(parsed.resultCode).to.equal('dstcall_none');
+            assert.equal('dstcall_none', parsed.resultCode);
         });
     });
 
@@ -143,7 +142,15 @@ describe('FAP - test bad packets', () => {
         let parsed: aprsPacket = parser.parseaprs('PY5LF-13>APTT4,WIDE1-1,WIDE2-1,qAR,PU5SZN-2:! Weather Station ISS Davis CURITIBA - PR');
 
         it('Should return a resultCode: "packet_invalid"', () => {
-            expect(parsed.resultCode).to.equal('packet_invalid');
+            assert.equal('packet_invalid', parsed.resultCode);
+        });
+    });
+
+    describe('#parseaprs - packet with invalid destination callsign', () => {
+        let parsed: aprsPacket = parser.parseaprs('BH8SEL-3>Office,qAS,BG6CQ:=2503.22N/10130.90E_000/000g000t057r000p000h48b08209ESP8266 MAC 84:0d:8e:84:26:c3 RSSI: -43');
+
+        it('Should return a resultCode: "dstcall_noax25"', () => {
+            assert.equal('dstcall_noax25', parsed.resultCode);
         });
     });
 });

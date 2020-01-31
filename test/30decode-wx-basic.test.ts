@@ -264,4 +264,13 @@ describe('FAP - Test wx packet parsing', function() {
             assert.equal(500, parsed.wx.luminosity);
         });
     });
+
+    describe('#parseaprs - Test an unsupported positionless weather report', function () {
+        let $aprspacket = 'WA2GUG>BEACON,WA2GUG-15,K1FFK,WIDE1*,qAR,N3LEE-4:_42204.57N/07401.85W#PHG1010/ GRN WX contact wa2gug@arrl.net';
+        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+
+        it('Should return result code: wx_unsupp', function () {
+            assert.equal('wx_unsupp', parsed.resultCode);
+        });
+    });
 });

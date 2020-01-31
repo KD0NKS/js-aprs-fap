@@ -181,4 +181,12 @@ describe('FAP - Test item parsing', function() {
             assert.equal(0.291, parsed.posresolution);
         });
     });
+
+    describe('#parseaprs - Test parsing an item with an error in decoding location', () => {
+        let packet: aprsPacket = parser.parseaprs('FR5GS>APZDMR,QTH*,TCPIP*,qAU,T2STRAS:)FR5GS-DP!-21-4.88S/05541.66rRNG0034 IPSC2-FRANCE 3 MMDVM 439.9500@-9.4 MHz ', { accept_broken_mice: true });
+
+        it('Should return a resultCode: item_dec_err', () => {
+            assert.equal("item_dec_err", packet.resultCode);
+        });
+    });
 });

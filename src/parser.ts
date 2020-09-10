@@ -15,7 +15,7 @@ const RESULT_MESSAGES: any = {
     , 'dstpath_toomany': 'Too many destination path components to be AX.25'
     , 'dstcall_none': 'No destination field in packet'
     , 'dstcall_noax25': 'Destination callsign is not a valid AX.25 call'
-    //, 'digicall_noax25': 'Digipeater callsign is not a valid AX.25 call'  // NOT USED
+    , 'digicall_noax25': 'Digipeater callsign is not a valid AX.25 call'
     , 'digicall_badchars': 'Digipeater callsign contains bad characters'
     , 'timestamp_inv_loc': 'Invalid timestamp in location'
     , 'timestamp_inv_obj': 'Invalid timestamp in object'
@@ -38,10 +38,10 @@ const RESULT_MESSAGES: any = {
     , 'gpgll_fewfields': 'Less than 5 fields in GPGLL sentence'
     , 'gpgll_nofix': 'No GPS fix in GPGLL sentence'
     , 'nmea_unsupp': 'Unsupported NMEA sentence type'
-    , 'obj_short': 'Too short object'
+    , 'obj_short': 'Too short object'                                       // This cannot be hit by the perl parser
     , 'obj_inv': 'Invalid object'
     , 'obj_dec_err': 'Error in object location decoding'
-    , 'item_short': 'Too short item'
+    , 'item_short': 'Too short item'                                        // This cannot be hit by the perl parser
     , 'item_inv': 'Invalid item'
     , 'item_dec_err': 'Error in item location decoding'
     , 'loc_short': 'Too short uncompressed location'
@@ -57,7 +57,7 @@ const RESULT_MESSAGES: any = {
     , 'comp_inv': 'Invalid compressed packet'
     , 'msg_inv': 'Invalid message packet'
     , 'wx_unsupp': 'Unsupported weather format'
-    , 'user_unsupp': 'Unsupported user format'
+//    , 'user_unsupp': 'Unsupported user format'    // Not Used
     , 'dx_inv_src': 'Invalid DX spot source callsign'
     , 'dx_inf_freq': 'Invalid DX spot frequency'
     , 'dx_no_dx': 'No DX spot callsign found'
@@ -424,6 +424,8 @@ export default class aprsParser {
                             retVal = this._wx_parse(body.substr(19), retVal);
                         }
                     }
+
+                    // TODO: Should an error be added here since there's no location data on the packet?
                 } else if($poschar == 47 || $poschar == 92
                         || ($poschar >= 65 && $poschar <= 90)
                         || ($poschar >= 97 && $poschar <= 106)) {
@@ -466,11 +468,9 @@ export default class aprsParser {
             }
         // Object
         } else if($packettype == ';') {
-            if($paclen >= 31) {
-                retVal.type = 'object';
+            retVal.type = 'object';
 
-                retVal = this.objectToDecimal(options, body, srcCallsign, retVal);
-            }
+            retVal = this.objectToDecimal(options, body, srcCallsign, retVal);
         // NMEA data
         } else if($packettype == '$') {
             // don't try to parse the weather stations, require "$GP" start
@@ -482,15 +482,14 @@ export default class aprsParser {
                 retVal = this._nmea_to_decimal(options, body.substr(1), srcCallsign, dstcallsign, retVal);
             } else if(body.substr(0, 5) == '$ULTW') {
                 retVal.type = 'wx';
-
                 retVal = this._wx_parse_peet_packet(body.substr(5), srcCallsign, retVal);
+            } else {
+                throw new Error(`test 1 - ${retVal.origpacket}`);
             }
         // Item
-        } else if($packettype == ')') {
-            if($paclen >= 18) {
-                retVal.type = 'item';
-                retVal = this._item_to_decimal(body, srcCallsign, retVal);
-            }
+        } else if ($packettype == ')') {
+            retVal.type = 'item';
+            retVal = this._item_to_decimal(body, srcCallsign, retVal);
         // Message, bulletin or an announcement
         } else if($packettype === ':') {
             if($paclen >= 11) {
@@ -498,8 +497,9 @@ export default class aprsParser {
                 retVal.type = 'message';
 
                 retVal = this.messageParse(body, retVal);
+            } else {
+                throw new Error(`test 2 - ${retVal.origpacket}`);
             }
-
         // Station capabilities
         } else if($packettype == '<') {
             // at least one other character besides '<' required
@@ -1082,6 +1082,18 @@ export default class aprsParser {
             let $second;
 
             if((tmp = nmeafields[1].match(/^\s*(\d{2})(\d{2})(\d{2})(|\.\d+)\s*$/))) {
+                if(parseInt(tmp[1]) > 23) {
+                    console.log(`if 1 - ${$rethash.origpacket}`);
+                }
+
+                if(parseInt(tmp[2]) > 59) {
+                    console.log(`if 2 - ${$rethash.origpacket}`);
+                }
+
+                if(parseInt(tmp[3]) > 59) {
+                    console.log(`if 3 - ${$rethash.origpacket}`);
+                }
+
                 // if seconds has a decimal part, ignore it
                 // leap seconds are not taken into account...
                 if(parseInt(tmp[1]) > 23 || parseInt(tmp[2]) > 59 || parseInt(tmp[3]) > 59) {

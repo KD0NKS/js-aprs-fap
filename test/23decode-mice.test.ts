@@ -366,4 +366,20 @@ describe('FAP - Test parsing mic-e packages', () => {
             assert.equal(packet.resultCode, "mice_amb_inv");
         });
     });
+
+    describe('#parseaprs - Test parsing a mic-e packet with invalid characters in the last 3 chars of the dest callsign.', () => {
+        let packet: aprsPacket = parser.parseaprs('N9317>SS5RWI,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`.1?shd\'/":l}K6SBZ', { accept_broken_mice: true });
+
+        it('Should return a resultCode: mice_inv', () => {
+            assert.equal(packet.resultCode, "mice_inv");
+        });
+    });
+
+    describe('#parseaprs - Test parsing a mic-e packet where the dest callsign is too short', () => {
+        let packet: aprsPacket = parser.parseaprs('PU2WAT-9>CMD,qAR,PU2WAT-1:`JAXm{=k/]"<=}=', { accept_broken_mice: true });
+
+        it('Should return a resultCode: mice_short', () => {
+            assert.equal(packet.resultCode, "mice_short");
+        });
+    });
 });

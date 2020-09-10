@@ -113,10 +113,18 @@ describe('FAP - Test decoding GPRMC NMEA', function() {
         });
     });
 
+    describe('#parseaprs - Test parsing a GPRMC packet with an invalid timestamp', function () {
+        let parsed: aprsPacket = parser.parseaprs("KB9WGA-2>APRS,W9DOR-10*,WIDE2-1,qAR,KB8ZXE-1:$GPRMC,A2,A,,,,,,,,, W * 0");
+
+        it('Should return a result code: gprmc_inv_time - 2nd path', function () {
+            assert.equal("gprmc_inv_time", parsed.resultCode);
+        });
+    });
+
     describe('#parseaprs - Test parsing a GPRMC packet with an invalid timestamp', function() {
         let parsed: aprsPacket = parser.parseaprs("KB9WGA-2>APRS,W9DOR-10*,WIDE2-1,qAR,KI8KR-10:$GPRMC,11,A,4458.2127,N,08720.8152,W,0.000,0.0,120,2.2, W * 0");
 
-        it('Should return a result code: gprmc_inv_time', function() {
+        it('Should return a result code: gprmc_inv_time - 2nd path', function() {
             assert.equal("gprmc_inv_time", parsed.resultCode);
         });
     });

@@ -20,4 +20,32 @@ describe('FAP - Test decoding GPGGA NMEA', function() {
             assert.equal("nmea_inv_cksum", parsed.resultCode);
         });
     });
+
+    /*
+    describe('#parseaprs - Test parsing something', () => {
+        let parsed: aprsPacket = parser.parseaprs("N7UV-5>APRS,KE7JVX-4,UNION,WIDE2*,qAR,K6YTE-10:$GPGSV,4,3,16,17,12,193,26,23,14,155,17,27,09,037,33,28,47,256,27*75");
+
+        console.log(parsed);
+
+        aprsPacket {
+            origpacket: 'N7UV-5>APRS,KE7JVX-4,UNION,WIDE2*,qAR,K6YTE-10:$GPGSV,4,3,16,17,12,193,26,23,14,155,17,27,09,037,33,28,47,256,27*75',
+            header: 'N7UV-5>APRS,KE7JVX-4,UNION,WIDE2*,qAR,K6YTE-10',
+            body: '$GPGSV,4,3,16,17,12,193,26,23,14,155,17,27,09,037,33,28,47,256,27*75',
+            sourceCallsign: 'N7UV-5',
+            destCallsign: 'APRS',
+            digipeaters: [
+                digipeater { callsign: 'KE7JVX-4', wasDigipeated: false },
+                digipeater { callsign: 'UNION', wasDigipeated: false },
+                digipeater { callsign: 'WIDE2', wasDigipeated: true },
+                digipeater { callsign: 'qAR', wasDigipeated: false },
+                digipeater { callsign: 'K6YTE-10', wasDigipeated: false }
+            ],
+            type: 'location',
+            checksumok: true,
+            format: 'nmea',
+            symboltable: '/',
+            symbolcode: '/'
+        }
+    });
+    */
 });

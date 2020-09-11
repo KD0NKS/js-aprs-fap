@@ -6,7 +6,6 @@ import * as chai from 'chai';
 
 const assert = require('assert');
 const should = chai.should();
-const expect = chai.expect;
 
 import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
@@ -248,7 +247,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
         let packet: aprsPacket = parser.parseaprs("DB0GV>APNU19,WIDE1-1,WIDE3-3,DB0ZAV-1,IGATE,qAS,DB0ZAV-1:!5007.86700");
 
         it('Should return a packet with a result code: packet_short', () => {
-            expect(packet.resultCode).to.equal("packet_short");
+            assert.equal("packet_short", packet.resultCode);
         });
     });
 
@@ -256,7 +255,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
         let packet: aprsPacket = parser.parseaprs("DB0ZEH>APNDBB,DB0LDS*,WIDE3-2,qAR,DB0ZEH:;800-ZEH  *111111z5258.75N/01319.9");
 
         it('Should return a packet with a result code: loc_short', () => {
-            expect(packet.resultCode).to.equal("loc_short");
+            assert.equal("loc_short", packet.resultCode);
         });
     });
 
@@ -264,15 +263,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
         let packet: aprsPacket = parser.parseaprs("N6BMW-1>APRS,DMR*,qAS,n3fe-10:=3426.19N/24051.47E[Dan - Ojai CA");
 
         it('Should return a packet with a result code: loc_large', () => {
-            expect(packet.resultCode).to.equal("loc_large");
-        });
-    });
-
-    describe('Test parsing a location packet that is too large', () => {
-        let packet: aprsPacket = parser.parseaprs("N6BMW-1>APRS,DMR*,qAS,n3fe-10:=3426.19N/24051.47E[Dan - Ojai CA");
-
-        it('Should return a packet with a result code: loc_large', () => {
-            expect(packet.resultCode).to.equal("loc_large");
+            assert.equal("loc_large", packet.resultCode);
         });
     });
 
@@ -280,13 +271,27 @@ describe('FAP - Test decoding uncompressed packets', () => {
         let packet: aprsPacket = parser.parseaprs("SPBLTZ>APRS,TCPIP*,qAC,T2POLAND:;SPBLTZ   *112050z5210.  N/021  .  E? Informacje burzowe, op. Pawel SP5MNC");
 
         it('Should return a packet with a result code: loc_amb_inv', () => {
-            expect(packet.resultCode).to.equal("loc_amb_inv");
+            assert.equal("loc_amb_inv", packet.resultCode);
         });
 
         it('Should return a packet with a result message: Invalid position ambiguity: lat/lon 2', () => {
-            expect(packet.resultMessage).to.equal("Invalid position ambiguity: lat/lon 2");
+            assert.equal("Invalid position ambiguity: lat/lon 2", packet.resultMessage);
         });
     });
+
+    describe('Test parsing a packet where the location where the packet body is too short', () => {
+        let parsed: aprsPacket = parser.parseaprs('IR1AX-11>APNU19,WIDE1-1,WIDE2-2,qAR,IZ1REU-11:=4429.38N/00&11.');
+
+        it('Should not have a longitude', () => {
+            should.not.exist(parsed.longitude);
+        });
+
+        it('Should not have a latitude', () => {
+            should.not.exist(parsed.latitude);
+        });
+    });
+
+
 
     /* TODO:
      * no pos amb with err

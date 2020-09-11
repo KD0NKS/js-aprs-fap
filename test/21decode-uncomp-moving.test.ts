@@ -102,4 +102,26 @@ describe('FAP - Test decoding uncompressed packets', function() {
             assert.equal(141.732, parsed.altitude);
         });
     });
+
+    describe('#parseaprs - Test parsing uncompressed packet with invalid course and invalid speed', function () {
+        let $srccall = "OH7FDN";
+        let $dstcall = "APZMDR";
+        let $header = $srccall + '>' + $dstcall + ',OH7AA-1*,WIDE2-1,qAR,OH7AA';
+
+        // The comment field contains telemetry just to see that it doesn't break
+        // the actual position parsing.
+        let $body = "!6253.52N/02739.47E>366/   /A=000465 |!!!!!!!!!!!!!!|";
+
+        let $aprspacket = $header + ':' + $body;
+
+        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+
+        it('Should return course: 0', function () {
+            assert.equal(0, parsed.course);
+        });
+
+        it('Should not return a speed', function () {
+            should.not.exist(parsed.speed, 'Speed should not exist')
+        });
+    });
 });

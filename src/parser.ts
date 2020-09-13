@@ -1,15 +1,9 @@
 import aprsPacket from './aprsPacket';
+import ConversionConstantEnum from './ConversionConstantEnum';
+import ConversionUtil from './ConversionUtil';
 import digipeater from './digipeater';
 import telemetry from './telemetry';
 import wx from './wx';
-
-// conversion constants
-const KNOT_TO_KMH = 1.852;   // nautical miles per hour to kilometers per hour
-const MPH_TO_KMH = 1.609344; // miles per hour to kilometers per hour
-const KMH_TO_MS = 10 / 36;   // kilometers per hour to meters per second
-const MPH_TO_MS = MPH_TO_KMH * KMH_TO_MS;  // miles per hour to meters per second
-const HINCH_TO_MM = 0.254;   // hundredths of an inch to millimeters
-const FEET_TO_METERS = 0.3048;
 
 const RESULT_MESSAGES: any = {
     'unknown': 'Unsupported packet format'
@@ -44,10 +38,10 @@ const RESULT_MESSAGES: any = {
     , 'gpgll_fewfields': 'Less than 5 fields in GPGLL sentence'
     , 'gpgll_nofix': 'No GPS fix in GPGLL sentence'
     , 'nmea_unsupp': 'Unsupported NMEA sentence type'
-    , 'obj_short': 'Too short object'
+    , 'obj_short': 'Too short object'                                       // This cannot be hit by the perl parser
     , 'obj_inv': 'Invalid object'
     , 'obj_dec_err': 'Error in object location decoding'
-    , 'item_short': 'Too short item'
+    , 'item_short': 'Too short item'                                        // This cannot be hit by the perl parser
     , 'item_inv': 'Invalid item'
     , 'item_dec_err': 'Error in item location decoding'
     , 'loc_short': 'Too short uncompressed location'
@@ -63,7 +57,7 @@ const RESULT_MESSAGES: any = {
     , 'comp_inv': 'Invalid compressed packet'
     , 'msg_inv': 'Invalid message packet'
     , 'wx_unsupp': 'Unsupported weather format'
-    , 'user_unsupp': 'Unsupported user format'
+//    , 'user_unsupp': 'Unsupported user format'    // Not Used
     , 'dx_inv_src': 'Invalid DX spot source callsign'
     , 'dx_inf_freq': 'Invalid DX spot frequency'
     , 'dx_no_dx': 'No DX spot callsign found'
@@ -72,29 +66,6 @@ const RESULT_MESSAGES: any = {
     , 'tlm_unsupp': 'Unsupported telemetry'
     , 'exp_unsupp': 'Unsupported experimental'
     , 'sym_inv_table': 'Invalid symbol table or overlay'
-};
-
-/**
- * message bit types for mic-e
- * from left to right, bits a, b and c
- * standard one bit is 1, custom one bit is 2
- */
-const MICE_MESSAGE_TYPES = {
-    '111': 'off duty'
-    , '222': 'custom 0'
-    , '110': 'en route'
-    , '220': 'custom 1'
-    , '101': 'in service'
-    , '202': 'custom 2'
-    , '100': 'returning'
-    , '200': 'custom 3'
-    , '011': 'committed'
-    , '022': 'custom 4'
-    , '010': 'special'
-    , '020': 'custom 5'
-    , '001': 'priority'
-    , '002': 'custom 6'
-    , '000': 'emergency'
 };
 
 /**
@@ -197,38 +168,7 @@ export default class aprsParser {
         return packet;
     }
 
-    // Utility Functions
-    degToRad(deg: number): number {
-        return deg * (Math.PI / 180);
-    }
 
-    radToDeg(rad: number): number {
-        return rad * (180 / Math.PI);
-    }
-
-    /**
-     * Converts Degrees Fahrenheit to Celsius
-     * @param {number} degF Degrees in Fahrenheit
-     * @returns {number} Degrees in Celsius
-     */
-    fahrenheitToCelsius(degF: number): number {
-        return (degF - 32) / 1.8;
-    }
-
-    /**
-     * Utility method to replace perl's Date-Calc check_date method.
-     * Given the year, month, and day, this checks to see if it it's a valid date.
-     *
-     * @param {Number} year year for the date
-     * @param {Number} month month for the date
-     * @param {Number} day day for the date
-     * @returns {boolean} Whether or not the given date is valid
-     */
-    checkDate = function (year: number, month: number, day: number): boolean {
-        var d = new Date(year, month, day);
-
-        return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
-    }
 
     /**
      * =item checkAX25Call()
@@ -289,7 +229,7 @@ export default class aprsParser {
      */
     parseaprs(packet: string, options?: any) {
         let retVal: aprsPacket = new aprsPacket();
-        let $isax25 = (options && options['isax25'] != undefined) ? options['isax25'] : false;
+        let isax25 = (options && options['isax25'] != undefined) ? options['isax25'] : false;
 
         // save the original packet
         retVal.origpacket = packet;
@@ -322,7 +262,7 @@ export default class aprsParser {
         if(($header = header.match(/^([A-Z0-9-]{1,9})>(.*)$/i))) {
             rest = $header[2];
 
-            if($isax25 == false) {
+            if(isax25 == false) {
                 srcCallsign = $header[1];
             } else {
                 srcCallsign = this.checkAX25Call($header[1].toUpperCase());
@@ -341,18 +281,18 @@ export default class aprsParser {
 
         // Get the destination callsign and digipeaters.
         // Only TNC-2 format is supported, AEA (with digipeaters) is not.
-        let $pathcomponents = rest.split(',');
+        let pathcomponents = rest.split(',');
 
         // More than 9 (dst callsign + 8 digipeaters) path components
         // from AX.25 or less than 1 from anywhere is invalid.
-        if($isax25 == true) {
-            if($pathcomponents.length > 9) {
+        if(isax25 == true) {
+            if(pathcomponents.length > 9) {
                 // too many fields to be from AX.25
                 return this.addError(retVal, 'dstpath_toomany');
             }
         }
 
-        if($pathcomponents.length < 1) {
+        if(pathcomponents.length === 1 && pathcomponents[0] === '') {
             // no destination field
             return this.addError(retVal, 'dstcall_none');
         }
@@ -361,54 +301,54 @@ export default class aprsParser {
         // Destination callsign. We are strict here, there
         // should be no need to use a non-AX.25 compatible
         //# destination callsigns in the APRS-IS.
-        let $dstcallsign = this.checkAX25Call($pathcomponents.shift());
+        let dstcallsign = this.checkAX25Call(pathcomponents.shift());
 
-        if(!$dstcallsign) {
+        if(!dstcallsign) {
             return this.addError(retVal, 'dstcall_noax25');
         }
 
-        retVal.destCallsign = $dstcallsign;
+        retVal.destCallsign = dstcallsign;
 
         // digipeaters
-        let $digipeaters = [];
+        let digipeaters = [];
 
-        if($isax25 == true) {
-            for(let $digi of $pathcomponents) {
-                let $d;
+        if(isax25 == true) {
+            for(let digi of pathcomponents) {
+                let d;
 
-                if(($d = $digi.match(/^([A-Z0-9-]+)(\*|)$/i))) {
-                    let $digitested = this.checkAX25Call($d[1].toUpperCase());
+                if((d = digi.match(/^([A-Z0-9-]+)(\*|)$/i))) {
+                    let digitested = this.checkAX25Call(d[1].toUpperCase());
 
-                    if(!$digitested) {
-                        return this.addError(retVal, 'digicall_noax25');
+                    if(!digitested) {
+                        return this.addError(retVal, `${digi} digicall_noax25`);
                     }
 
                     // add it to the digipeater array
-                    $digipeaters.push(new digipeater(
-                        $digitested
-                        , ($d[2] == '*')
+                    digipeaters.push(new digipeater(
+                        digitested
+                        , (d[2] == '*')
                     ));
                 } else {
                     return this.addError(retVal, 'digicall_badchars');
                 }
             }
         } else {
-            let $seen_qconstr = false;
+            let seen_qconstr = false;
             let tmp = null;
 
-            for(let $digi of $pathcomponents) {
+            for(let digi of pathcomponents) {
                 // From the internet. Apply the same checks as for
                 // APRS-IS packet originator. Allow long hexadecimal IPv6
                 // address after the Q construct.
-                if((tmp = $digi.match(/^([A-Z0-9a-z-]{1,9})(\*|)$/))) {
-                    $digipeaters.push(new digipeater(tmp[1], (tmp[2] == '*')));
+                if((tmp = digi.match(/^([A-Z0-9a-z-]{1,9})(\*|)$/))) {
+                    digipeaters.push(new digipeater(tmp[1], (tmp[2] == '*')));
 
-                    $seen_qconstr = /^q..$/.test(tmp[1]) || $seen_qconstr; // if it's already true, don't reset it to false.
+                    seen_qconstr = /^q..$/.test(tmp[1]) || seen_qconstr; // if it's already true, don't reset it to false.
                 } else {
                     //if ($seen_qconstr && $digi =~ /^([0-9A-F]{32})$/) { // This doesn't even make sense.  Unless perl does something special
                     // this condition should never be true.  Lets remove the first condition for fun.
-                    if($seen_qconstr == true && (tmp = $digi.match(/^([0-9A-F]{32})$/))) {
-                        $digipeaters.push(new digipeater(tmp[1], false));
+                    if(seen_qconstr == true && (tmp = digi.match(/^([0-9A-F]{32})$/))) {
+                        digipeaters.push(new digipeater(tmp[1], false));
                     } else {
                         return this.addError(retVal, 'digicall_badchars');
                     }
@@ -416,7 +356,7 @@ export default class aprsParser {
             }
         }
 
-        retVal.digipeaters = $digipeaters;
+        retVal.digipeaters = digipeaters;
 
         // So now we have source and destination callsigns and
         // digipeaters parsed and ok. Move on to the body.
@@ -436,7 +376,7 @@ export default class aprsParser {
             if($paclen >= 9) {
                 retVal.type = 'location';
 
-                retVal = this._mice_to_decimal(body.substr(1), $dstcallsign, srcCallsign, retVal, options);
+                retVal = this._mice_to_decimal(body.substr(1), dstcallsign, srcCallsign, retVal, options);
                 //return $rethash;
             }
         // Normal or compressed location packet, with or without
@@ -454,11 +394,10 @@ export default class aprsParser {
                     // If the timestamp is invalid, it will be set to zero.
                     retVal.timestamp = this.parseTimestamp(options, body.substr(1, 7));
 
-                    /* TODO: DO WE NEED THIS?
-                    if($rethash['timestamp'] == false) {
-                        addWarning($rethash, 'timestamp_inv_loc');
+                    // TODO: this can be hit if this condition is not met: /^(\d{2})(\d{2})(\d{2})(z|h|\/)$/
+                    if(retVal.timestamp == 0) {
+                        this.addWarning(retVal, 'timestamp_inv_loc');
                     }
-                    */
 
                     body = body.substr(7);
                 }
@@ -485,6 +424,8 @@ export default class aprsParser {
                             retVal = this._wx_parse(body.substr(19), retVal);
                         }
                     }
+
+                    // TODO: Should an error be added here since there's no location data on the packet?
                 } else if($poschar == 47 || $poschar == 92
                         || ($poschar >= 65 && $poschar <= 90)
                         || ($poschar >= 97 && $poschar <= 106)) {
@@ -526,12 +467,11 @@ export default class aprsParser {
                 return this.addError(retVal, 'wx_unsupp', 'Positionless');
             }
         // Object
-        } else if($packettype == ';') {
-            if($paclen >= 31) {
-                retVal.type = 'object';
+        } else if ($packettype == ';') {
+            // if($paclen >= 31) { is there a case where this couldn't be met?
+            retVal.type = 'object';
 
-                retVal = this.objectToDecimal(options, body, srcCallsign, retVal);
-            }
+            retVal = this.objectToDecimal(options, body, srcCallsign, retVal);
         // NMEA data
         } else if($packettype == '$') {
             // don't try to parse the weather stations, require "$GP" start
@@ -540,18 +480,20 @@ export default class aprsParser {
                 // so read that one too
                 retVal.type = 'location';
 
-                retVal = this._nmea_to_decimal(options, body.substr(1), srcCallsign, $dstcallsign, retVal);
+                retVal = this._nmea_to_decimal(options, body.substr(1), srcCallsign, dstcallsign, retVal);
             } else if(body.substr(0, 5) == '$ULTW') {
                 retVal.type = 'wx';
-
                 retVal = this._wx_parse_peet_packet(body.substr(5), srcCallsign, retVal);
             }
-        // Item
-        } else if($packettype == ')') {
-            if($paclen >= 18) {
-                retVal.type = 'item';
-                retVal = this._item_to_decimal(body, srcCallsign, retVal);
+            /*
+            else {
+                throw new Error(`test 1 - ${retVal.origpacket}`);
             }
+            */
+        // Item
+        } else if ($packettype == ')') {
+            retVal.type = 'item';
+            retVal = this._item_to_decimal(body, srcCallsign, retVal);
         // Message, bulletin or an announcement
         } else if($packettype === ':') {
             if($paclen >= 11) {
@@ -560,7 +502,11 @@ export default class aprsParser {
 
                 retVal = this.messageParse(body, retVal);
             }
-
+            /*
+            else {
+                throw new Error(`test 2 - ${retVal.origpacket}`);
+            }
+            */
         // Station capabilities
         } else if($packettype == '<') {
             // at least one other character besides '<' required
@@ -765,7 +711,7 @@ export default class aprsParser {
             let $currtstamp = null;
             let $backtstamp = null;
 
-            if(this.checkDate($cyear, $cmonth, $day)) {
+            if(ConversionUtil.CheckDate($cyear, $cmonth, $day)) {
                 if($stamptype === 'z') {
                     //$currtstamp = Date_to_Time($cyear, $cmonth, $day, $hour, $minute, 0);
                     $currtstamp = Math.floor(new Date(Date.UTC($cyear, $cmonth, $cday, $hour, $minute, 0, 0)).getTime() / 1000);
@@ -774,7 +720,7 @@ export default class aprsParser {
                 }
             }
 
-            if(this.checkDate($fwdyear, $fwdmonth, $day)) {
+            if(ConversionUtil.CheckDate($fwdyear, $fwdmonth, $day)) {
                 if($stamptype === 'z') {
                     $fwdtstamp = Math.floor(new Date(Date.UTC($fwdyear, $fwdmonth, $day, $hour, $minute, 0, 0)).getTime() / 1000);
                 } else {
@@ -782,7 +728,7 @@ export default class aprsParser {
                 }
             }
 
-            if(this.checkDate($backyear, $backmonth, $day)) {
+            if(ConversionUtil.CheckDate($backyear, $backmonth, $day)) {
                 if($stamptype === 'z') {
                     $backtstamp = Math.floor(new Date(Date.UTC($backyear, $backmonth, $day, $hour, $minute, 0, 0)).getTime() / 1000);
                 } else {
@@ -933,7 +879,7 @@ export default class aprsParser {
      * @returns {Number} Position resolution in meters based on the number of minute decimal digits.
      */
     private get_posresolution(dec: number): number {
-        return parseFloat((KNOT_TO_KMH * (dec <= -2 ? 600 : 1000) * Math.pow(10, (-1 * dec))).toFixed(4));
+        return parseFloat((ConversionConstantEnum.KNOT_TO_KMH * (dec <= -2 ? 600 : 1000) * Math.pow(10, (-1 * dec))).toFixed(4));
     }
 
     /**
@@ -1172,7 +1118,7 @@ export default class aprsParser {
 
                 // check for invalid date
                 // javascript months are 0 based
-                if(!(this.checkDate($year, parseInt(tmp[2]) - 1, parseInt(tmp[1])))) {
+                if(!(ConversionUtil.CheckDate($year, parseInt(tmp[2]) - 1, parseInt(tmp[1])))) {
                     return this.addError($rethash, 'gprmc_inv_date', `${$year} ${parseInt(tmp[2]) - 1} ${tmp[1]}`);
                 }
 
@@ -1183,6 +1129,7 @@ export default class aprsParser {
                 return this.addError($rethash, 'gprmc_inv_date');
             }
 
+            // TODO: This isn't true for javascript - https://stackoverflow.com/questions/11526504/minimum-and-maximum-date
             // Date_to_Time() can only handle 32-bit unix timestamps,
             // so make sure it is not used for those years that
             // are outside that range.
@@ -1200,7 +1147,7 @@ export default class aprsParser {
             // can't be decoded).
             if((tmp = nmeafields[7].match(/^\s*(\d+(|\.\d+))\s*$/))) {
                 // convert to km/h
-                $rethash.speed = parseFloat(tmp[1]) * KNOT_TO_KMH;
+                $rethash.speed = parseFloat(tmp[1]) * ConversionConstantEnum.KNOT_TO_KMH;
             }
 
             if((tmp = nmeafields[8].match(/^\s*(\d+(|\.\d+))\s*$/))) {
@@ -1241,7 +1188,9 @@ export default class aprsParser {
 
             // we have everything we want, return
             return $rethash;
-        } else if(nmeafields[0] == 'GPGGA') /*{
+        }
+        /*
+            else if(nmeafields[0] == 'GPGGA') {
 
             # we want at least 11 fields
             if (@nmeafields < 11) {
@@ -1380,7 +1329,7 @@ export default class aprsParser {
                 if((match = $speed.match(/^\d{3}$/))) {
                     // force numeric interpretation
                     // and convert to km/h
-                    $rethash.speed = parseInt($speed) * KNOT_TO_KMH;
+                    $rethash.speed = parseInt($speed) * ConversionConstantEnum.KNOT_TO_KMH;
                 }
 
                 $rest = $rest.substr(7);
@@ -1394,7 +1343,7 @@ export default class aprsParser {
                 $rest = $rest.substr(7);
             } else if((tmprest = $rest.match(/^RNG(\d{4})/))) {
                 // radio range, in miles, so convert to km
-                $rethash['radiorange'] = parseInt(tmprest[1]) * MPH_TO_KMH;
+                $rethash['radiorange'] = parseInt(tmprest[1]) * ConversionConstantEnum.MPH_TO_KMH;
                 $rest = $rest.substr(7);
             }
         }
@@ -1403,7 +1352,7 @@ export default class aprsParser {
         // take the first occurrence
         if((tmprest = $rest.match(/^(.*?)\/A=(-\d{5}|\d{6})(.*)$/))) {
             // convert to meters as well
-            $rethash.altitude = parseFloat(tmprest[2]) * FEET_TO_METERS;
+            $rethash.altitude = parseFloat(tmprest[2]) * ConversionConstantEnum.FEET_TO_METERS;
             $rest = tmprest[1] + tmprest[3];
         }
 
@@ -1926,7 +1875,7 @@ export default class aprsParser {
             }
 
             // convert speed to km/h and store
-            $rethash.speed = $speed * KNOT_TO_KMH;
+            $rethash.speed = $speed * ConversionConstantEnum.KNOT_TO_KMH;
         }
 
         // save the symbol table and code
@@ -2078,7 +2027,7 @@ export default class aprsParser {
             // cs is altitude
             let $cs = $c1 * 91 + $s1;
             // convert directly to meters
-            $rethash.altitude = Math.pow(1.002, $cs) * FEET_TO_METERS;
+            $rethash.altitude = Math.pow(1.002, $cs) * ConversionConstantEnum.FEET_TO_METERS;
         } else if($c1 >= 0 && $c1 <= 89) {
             if($c1 == 0) {
                 // special case of north, APRS spec
@@ -2090,10 +2039,10 @@ export default class aprsParser {
             }
 
             // convert directly to km/h
-            $rethash.speed = (Math.pow(1.08, $s1) - 1) * KNOT_TO_KMH;
+            $rethash.speed = (Math.pow(1.08, $s1) - 1) * ConversionConstantEnum.KNOT_TO_KMH;
         } else if($c1 == 90) {
             // convert directly to km
-            $rethash.radiorange = (2 * Math.pow(1.08, $s1)) * MPH_TO_KMH;
+            $rethash.radiorange = (2 * Math.pow(1.08, $s1)) * ConversionConstantEnum.MPH_TO_KMH;
         }
 
         return $rethash;
@@ -2274,7 +2223,7 @@ export default class aprsParser {
         }
 
         if(/^\d+$/.test($wind_gust)) {
-            $w.wind_gust = (parseFloat($wind_gust) * MPH_TO_MS).toFixed(1);
+            $w.wind_gust = (parseFloat($wind_gust) * ConversionConstantEnum.MPH_TO_MS).toFixed(1);
         }
 
         if(/^\d+$/.test($wind_dir)) {
@@ -2282,16 +2231,16 @@ export default class aprsParser {
         }
 
         if(/^\d+$/.test($wind_speed)) {
-            $w.wind_speed = (parseFloat($wind_speed) * MPH_TO_MS).toFixed(1);
+            $w.wind_speed = (parseFloat($wind_speed) * ConversionConstantEnum.MPH_TO_MS).toFixed(1);
         }
 
         if(/^-{0,1}\d+$/.test($temp)) {
-            $w.temp = this.fahrenheitToCelsius(parseInt($temp)).toFixed(1) ;
+            $w.temp = ConversionUtil.FahrenheitToCelsius(parseInt($temp)).toFixed(1) ;
         }
 
         $s = $s.replace(/r(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w.rain_1h = (parseFloat($1) * HINCH_TO_MM).toFixed(1); // during last 1h
+                $w.rain_1h = (parseFloat($1) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // during last 1h
             }
 
             return '';
@@ -2299,7 +2248,7 @@ export default class aprsParser {
 
         $s = $s.replace(/p(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w.rain_24h = (parseFloat($1) * HINCH_TO_MM).toFixed(1); // during last 24h
+                $w.rain_24h = (parseFloat($1) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // during last 24h
             }
 
             return '';
@@ -2307,7 +2256,7 @@ export default class aprsParser {
 
         $s = $s.replace(/P(\d{1,3})/, function($0, $1) {
             if($1) {
-                $w.rain_midnight = (parseFloat($1) * HINCH_TO_MM).toFixed(1); // since midnight
+                $w.rain_midnight = (parseFloat($1) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // since midnight
             }
 
             return '';
@@ -2358,7 +2307,7 @@ export default class aprsParser {
         $s = $s.replace(/s(\d{1,3})/, function($0, $1) {
             // snowfall
             if($1) {
-                $w.snow_24h = ($1 * HINCH_TO_MM).toFixed(1);
+                $w.snow_24h = ($1 * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
             }
 
             return '';
@@ -2437,7 +2386,7 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t != null) {
-            $w.wind_gust = ($t * KMH_TO_MS / 10).toFixed(1);
+            $w.wind_gust = ($t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2447,12 +2396,12 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t != null) {
-            $w.temp = this.fahrenheitToCelsius($t / 10).toFixed(1);   // 1/255 => 1/360
+            $w.temp = ConversionUtil.FahrenheitToCelsius($t / 10).toFixed(1);   // 1/255 => 1/360
         }
 
         $t = $vals.shift();
         if($t != null) {
-            $w.rain_midnight = ($t * HINCH_TO_MM).toFixed(1);
+            $w.rain_midnight = ($t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2480,12 +2429,12 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w.rain_midnight = ($t * HINCH_TO_MM).toFixed(1);
+            $w.rain_midnight = ($t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
         if($t) {
-            $w.wind_speed = ($t * KMH_TO_MS / 10).toFixed(1);
+            $w.wind_speed = ($t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         if($w.temp
@@ -2550,7 +2499,7 @@ export default class aprsParser {
 
         $t = $vals.shift(); // instant wind speed
         if($t != null) {
-            $w.wind_speed = ($t * KMH_TO_MS / 10).toFixed(1);
+            $w.wind_speed = ($t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2560,12 +2509,12 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w.temp = this.fahrenheitToCelsius($t / 10).toFixed(1); // 1/255 => 1/360
+            $w.temp = ConversionUtil.FahrenheitToCelsius($t / 10).toFixed(1); // 1/255 => 1/360
         }
 
         $t = $vals.shift();
         if($t) {
-            $w.rain_midnight = ($t * HINCH_TO_MM).toFixed(1);
+            $w.rain_midnight = ($t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
         $t = $vals.shift();
@@ -2575,7 +2524,7 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w.temp_in = parseFloat(this.fahrenheitToCelsius($t / 10).toFixed(1));   // 1/255 => 1/360
+            $w.temp_in = parseFloat(ConversionUtil.FahrenheitToCelsius($t / 10).toFixed(1));   // 1/255 => 1/360
         }
 
         $t = $vals.shift();
@@ -2601,13 +2550,13 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w['rain_midnight'] = ($t * HINCH_TO_MM).toFixed(1);
+            $w['rain_midnight'] = ($t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
         // avg wind speed
         $t = $vals.shift();
         if($t) {
-            $w.wind_speed = ($t * KMH_TO_MS / 10).toFixed(1);
+            $w.wind_speed = ($t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         // if inside temperature exists but no outside, use inside

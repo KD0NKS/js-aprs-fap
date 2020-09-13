@@ -1,8 +1,4 @@
-import * as chai from 'chai';
-
 const assert = require('assert');
-const should = chai.should();
-const expect = chai.expect;
 
 import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
@@ -351,25 +347,39 @@ describe('FAP - Test parsing mic-e packages', () => {
 
         // check for undefined value, when there is no such data in the packet
         it('Should return resultCode: mice_inv_info', () => {
-            expect('mice_inv_info').to.equal("mice_inv_info");
+            assert.equal(parsed.resultCode, "mice_inv_info");
         });
     });
 
-
-    describe('#parseaprs - Decoding a packet which has had a binary byte removed, not accepting broken packet.', () => {
-        let parsed: aprsPacket = parser.parseaprs('IV3CVN-9>TU3RY9,IR2AO,WIDE1*,WIDE2,qAR,I1EPJ-10:` )T!6S>/>"5G}Riccardo IV3CVN 73! =');
-
-        // check for undefined value, when there is no such data in the packet
-        it('Should return resultCode: mice_inv_info', () => {
-            expect('mice_inv_info').to.equal("mice_inv_info");
-        });
-    });
-
-    describe('Test parsing a mic-e packet with invalid symbol table code', () => {
+    describe('#parseaprs - Test parsing a mic-e packet with invalid symbol table code', () => {
         let packet: aprsPacket = parser.parseaprs("K1LEF-1>S2QPVR,qAR,N7HND:`\'[!>fk/]\"<j}=", { accept_broken_mice: true });
 
         it('Should return a resultCode: sym_inv_table', () => {
-            expect(packet.resultCode).to.equal("sym_inv_table");
+            assert.equal(packet.resultCode, "sym_inv_table");
+        });
+    });
+
+    describe('#parseaprs - Test parsing a mic-e packet with invalid position ambiguity', () => {
+        let packet: aprsPacket = parser.parseaprs('KM6LOU-9>SSULXR,N6EX-4,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`-S@m_Ok/]"4q}=', { accept_broken_mice: true });
+
+        it('Should return a resultCode: mice_amb_inv', () => {
+            assert.equal(packet.resultCode, "mice_amb_inv");
+        });
+    });
+
+    describe('#parseaprs - Test parsing a mic-e packet with invalid characters in the last 3 chars of the dest callsign.', () => {
+        let packet: aprsPacket = parser.parseaprs('N9317>SS5RWI,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`.1?shd\'/":l}K6SBZ', { accept_broken_mice: true });
+
+        it('Should return a resultCode: mice_inv', () => {
+            assert.equal(packet.resultCode, "mice_inv");
+        });
+    });
+
+    describe('#parseaprs - Test parsing a mic-e packet where the dest callsign is too short', () => {
+        let packet: aprsPacket = parser.parseaprs('PU2WAT-9>CMD,qAR,PU2WAT-1:`JAXm{=k/]"<=}=', { accept_broken_mice: true });
+
+        it('Should return a resultCode: mice_short', () => {
+            assert.equal(packet.resultCode, "mice_short");
         });
     });
 });

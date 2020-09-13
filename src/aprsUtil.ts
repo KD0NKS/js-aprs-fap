@@ -1,4 +1,28 @@
     /**
+     * message bit types for mic-e
+     * from left to right, bits a, b and c
+     * standard one bit is 1, custom one bit is 2
+     *
+    const MICE_MESSAGE_TYPES = {
+        '111': 'off duty'
+        , '222': 'custom 0'
+        , '110': 'en route'
+        , '220': 'custom 1'
+        , '101': 'in service'
+        , '202': 'custom 2'
+        , '100': 'returning'
+        , '200': 'custom 3'
+        , '011': 'committed'
+        , '022': 'custom 4'
+        , '010': 'special'
+        , '020': 'custom 5'
+        , '001': 'priority'
+        , '002': 'custom 6'
+        , '000': 'emergency'
+    };
+    */
+
+    /**
      * mice_mbits_to_message($packetdata{'mbits'})
      * Convert mic-e message bits (three numbers 0-2) to a textual message.
      *

@@ -245,6 +245,14 @@ describe('FAP - Test decoding compressed packets', function() {
         });
     });
 
+    describe('Test parsing an invalid location packet... packet length > 106', () => {
+        let packet: aprsPacket = parser.parseaprs("I5NOD-5>APMI06,TCPIP*,qAS,I5NOD:@ARI Altopascio Montecarlo Monte Cascetto Lucca slm 950 metri");
+
+        it('Should return a packet with a result code: packet_invalid', () => {
+            expect(packet.resultCode).to.equal("packet_invalid");
+        });
+    });
+
     describe('Test parsing an invalid compressed location packet', () => {
         let packet: aprsPacket = parser.parseaprs("SR3NRI>APNW01,SR3NJE*,qAR,SR3NDG:/111959zNEW SOFT WX3In1+ TEST");
 

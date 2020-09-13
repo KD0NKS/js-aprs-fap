@@ -2,10 +2,9 @@
   "author": "afairhurst",
   "license": "ISC",
   "name": "js-aprs-fap",
-  "version": "1.0.0",
+  "version": "1.0.1-beta.2",
   "homepage": "https://github.com/KD0NKS/js-aprs-fap",
   "description": "NodeJs library for parsing APRS packets.",
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KD0NKS/js-aprs-fap.git"

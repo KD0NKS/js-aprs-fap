@@ -35,21 +35,22 @@
   "scripts": {
     "tsc": "./node_modules/.bin/tsc",
     "setup": "npm install",
-    "build": "tsc",
+    "build": "npm run tsc",
     "test": "nyc mocha",
-    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "prepare": "npm run build"
   },
   "devDependencies": {
-    "@istanbuljs/nyc-config-typescript": "^1.0.0",
-    "@types/chai": "^4.2.4",
-    "@types/mocha": "^7.0.0",
-    "@types/node": "^13.1.0",
+    "@istanbuljs/nyc-config-typescript": "^1.0.1",
+    "@types/chai": "^4.2.12",
+    "@types/mocha": "^8.0.3",
+    "@types/node": "^14.10.1",
     "chai": "^4.2.0",
-    "coveralls": "^3.0.7",
-    "mocha": "^7.0.1",
-    "nyc": "^15.0.0",
-    "source-map-support": "^0.5.16",
-    "ts-node": "^8.6.2",
-    "typescript": "^3.6.4"
+    "coveralls": "^3.1.0",
+    "mocha": "^8.1.3",
+    "nyc": "^15.1.0",
+    "source-map-support": "^0.5.19",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.2"
   }
 }

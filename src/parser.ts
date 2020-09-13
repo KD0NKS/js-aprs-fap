@@ -1728,7 +1728,6 @@ export default class aprsParser {
         let $mice_fixed;
         let $symboltable = $packet.charAt(7);
 
-        // TODO: Too sober to figure this out right now...
         if(!(tmp = $packet.match(/^[\x26-\x7f][\x26-\x61][\x1c-\x7f]{2}[\x1c-\x7d][\x1c-\x7f][\x21-\x7b\x7d][\/\\A-Z0-9]/))) {
             // If the accept_broken_mice option is given, check for a known
             // corruption in the packets and try to fix it - aprsd is

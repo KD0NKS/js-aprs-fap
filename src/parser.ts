@@ -468,7 +468,7 @@ export default class aprsParser {
             }
         // Object
         } else if ($packettype == ';') {
-            // if($paclen >= 31) { is there a case where this couldn't be met?
+            // if($paclen >= 31) { is there a case where this couldn't be
             retVal.type = 'object';
 
             retVal = this.objectToDecimal(options, body, srcCallsign, retVal);

@@ -467,7 +467,8 @@ export default class aprsParser {
                 return this.addError(retVal, 'wx_unsupp', 'Positionless');
             }
         // Object
-        } else if($packettype == ';') {
+        } else if ($packettype == ';') {
+            // if($paclen >= 31) { is there a case where this couldn't be
             retVal.type = 'object';
 
             retVal = this.objectToDecimal(options, body, srcCallsign, retVal);
@@ -483,9 +484,12 @@ export default class aprsParser {
             } else if(body.substr(0, 5) == '$ULTW') {
                 retVal.type = 'wx';
                 retVal = this._wx_parse_peet_packet(body.substr(5), srcCallsign, retVal);
-            } else {
+            }
+            /*
+            else {
                 throw new Error(`test 1 - ${retVal.origpacket}`);
             }
+            */
         // Item
         } else if ($packettype == ')') {
             retVal.type = 'item';
@@ -497,9 +501,12 @@ export default class aprsParser {
                 retVal.type = 'message';
 
                 retVal = this.messageParse(body, retVal);
-            } else {
+            }
+            /*
+            else {
                 throw new Error(`test 2 - ${retVal.origpacket}`);
             }
+            */
         // Station capabilities
         } else if($packettype == '<') {
             // at least one other character besides '<' required
@@ -1082,18 +1089,6 @@ export default class aprsParser {
             let $second;
 
             if((tmp = nmeafields[1].match(/^\s*(\d{2})(\d{2})(\d{2})(|\.\d+)\s*$/))) {
-                if(parseInt(tmp[1]) > 23) {
-                    console.log(`if 1 - ${$rethash.origpacket}`);
-                }
-
-                if(parseInt(tmp[2]) > 59) {
-                    console.log(`if 2 - ${$rethash.origpacket}`);
-                }
-
-                if(parseInt(tmp[3]) > 59) {
-                    console.log(`if 3 - ${$rethash.origpacket}`);
-                }
-
                 // if seconds has a decimal part, ignore it
                 // leap seconds are not taken into account...
                 if(parseInt(tmp[1]) > 23 || parseInt(tmp[2]) > 59 || parseInt(tmp[3]) > 59) {
@@ -1682,7 +1677,6 @@ export default class aprsParser {
         let $mice_fixed;
         let $symboltable = $packet.charAt(7);
 
-        // TODO: Too sober to figure this out right now...
         if(!(tmp = $packet.match(/^[\x26-\x7f][\x26-\x61][\x1c-\x7f]{2}[\x1c-\x7d][\x1c-\x7f][\x21-\x7b\x7d][\/\\A-Z0-9]/))) {
             // If the accept_broken_mice option is given, check for a known
             // corruption in the packets and try to fix it - aprsd is

@@ -1,7 +1,9 @@
+.vscode
 build/
 coverage/
 node_modules/
 *.js
+lib/
 dist/
 .nyc_output/
 

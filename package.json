@@ -42,15 +42,16 @@
   "scripts": {
     "tsc": "./node_modules/.bin/tsc",
     "setup": "npm install",
-    "build": "tsc",
+    "build": "npm run tsc",
     "test": "nyc mocha",
-    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/chai": "^4.2.12",
     "@types/mocha": "^8.0.3",
-    "@types/node": "^14.10.0",
+    "@types/node": "^14.10.1",
     "chai": "^4.2.0",
     "coveralls": "^3.1.0",
     "mocha": "^8.1.3",

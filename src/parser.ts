@@ -1,130 +1,11 @@
-import aprsPacket from './aprsPacket';
-import ConversionConstantEnum from './ConversionConstantEnum';
-import ConversionUtil from './ConversionUtil';
-import digipeater from './digipeater';
-import telemetry from './telemetry';
-import wx from './wx';
-
-const RESULT_MESSAGES: any = {
-    'unknown': 'Unsupported packet format'
-    , 'packet_no': 'No packet given to parse'
-    , 'packet_short': 'Too short packet'
-    , 'packet_nobody': 'No body in packet'
-    , 'srccall_noax25': 'Source callsign is not a valid AX.25 call'
-    , 'srccall_badchars': 'Source callsign contains bad characters'
-    , 'dstpath_toomany': 'Too many destination path components to be AX.25'
-    , 'dstcall_none': 'No destination field in packet'
-    , 'dstcall_noax25': 'Destination callsign is not a valid AX.25 call'
-    , 'digicall_noax25': 'Digipeater callsign is not a valid AX.25 call'
-    , 'digicall_badchars': 'Digipeater callsign contains bad characters'
-    , 'timestamp_inv_loc': 'Invalid timestamp in location'
-    , 'timestamp_inv_obj': 'Invalid timestamp in object'
-    , 'timestamp_inv_sta': 'Invalid timestamp in status'
-    , 'timestamp_inv_gpgga': 'Invalid timestamp in GPGGA sentence'
-    , 'timestamp_inv_gpgll': 'Invalid timestamp in GPGLL sentence'
-    , 'packet_invalid': 'Invalid packet'
-    , 'nmea_inv_cval': 'Invalid coordinate value in NMEA sentence'
-    , 'nmea_large_ew': 'Too large value in NMEA sentence (east/west)'
-    , 'nmea_large_ns': 'Too large value in NMEA sentence (north/south)'
-    , 'nmea_inv_sign': 'Invalid lat/long sign in NMEA sentence'
-    , 'nmea_inv_cksum': 'Invalid checksum in NMEA sentence'
-    , 'gprmc_fewfields': 'Less than ten fields in GPRMC sentence '
-    , 'gprmc_nofix': 'No GPS fix in GPRMC sentence'
-    , 'gprmc_inv_time': 'Invalid timestamp in GPRMC sentence'
-    , 'gprmc_inv_date': 'Invalid date in GPRMC sentence'
-    , 'gprmc_date_out': 'GPRMC date does not fit in an Unix timestamp'
-    , 'gpgga_fewfields': 'Less than 11 fields in GPGGA sentence'
-    , 'gpgga_nofix': 'No GPS fix in GPGGA sentence'
-    , 'gpgll_fewfields': 'Less than 5 fields in GPGLL sentence'
-    , 'gpgll_nofix': 'No GPS fix in GPGLL sentence'
-    , 'nmea_unsupp': 'Unsupported NMEA sentence type'
-    , 'obj_short': 'Too short object'                                       // This cannot be hit by the perl parser
-    , 'obj_inv': 'Invalid object'
-    , 'obj_dec_err': 'Error in object location decoding'
-    , 'item_short': 'Too short item'                                        // This cannot be hit by the perl parser
-    , 'item_inv': 'Invalid item'
-    , 'item_dec_err': 'Error in item location decoding'
-    , 'loc_short': 'Too short uncompressed location'
-    , 'loc_inv': 'Invalid uncompressed location'
-    , 'loc_large': 'Degree value too large'
-    , 'loc_amb_inv': 'Invalid position ambiguity'
-    , 'mice_short': 'Too short mic-e packet'
-    , 'mice_inv': 'Invalid characters in mic-e packet'
-    , 'mice_inv_info': 'Invalid characters in mic-e information field'
-    , 'mice_amb_large': 'Too much position ambiguity in mic-e packet'
-    , 'mice_amb_inv': 'Invalid position ambiguity in mic-e packet'
-    , 'mice_amb_odd': 'Odd position ambiguity in mic-e packet'
-    , 'comp_inv': 'Invalid compressed packet'
-    , 'msg_inv': 'Invalid message packet'
-    , 'wx_unsupp': 'Unsupported weather format'
-//    , 'user_unsupp': 'Unsupported user format'    // Not Used
-    , 'dx_inv_src': 'Invalid DX spot source callsign'
-    , 'dx_inf_freq': 'Invalid DX spot frequency'
-    , 'dx_no_dx': 'No DX spot callsign found'
-    , 'tlm_inv': 'Invalid telemetry packet'
-    , 'tlm_large': 'Too large telemetry value'
-    , 'tlm_unsupp': 'Unsupported telemetry'
-    , 'exp_unsupp': 'Unsupported experimental'
-    , 'sym_inv_table': 'Invalid symbol table or overlay'
-};
-
-/**
- * A list of mappings from GPSxyz (or SPCxyz)
- * to APRS symbols. Overlay characters (z) are
- * not handled here
- */
-const DST_SYMBOLS: any = {
-    'BB': '/!', 'BC': '/"', 'BD': '/#',  'BE': '/$', 'BF': '/%', 'BG': '/&', 'BH': '/\'', 'BI': '/(!'
-    , 'BJ': '/)', 'BK': '/*', 'BL': '/+',  'BM': '/,)' , 'BN': '/-', 'BO': '/.', 'BP': '//'
-    , 'P0': '/0', 'P1': '/1', 'P2': '/2', 'P3': '/3'
-    , 'P4': '/4', 'P5': '/5', 'P6': '/6', 'P7': '/7'
-    , 'P8': '/8', 'P9': '/9'
-    , 'MR': '/:', 'MS': '/;', 'MT': '/<', 'MU': '/='
-    , 'MV': '/>', 'MW': '/?', 'MX': '/@'
-    , 'PA': '/A', 'PB': '/B', 'PC': '/C', 'PD': '/D'
-    , 'PE': '/E', 'PF': '/F', 'PG': '/G', 'PH': '/H'
-    , 'PI': '/I', 'PJ': '/J', 'PK': '/K', 'PL': '/L'
-    , 'PM': '/M', 'PN': '/N', 'PO': '/O', 'PP': '/P'
-    , 'PQ': '/Q', 'PR': '/R', 'PS': '/S', 'PT': '/T'
-    , 'PU': '/U', 'PV': '/V', 'PW': '/W', 'PX': '/X'
-    , 'PY': '/Y', 'PZ': '/Z'
-    , 'HS': '/[', 'HT': '/\\', 'HU': '/]', 'HV': '/^'
-    , 'HW': '/_', 'HX': '/`'
-    , 'LA': '/a', 'LB': '/b', 'LC': '/c', 'LD': '/d'
-    , 'LE': '/e', 'LF': '/f', 'LG': '/g', 'LH': '/h'
-    , 'LI': '/i', 'LJ': '/j', 'LK': '/k', 'LL': '/l'
-    , 'LM': '/m', 'LN': '/n', 'LO': '/o', 'LP': '/p'
-    , 'LQ': '/q', 'LR': '/r', 'LS': '/s', 'LT': '/t'
-    , 'LU': '/u', 'LV': '/v', 'LW': '/w', 'LX': '/x'
-    , 'LY': '/y', 'LZ': '/z'
-    , 'J1': '/{', 'J2': '/|', 'J3': '/}', 'J4': '/~'
-    , 'OB': '\\!', 'OC': '\\"', 'OD': '\\#', 'OE': '\\$'
-    , 'OF': '\\%', 'OG': '\\&', 'OH': '\\\'', 'OI': '\\('
-    , 'OJ': '\\)', 'OK': '\\*', 'OL': '\\+', 'OM': '\\,'
-    , 'ON': '\\-', 'OO': '\\.', 'OP': '\\/'
-    , 'A0': '\\0', 'A1': '\\1', 'A2': '\\2', 'A3': '\\3'
-    , 'A4': '\\4', 'A5': '\\5', 'A6': '\\6', 'A7': '\\7'
-    , 'A8': '\\8', 'A9': '\\9'
-    , 'NR': '\\:', 'NS': '\\;', 'NT': '\\<', 'NU': '\\='
-    , 'NV': '\\>', 'NW': '\\?', 'NX': '\\@'
-    , 'AA': '\\A', 'AB': '\\B', 'AC': '\\C', 'AD': '\\D'
-    , 'AE': '\\E', 'AF': '\\F', 'AG': '\\G', 'AH': '\\H'
-    , 'AI': '\\I', 'AJ': '\\J', 'AK': '\\K', 'AL': '\\L'
-    , 'AM': '\\M', 'AN': '\\N', 'AO': '\\O', 'AP': '\\P'
-    , 'AQ': '\\Q', 'AR': '\\R', 'AS': '\\S', 'AT': '\\T'
-    , 'AU': '\\U', 'AV': '\\V', 'AW': '\\W', 'AX': '\\X'
-    , 'AY': '\\Y', 'AZ': '\\Z'
-    , 'DS': '\\[', 'DT': '\\\\', 'DU': '\\]', 'DV': '\\^'
-    , 'DW': '\\_', 'DX': '\\`'
-    , 'SA': '\\a', 'SB': '\\b', 'SC': '\\c', 'SD': '\\d'
-    , 'SE': '\\e', 'SF': '\\f', 'SG': '\\g', 'SH': '\\h'
-    , 'SI': '\\i', 'SJ': '\\j', 'SK': '\\k', 'SL': '\\l'
-    , 'SM': '\\m', 'SN': '\\n', 'SO': '\\o', 'SP': '\\p'
-    , 'SQ': '\\q', 'SR': '\\r', 'SS': '\\s', 'ST': '\\t'
-    , 'SU': '\\u', 'SV': '\\v', 'SW': '\\w', 'SX': '\\x'
-    , 'SY': '\\y', 'SZ': '\\z'
-    , 'Q1': '\\{', 'Q2': '\\|', 'Q3': '\\}', 'Q4': '\\~'
-};
+import aprsPacket from './aprsPacket'
+import ConversionConstantEnum from './ConversionConstantEnum'
+import ConversionUtil from './ConversionUtil'
+import digipeater from './digipeater'
+import { DST_SYMBOLS } from './DSTSymbols'
+import { RESULT_MESSAGES } from './ResultMessages'
+import telemetry from './telemetry'
+import wx from './wx'
 
 export default class aprsParser {
     constructor() { }
@@ -167,8 +48,6 @@ export default class aprsParser {
 
         return packet;
     }
-
-
 
     /**
      * =item checkAX25Call()

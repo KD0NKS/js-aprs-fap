@@ -4,9 +4,10 @@
  * a cut 'n paste operation
  * Tue Dec 11 2007, Hessu, OH7LZB
  */
-import aprsPacket from '../src/aprsPacket';
-import aprsParser from '../src/parser';
-import * as chai from 'chai';
+import aprsPacket from '../src/aprsPacket'
+import aprsParser from '../src/parser'
+import * as chai from 'chai'
+import { PacketTypeEnum } from '../src/enums'
 
 const assert = chai.assert;
 
@@ -22,7 +23,7 @@ describe('FAP - Test parsing a bad packet', function() {
         })
 
         it('Should return a type: object', function() {
-            assert.equal('object', parsed.type);
+            assert.equal(PacketTypeEnum.OBJECT, parsed.type);
         })
     })
 
@@ -37,7 +38,7 @@ describe('FAP - Test parsing a bad packet', function() {
         })
 
         it('Should return a type: object', function () {
-            assert.equal('object', parsed.type);
+            assert.equal(PacketTypeEnum.OBJECT, parsed.type);
         })
     })
 

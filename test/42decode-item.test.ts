@@ -3,6 +3,7 @@
 const assert = require('assert');
 
 import aprsPacket from '../src/aprsPacket';
+import { PacketTypeEnum } from '../src/enums';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test item parsing', function() {
@@ -30,7 +31,7 @@ describe('FAP - Test item parsing', function() {
         });
 
         it('Should return type value: item', function() {
-            assert.equal('item', parsed.type);
+            assert.equal(PacketTypeEnum.ITEM, parsed.type);
         });
 
         it('Should return alive value: true', function() {
@@ -88,7 +89,7 @@ describe('FAP - Test item parsing', function() {
         });
 
         it('Should return type value: item', function() {
-            assert.equal('item', parsed.type);
+            assert.equal(PacketTypeEnum.ITEM, parsed.type);
         });
 
         it('Should return alive value: false', function() {
@@ -146,7 +147,7 @@ describe('FAP - Test item parsing', function() {
         });
 
         it('Should return type value: item', function() {
-            assert.equal('item', parsed.type);
+            assert.equal(PacketTypeEnum.ITEM, parsed.type);
         });
 
         it('Should return alive value: true', function() {

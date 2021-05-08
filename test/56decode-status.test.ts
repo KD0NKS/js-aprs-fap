@@ -2,8 +2,8 @@ import aprsPacket from '../src/aprsPacket'
 import aprsParser from '../src/parser'
 import * as chai from 'chai';
 import { RESULT_MESSAGES } from '../src/ResultMessages'
-import assert = require('assert')
 
+const assert = chai.assert;
 const should = chai.should();
 
 describe('FAP - Status message decoding', function() {

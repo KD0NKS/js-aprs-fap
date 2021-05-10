@@ -6,6 +6,7 @@ const assert = require('assert');
 const should = chai.should();
 
 import aprsPacket from '../src/aprsPacket';
+import { PacketTypeEnum } from '../src/enums';
 import aprsParser from '../src/parser';
 
 describe('FAP - test bad packets', () => {
@@ -28,7 +29,7 @@ describe('FAP - test bad packets', () => {
         });
 
         it('Should return a type: location', () => {
-            assert.equal('location', parsed.type);
+            assert.equal(PacketTypeEnum.LOCATION, parsed.type);
         });
 
         it('Should return the source call sign: ' + $srccall, () => {

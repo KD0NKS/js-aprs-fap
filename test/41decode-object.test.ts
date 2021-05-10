@@ -2,11 +2,11 @@
 // Tue Dec 11 2007, Hessu, OH7LZB
 import * as chai from 'chai';
 
-const assert = require('assert');
-const should = chai.should();
-const expect = chai.expect;
+const assert = require('assert')
+const expect = chai.expect
 
 import aprsPacket from '../src/aprsPacket';
+import { PacketTypeEnum } from '../src/enums';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test parsing object', () => {
@@ -38,7 +38,7 @@ describe('FAP - Test parsing object', () => {
         });
 
         it('Should return type value: object', () => {
-            assert.equal('object', parsed.type);
+            assert.equal(PacketTypeEnum.OBJECT, parsed.type);
         });
 
         it('Should return object name: \'SRAL HQ  \'', () => {

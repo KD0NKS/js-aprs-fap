@@ -8,6 +8,7 @@ const assert = require('assert');
 const should = chai.should();
 
 import aprsPacket from '../src/aprsPacket';
+import { PacketTypeEnum } from '../src/enums';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test decoding GPRMC NMEA', function() {
@@ -35,7 +36,7 @@ describe('FAP - Test decoding GPRMC NMEA', function() {
         });
 
         it('Should return the location type: location', function() {
-            assert.equal('location', parsed.type);
+            assert.equal(PacketTypeEnum.LOCATION, parsed.type);
         });
 
         it('Should return the type: nmea', function() {

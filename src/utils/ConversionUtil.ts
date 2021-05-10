@@ -8,7 +8,7 @@ export default class ConversionUtil {
      * @param {Number} day day for the date
      * @returns {boolean} Whether or not the given date is valid
      */
-    static CheckDate = function (year: number, month: number, day: number): boolean {
+    static CheckDate(year: number, month: number, day: number): boolean {
         var d = new Date(year, month, day);
 
         return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;

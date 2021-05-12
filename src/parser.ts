@@ -1,6 +1,6 @@
 import aprsPacket from './aprsPacket'
 import { ConversionConstantEnum } from './enums'
-import ConversionUtil from './utils/ConversionUtil'
+import { ConversionUtil } from './utils/ConversionUtil'
 import digipeater from './digipeater'
 import { DST_SYMBOLS } from './DSTSymbols'
 import { RESULT_MESSAGES } from './ResultMessages'

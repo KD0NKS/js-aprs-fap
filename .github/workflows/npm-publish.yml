@@ -1,9 +1,7 @@
 name: npm-publish
 
 on:
-  push:
-    branches: [master]
-  pull_request:
+  workflow_dispatch:
     branches: [ master ]
 
 jobs:
@@ -25,7 +23,7 @@ jobs:
       - name: npm build
         run: npm run build
 
-      - name: npm pack
-        run: npm pack
-
-
+      - name: npm publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

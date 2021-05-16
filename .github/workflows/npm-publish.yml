@@ -15,9 +15,10 @@ jobs:
         with:
           node-version: 16
           check-latest: true
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: npm install
-        run: npm install
+      - name: npm ci
+        run: npm ci
 
       - name: npm test
         run: npm test

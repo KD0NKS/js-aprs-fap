@@ -6,10 +6,7 @@ is listed here is directly copied from the original repository.
 
 ## Goals - work in progress
 - Be lightweight
-  - Consuming world stream with Celeron 900 processor, 4GB ram, while utilizing the machine for development.
 - Parse all message types
-- Respond appropriately to all queries
-- Implement full APRS spec
 - Full code coverage with unit tests
 
 ## Implemented features - parse

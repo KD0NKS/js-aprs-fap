@@ -1,4 +1,4 @@
-export default class ConversionUtil {
+export class ConversionUtil {
     /**
      * Utility method to replace perl's Date-Calc check_date method.
      * Given the year, month, and day, this checks to see if it it's a valid date.

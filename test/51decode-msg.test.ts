@@ -4,7 +4,7 @@ const assert = require('assert');
 const should = chai.should();
 
 import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/enums';
+import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
 import aprsParser from '../src/parser';
 
 describe('Test parsing messages', function() {

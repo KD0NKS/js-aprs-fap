@@ -33,9 +33,6 @@
     ],
     "include": [
       "src/**/*.ts"
-    ],
-    "exclude": [
-      "src/enums/ConversionConstantEnum.ts"
     ]
   },
   "scripts": {

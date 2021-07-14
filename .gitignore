@@ -1,10 +1,8 @@
 .vscode
+*.js
 build/
 coverage/
-node_modules/
-*.js
 lib/
 dist/
 .nyc_output/
-
-yarn.lock
+node_modules/

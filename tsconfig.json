@@ -14,8 +14,8 @@
     "resolveJsonModule": true
   },
   "include": [
-    "index.ts"
-    , "src/**/*"
+    "index.ts",
+    "src/**/*"
   ],
   "exclude": [
     ".nyc_output",

@@ -34,6 +34,7 @@
   },
   "scripts": {
     "tsc": "./node_modules/.bin/tsc",
+    "nyc": "./node_modules/.bin/nyc",
     "setup": "npm install",
     "build": "npm run tsc",
     "test": "nyc mocha",

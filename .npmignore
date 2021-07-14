@@ -1,9 +1,8 @@
-.github
-.nyc_output
-.vscode
-build/
-coverage/
-lib/
-node_modules/
-
-package-lock.json
+#.github
+#.nyc_output
+#.vscode
+#build/
+#coverage/
+#lib/
+#node_modules/
+#package-lock.json

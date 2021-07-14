@@ -1,11 +1,12 @@
 import aprsPacket from './aprsPacket'
-import ConversionConstantEnum from './ConversionConstantEnum'
-import ConversionUtil from './ConversionUtil'
+import { ConversionConstantEnum } from './enums'
+import { ConversionUtil } from './utils/ConversionUtil'
 import digipeater from './digipeater'
 import { DST_SYMBOLS } from './DSTSymbols'
 import { RESULT_MESSAGES } from './ResultMessages'
 import telemetry from './telemetry'
 import wx from './wx'
+import { PacketTypeEnum } from './enums'
 
 export default class aprsParser {
     constructor() { }
@@ -253,7 +254,7 @@ export default class aprsParser {
             // mic-encoder data
             // minimum body length 9 chars
             if($paclen >= 9) {
-                retVal.type = 'location';
+                retVal.type = PacketTypeEnum.LOCATION
 
                 retVal = this._mice_to_decimal(body.substr(1), dstcallsign, srcCallsign, retVal, options);
                 //return $rethash;
@@ -266,7 +267,7 @@ export default class aprsParser {
             retVal.messaging = !($packettype == '!' || $packettype == '/');
 
             if($paclen >= 14) {
-                retVal.type = 'location';
+                retVal.type = PacketTypeEnum.LOCATION;
 
                 if($packettype == '/' || $packettype == '@') {
                     // With a prepended timestamp, check it and jump over.
@@ -327,7 +328,7 @@ export default class aprsParser {
                     }
                 } else if($poschar == 33) { // '!'
                     // Weather report from Ultimeter 2000
-                    retVal.type = 'wx';
+                    retVal.type = PacketTypeEnum.WEATHER
 
                     retVal = this._wx_parse_peet_logging(body.substr(1), srcCallsign, retVal);
                 } else {
@@ -339,7 +340,7 @@ export default class aprsParser {
         // Weather report
         } else if($packettype == '_') {
             if(/_(\d{8})c[\- \.\d]{1,3}s[\- \.\d]{1,3}/.test(body)) {
-                retVal.type = 'wx';
+                retVal.type = PacketTypeEnum.WEATHER
 
                 retVal = this._wx_parse(body.substr(9), retVal);
             } else {
@@ -348,7 +349,7 @@ export default class aprsParser {
         // Object
         } else if ($packettype == ';') {
             // if($paclen >= 31) { is there a case where this couldn't be
-            retVal.type = 'object';
+            retVal.type = PacketTypeEnum.OBJECT
 
             retVal = this.objectToDecimal(options, body, srcCallsign, retVal);
         // NMEA data
@@ -357,11 +358,11 @@ export default class aprsParser {
             if(body.substr(0, 3) == '$GP') {
                 // dstcallsign can contain the APRS symbol to use,
                 // so read that one too
-                retVal.type = 'location';
+                retVal.type = PacketTypeEnum.LOCATION
 
                 retVal = this._nmea_to_decimal(options, body.substr(1), srcCallsign, dstcallsign, retVal);
             } else if(body.substr(0, 5) == '$ULTW') {
-                retVal.type = 'wx';
+                retVal.type = PacketTypeEnum.WEATHER
                 retVal = this._wx_parse_peet_packet(body.substr(5), srcCallsign, retVal);
             }
             /*
@@ -371,13 +372,13 @@ export default class aprsParser {
             */
         // Item
         } else if ($packettype == ')') {
-            retVal.type = 'item';
+            retVal.type = PacketTypeEnum.ITEM
             retVal = this._item_to_decimal(body, srcCallsign, retVal);
         // Message, bulletin or an announcement
         } else if($packettype === ':') {
             if($paclen >= 11) {
                 // all are labeled as messages for the time being
-                retVal.type = 'message';
+                retVal.type = PacketTypeEnum.MESSAGE
 
                 retVal = this.messageParse(body, retVal);
             }
@@ -390,7 +391,7 @@ export default class aprsParser {
         } else if($packettype == '<') {
             // at least one other character besides '<' required
             if($paclen >= 2) {
-                retVal.type = 'capabilities';
+                retVal.type = PacketTypeEnum.CAPABILITIES
 
                 retVal = this._capabilities_parse(body.substr(1), srcCallsign, retVal);
             }
@@ -398,25 +399,28 @@ export default class aprsParser {
         } else if($packettype == '>') {
             // we can live with empty status reports
             if($paclen >= 1) {
-                retVal.type = 'status';
+                retVal.type = PacketTypeEnum.STATUS
 
                 retVal = this._status_parse(options, body.substr(1), srcCallsign, retVal)
             }
         // Telemetry
         } else if(/^T#(.*?),(.*)$/.test(body)) {
-            retVal.type = 'telemetry';
+            retVal.type = PacketTypeEnum.TELEMETRY
 
             retVal = this._telemetry_parse(body.substr(2), retVal);
         // DX spot
-        } else if(/^DX\s+de\s+(.*?)\s*[:>]\s*(.*)$/i.test(body)) {
+        }
+        /*
+        else if (/^DX\s+de\s+(.*?)\s*[:>]\s*(.*)$/i.test(body)) {
             var tmp: string[];
             tmp = body.match(/^DX\s+de\s+(.*?)\s*[:>]\s*(.*)$/i);
 
-            retVal.type = 'dx';
+            retVal.type = PacketTypeEnum.DX
 
             retVal = this._dx_parse(tmp[1], tmp[2], retVal);
         //# Experimental
-        } else if(/^\{\{/i.test(body)) {
+        } */
+        else if(/^\{\{/i.test(body)) {
             return this.addError(retVal, 'exp_unsupp');
         // When all else fails, try to look for a !-position that can
         // occur anywhere within the 40 first characters according
@@ -425,7 +429,7 @@ export default class aprsParser {
             let $pos = body.indexOf('!');
 
             if($pos >= 0 && $pos <= 39) {
-                retVal.type = 'location';
+                retVal.type = PacketTypeEnum.LOCATION
                 retVal.messaging = false;
 
                 let $pchar = body.substr($pos + 1, 1);
@@ -662,7 +666,7 @@ export default class aprsParser {
 
             // catch telemetry messages
             if(/^(BITS|PARM|UNIT|EQNS)\./i.test($message)) {
-                retVal.type = 'telemetry-message';
+                retVal.type = PacketTypeEnum.TELEMETRY_MESSAGE
             }
 
             // messages cannot contain |, ~, or {
@@ -1222,7 +1226,7 @@ export default class aprsParser {
                 $rest = $rest.substr(7);
             } else if((tmprest = $rest.match(/^RNG(\d{4})/))) {
                 // radio range, in miles, so convert to km
-                $rethash['radiorange'] = parseInt(tmprest[1]) * ConversionConstantEnum.MPH_TO_KMH;
+                $rethash.radiorange = parseInt(tmprest[1]) * ConversionConstantEnum.MPH_TO_KMH;
                 $rest = $rest.substr(7);
             }
         }
@@ -1256,7 +1260,7 @@ export default class aprsParser {
         // anything is left (trim unprintable chars
         // out first and white space from both ends)
         if($rest.length > 0) {
-            $rethash['comment'] = $rest.trim();
+            $rethash.comment = $rest.trim();
         }
 
         // Always succeed as these are optional
@@ -1381,7 +1385,7 @@ export default class aprsParser {
         // Check the APRS data extension and possible comments,
         // unless it is a weather report (we don't want erroneus
         // course/speed figures and weather in the comments..)
-        if($rethash['symbolcode'] != '_') {
+        if($rethash.symbolcode != '_') {
             $rethash = this._comments_to_decimal($packet.substr($locationoffset), $srccallsign, $rethash);
         }
 
@@ -1416,7 +1420,7 @@ export default class aprsParser {
 
             $symboltable = matches[4];
 
-            $rethash['symbolcode'] = matches[8];
+            $rethash.symbolcode = matches[8];
 
             if($sind == 'S') {
                 $issouth = 1;
@@ -1745,7 +1749,7 @@ export default class aprsParser {
 
             // also zero course is saved, which means unknown
             if($course >= 0) {
-                $rethash['course'] = $course;
+                $rethash.course = $course;
             }
 
             // do some important adjustements
@@ -1990,14 +1994,12 @@ export default class aprsParser {
      * Parses the body of a DX spot packet. Returns the following
      * hash elements: dxsource (source of the info), dxfreq (frequency),
      * dxcall (DX callsign) and dxinfo (info string).
-     */
+     *
     private _dx_parse($sourcecall: string, $info: string, $rethash: aprsPacket): aprsPacket {
-
         if(!this.checkAX25Call($sourcecall)) {
             return this.addError($rethash, 'dx_inv_src', $sourcecall);
         }
 
-        /*
         $rethash['dxsource'] = $sourcecall;
 
         $info = $info.replace(/^\s*(.*?)\s*$/, $1); // strip whitespace
@@ -2022,13 +2024,12 @@ export default class aprsParser {
 
         $info = $info.match(/\s+/ /g);
         $rethash['dxinfo'] = $info;
-        *
 
         return 1;
-        */
 
         return $rethash;
     }
+    */
 
     /**
      * _wx_parse($s, $rethash)
@@ -2429,7 +2430,7 @@ export default class aprsParser {
 
         $t = $vals.shift();
         if($t) {
-            $w['rain_midnight'] = ($t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
+            $w.rain_midnight = ($t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
         // avg wind speed

@@ -8,6 +8,7 @@ const assert = require('assert');
 const should = chai.should();
 
 import aprsPacket from '../src/aprsPacket';
+import { PacketTypeEnum } from '../src/enums';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test decoding uncompressed packets', function() {
@@ -43,7 +44,7 @@ describe('FAP - Test decoding uncompressed packets', function() {
         });
 
         it('Should return a type: location', function() {
-            assert.equal('location', parsed.type);
+            assert.equal(PacketTypeEnum.LOCATION, parsed.type);
         });
 
         it('Should return 3 valid digis', function() {

@@ -1,4 +1,4 @@
-# js-aprs-fap ![npm](https://img.shields.io/npm/v/js-aprs-fap) [![Build Status](https://github.com/KD0NKS/js-aprs-fap/actions/workflows/build-and-test.yml/badge.svg?branch=master)](https://github.com/KD0NKS/js-aprs-fap/actions/workflows/build-and-test.yml) [![Coverage Status](https://coveralls.io/repos/github/KD0NKS/js-aprs-fap/badge.svg?branch=master)](https://coveralls.io/github/KD0NKS/js-aprs-fap?branch=master)
+# js-aprs-fap [![npm](https://img.shields.io/npm/v/js-aprs-fap)](https://www.npmjs.com/package/js-aprs-fap) [![Build Status](https://github.com/KD0NKS/js-aprs-fap/actions/workflows/build-and-test.yml/badge.svg?branch=master)](https://github.com/KD0NKS/js-aprs-fap/actions/workflows/build-and-test.yml) [![Coverage Status](https://coveralls.io/repos/github/KD0NKS/js-aprs-fap/badge.svg?branch=master)](https://coveralls.io/github/KD0NKS/js-aprs-fap?branch=master)
 APRS is a registered trademark Bob Bruninga, WB4APR.
 
 This is an APRS parser based on [Ham::APRS::FAP](https://github.com/hessu/perl-aprs-fap) rewritten in JavaScript.  Therefore, much of what
@@ -6,10 +6,7 @@ is listed here is directly copied from the original repository.
 
 ## Goals - work in progress
 - Be lightweight
-  - Consuming world stream with Celeron 900 processor, 4GB ram, while utilizing the machine for development.
 - Parse all message types
-- Respond appropriately to all queries
-- Implement full APRS spec
 - Full code coverage with unit tests
 
 ## Implemented features - parse

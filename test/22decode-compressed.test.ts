@@ -9,6 +9,7 @@ const should = chai.should();
 const expect = chai.expect;
 
 import aprsPacket from '../src/aprsPacket';
+import { PacketTypeEnum } from '../src/enums';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test decoding compressed packets', function() {
@@ -44,7 +45,7 @@ describe('FAP - Test decoding compressed packets', function() {
         });
 
         it('Should return a type: location', function() {
-            assert.equal('location', parsed.type);
+            assert.equal(PacketTypeEnum.LOCATION, parsed.type);
         });
 
         it('Should return format: compressed', function() {

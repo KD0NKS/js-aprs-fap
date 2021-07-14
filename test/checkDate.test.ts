@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-import ConversionUtil from '../src/ConversionUtil';
+import { ConversionUtil } from '../src/utils/ConversionUtil';
 
 describe('checkDate', function() {
     describe('Test valid checkdate', function() {

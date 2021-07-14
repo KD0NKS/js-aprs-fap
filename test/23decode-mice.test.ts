@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 import aprsPacket from '../src/aprsPacket';
+import { PacketTypeEnum } from '../src/enums';
 import aprsParser from '../src/parser';
 
 // a mic-e decoding test
@@ -39,7 +40,7 @@ describe('FAP - Test parsing mic-e packages', () => {
         });
 
         it('Should return the location type: location', () => {
-            assert.equal('location', parsed.type);
+            assert.equal(PacketTypeEnum.LOCATION, parsed.type);
         });
 
         it('Should return the type: mice', () => {
@@ -134,7 +135,7 @@ describe('FAP - Test parsing mic-e packages', () => {
         });
 
         it('Should return the location type: location', () => {
-            assert.equal('location', parsed.type);
+            assert.equal(PacketTypeEnum.LOCATION, parsed.type);
         });
 
         it('Should return the type: mice', () => {
@@ -233,7 +234,7 @@ describe('FAP - Test parsing mic-e packages', () => {
         });
 
         it('Should return the location type: location', () => {
-            assert.equal('location', parsed.type);
+            assert.equal(PacketTypeEnum.LOCATION, parsed.type);
         });
 
         it('Should return the type: mice', () => {

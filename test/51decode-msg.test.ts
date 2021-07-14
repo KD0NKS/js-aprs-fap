@@ -4,7 +4,7 @@ const assert = require('assert');
 const should = chai.should();
 
 import aprsPacket from '../src/aprsPacket';
-import digipeater from '../src/digipeater';
+import { PacketTypeEnum } from '../src/enums';
 import aprsParser from '../src/parser';
 
 describe('Test parsing messages', function() {
@@ -26,7 +26,7 @@ describe('Test parsing messages', function() {
             });
 
             it('Should return a type: message', function() {
-                assert.equal('message', packet.type);
+                assert.equal(PacketTypeEnum.MESSAGE, packet.type);
             });
 
             it('Should return a destination: ' + destination.trim(), function() {
@@ -56,7 +56,7 @@ describe('Test parsing messages', function() {
             });
 
             it('Should return a type: message', function() {
-                assert.equal('message', packet.type);
+                assert.equal(PacketTypeEnum.MESSAGE, packet.type);
 
             });
 
@@ -82,7 +82,7 @@ describe('Test parsing messages', function() {
             });
 
             it('Should return a type: message', function() {
-                assert.equal("message", packet.type);
+                assert.equal(PacketTypeEnum.MESSAGE, packet.type);
             });
 
             it('Should return a destination: ' + destination.trim(), function() {
@@ -109,7 +109,7 @@ describe('Test parsing messages', function() {
         });
 
         it('Should return a type: message', function() {
-            assert.equal("message", packet.type);
+            assert.equal(PacketTypeEnum.MESSAGE, packet.type);
         });
 
         it('Should return a destination: ' + destination.trim(), function() {
@@ -136,7 +136,7 @@ describe('Test parsing messages', function() {
         });
 
         it('Should return a type: message', function() {
-            assert.equal("telemetry-message", packet.type);
+            assert.equal(PacketTypeEnum.TELEMETRY_MESSAGE, packet.type);
         });
 
         it('Should return a message: ' + message, function() {

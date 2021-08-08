@@ -1,5 +1,5 @@
 var assert = require('assert');
-import { ConversionUtil } from '../src/utils/ConversionUtil';
+import { ConversionUtil } from '../src/ConversionUtil';
 
 describe('#degToRad', function() {
     it('should return ~0.017453', function() {

@@ -7,7 +7,7 @@
 import aprsPacket from '../src/aprsPacket'
 import aprsParser from '../src/parser'
 import * as chai from 'chai'
-import { PacketTypeEnum } from '../src/enums/PacketTypeEnum'
+import { PacketTypeEnum } from '../src/PacketTypeEnum'
 
 const assert = chai.assert;
 

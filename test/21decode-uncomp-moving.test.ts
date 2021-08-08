@@ -8,7 +8,7 @@ const assert = require('assert');
 const should = chai.should();
 
 import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
+import { PacketTypeEnum } from '../src/PacketTypeEnum';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test decoding uncompressed packets', function() {

@@ -3,7 +3,7 @@
 const assert = require('assert');
 
 import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
+import { PacketTypeEnum } from '../src/PacketTypeEnum';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test item parsing', function() {

@@ -9,7 +9,7 @@ const should = chai.should();
 const expect = chai.expect;
 
 import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
+import { PacketTypeEnum } from '../src/PacketTypeEnum';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test decoding compressed packets', function() {

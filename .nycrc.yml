@@ -4,5 +4,6 @@
         "src/**/*.ts"
     ],
     "exclude": [],
+    "extends": "@istanbuljs/nyc-config-typescript",
     "show-process-tree": true
 }

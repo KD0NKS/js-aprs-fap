@@ -18,9 +18,9 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
-      - run: ls ./node_modules/.bin/
       - run: npm ci
       - run: npm test
+      - run: ls ./node_modules/.bin/
 
       - name: Coveralls
         uses: coverallsapp/github-action@master

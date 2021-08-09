@@ -18,7 +18,8 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
-      - run: npm ci --loglevel verbose
+      - run: ls ./node_modules/.bin/
+      - run: npm ci
       - run: npm test
 
       - name: Coveralls

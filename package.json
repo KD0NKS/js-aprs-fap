@@ -25,16 +25,17 @@
     "dist/**/*"
   ],
   "scripts": {
-    "tsc": "./node_modules/.bin/tsc",
     "setup": "npm install",
     "build": "npm run tsc",
     "test": "nyc mocha",
-    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "tsc": "./node_modules/.bin/tsc"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/chai": "^4.2.21",
     "@types/mocha": "^9.0.0",
+    "@types/node": "^16.4.13",
     "chai": "^4.3.4",
     "coveralls": "^3.1.1",
     "mocha": "^9.0.3",
@@ -42,8 +43,5 @@
     "source-map-support": "^0.5.19",
     "ts-node": "^10.2.0",
     "typescript": "^4.3.5"
-  },
-  "dependencies": {
-    "@types/node": "^16.4.13"
   }
 }

@@ -1,7 +1,6 @@
 const assert = require('assert');
 
 import aprsPacket from '../src/aprsPacket';
-import digipeater from '../src/digipeater';
 import aprsParser from '../src/parser';
 
 // validate the check_ax25_call function

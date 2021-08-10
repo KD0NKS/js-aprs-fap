@@ -1,12 +1,12 @@
 import aprsPacket from './aprsPacket'
-import { ConversionConstantEnum } from './enums'
-import { ConversionUtil } from './utils/ConversionUtil'
+import { ConversionConstantEnum } from './ConversionConstantEnum'
+import { ConversionUtil } from './ConversionUtil'
 import digipeater from './digipeater'
 import { DST_SYMBOLS } from './DSTSymbols'
 import { RESULT_MESSAGES } from './ResultMessages'
 import telemetry from './telemetry'
 import wx from './wx'
-import { PacketTypeEnum } from './enums'
+import { PacketTypeEnum } from './PacketTypeEnum'
 
 export default class aprsParser {
     constructor() { }

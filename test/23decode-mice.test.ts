@@ -1,7 +1,7 @@
 const assert = require('assert');
 
 import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/enums';
+import { PacketTypeEnum } from '../src/PacketTypeEnum';
 import aprsParser from '../src/parser';
 
 // a mic-e decoding test

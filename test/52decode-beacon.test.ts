@@ -2,7 +2,6 @@
 // Tue Dec 11 2007, Hessu, OH7LZB
 const assert = require('assert');
 
-import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test parsing beacons', function() {

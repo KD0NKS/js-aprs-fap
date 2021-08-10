@@ -1,10 +1,7 @@
 /**
  * test mic-e telemetry decoding
  */
-import * as chai from 'chai';
-
 const assert = require('assert');
-const should = chai.should();
 
 import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';

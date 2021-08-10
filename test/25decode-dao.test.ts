@@ -2,12 +2,8 @@
  * test packets with DAO extensions
  * Original tests written: Wed May 5 2008, Hessu, OH7LZB
  */
-import * as chai from 'chai';
-
 const assert = require('assert');
-const should = chai.should();
 
-import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test decoding DAO', function() {

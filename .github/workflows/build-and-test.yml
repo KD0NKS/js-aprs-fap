@@ -20,10 +20,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: npm ci
       - run: npm test
-      - run: ls ./node_modules/.bin/
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel-finished: true

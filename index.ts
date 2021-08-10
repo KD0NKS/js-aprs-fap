@@ -4,14 +4,14 @@ import { ConversionConstantEnum } from './src/ConversionConstantEnum'
 import { PacketTypeEnum } from './src/PacketTypeEnum'
 import digipeater from './src/digipeater'
 import telemetry from './src/telemetry'
-//import { ConversionUtil } from './src/utils/ConversionUtil'
+import { ConversionUtil } from './src/ConversionUtil'
 import wx from './src/wx'
 
 export {
     aprsPacket
     , aprsParser
     , ConversionConstantEnum
-//    , ConversionUtil
+    , ConversionUtil
     , digipeater
     , PacketTypeEnum
     , telemetry

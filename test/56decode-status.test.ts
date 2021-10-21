@@ -60,4 +60,18 @@ describe('FAP - Status message decoding', function() {
             should.not.exist(parsed.timestamp)
         })
     })
-});
+
+    describe('#parseaprs - Status message has no body', function () {
+        let $aprspacket = 'KB3HVP-14>APU25N,WIDE2-2,qAR,LANSNG:>'
+        let parsed: aprsPacket = parser.parseaprs($aprspacket)
+
+        it('#parseaprse - Status message should not have an error or warning', function () {
+            should.not.exist(parsed.resultCode)
+            should.not.exist(parsed.resultMessage)
+            should.not.exist(parsed.warningCodes)
+        })
+    })
+
+    // TODO: Tests for status reports with beam heading and smaidenhead grid locator
+    // See pages 80-82 of spec
+})

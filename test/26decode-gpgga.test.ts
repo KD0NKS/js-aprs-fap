@@ -8,15 +8,15 @@ import aprsPacket from '../src/aprsPacket';
 import aprsParser from '../src/parser';
 
 describe('FAP - Test decoding GPGGA NMEA', function() {
-    let parser = new aprsParser();
+    let parser = new aprsParser()
 
     describe('#parseaprs - Test parsing a GPGGA packet with a bad checksum', function() {
         let parsed: aprsPacket = parser.parseaprs("DL5UY-3>GPSC70,DB0RO,WIDE1,F5ZEE,LX0APR-2,WIDE2*,qAR,DB0NIS-10:$GPGGA,222814.000,484768272,N,00829.8212,E,2,09,1.0,714.0,M,48.0,M,1.8,0000*7B");
 
         it('Should return a result code: nmea_inv_cksum', function() {
-            assert.equal("nmea_inv_cksum", parsed.resultCode);
-        });
-    });
+            assert.equal("nmea_inv_cksum", parsed.resultCode)
+        })
+    })
 
     /*
     describe('#parseaprs - Test parsing something', () => {
@@ -44,5 +44,10 @@ describe('FAP - Test decoding GPGGA NMEA', function() {
             symbolcode: '/'
         }
     });
+    */
+
+    /*
+    TIV2>GPSAT,WIDE1-1,WIDE2-2,qAR,N0PTL:$GPGGA,222500,3856.1806,N,09442.2753,W,1,7,,270,M,,,,
+    TIV2>GPSAT,MENORA,WIDE1*,WIDE2-2,qAR,N0PTL:$GPGGA,222600,3856.1296,N,09442.9020,W,1,7,,257,M,,,,
     */
 });

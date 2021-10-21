@@ -256,7 +256,7 @@ export default class aprsParser {
             if($paclen >= 9) {
                 retVal.type = PacketTypeEnum.LOCATION
 
-                retVal = this._mice_to_decimal(body.substr(1), dstcallsign, srcCallsign, retVal, options);
+                retVal = this.miceToDecimal(body.substr(1), dstcallsign, srcCallsign, retVal, options);
                 //return $rethash;
             }
         // Normal or compressed location packet, with or without
@@ -395,14 +395,16 @@ export default class aprsParser {
 
                 retVal = this._capabilities_parse(body.substr(1), srcCallsign, retVal);
             }
+
+            // TODO: add an error to the packet?
         // Status reports
         } else if($packettype == '>') {
             // we can live with empty status reports
-            if($paclen >= 1) {
+            // if($paclen >= 1) { NOTE: this cannot ever hit the else case, because the body will be empty and return an error
                 retVal.type = PacketTypeEnum.STATUS
 
                 retVal = this._status_parse(options, body.substr(1), srcCallsign, retVal)
-            }
+            //}
         // Telemetry
         } else if(/^T#(.*?),(.*)$/.test(body)) {
             retVal.type = PacketTypeEnum.TELEMETRY
@@ -485,6 +487,8 @@ export default class aprsParser {
 
             $packet = $packet.substr(7);
         }
+
+        // TODO: handle beam heading and maidenhead grid locator status reports
 
         // Save the rest as the report
         $rethash.status = $packet;
@@ -1536,7 +1540,7 @@ export default class aprsParser {
     /**
      * convert a mic-encoder packet
      */
-    private _mice_to_decimal($packet: string, $dstcallsign: string, $srccallsign: string, $rethash: aprsPacket, $options: any): aprsPacket {
+    private miceToDecimal($packet: string, $dstcallsign: string, $srccallsign: string, $rethash: aprsPacket, $options: any): aprsPacket {
         let tmp: any;
         $rethash.format = 'mice';
 
@@ -1671,7 +1675,6 @@ export default class aprsParser {
         let $mbitstring = $dstcallsign.substr(0, 3);
 
         $mbitstring = $mbitstring.replace(/[0-9L]/g, '0');
-        //$mbitstring = $mbitstring.replace(/[]/g, '0');
         $mbitstring = $mbitstring.replace(/[P-Z]/g, '1');
         $mbitstring = $mbitstring.replace(/[A-K]/g, '2');
 
@@ -1683,7 +1686,7 @@ export default class aprsParser {
         let $longitude = $packet.charCodeAt(0) - 28;
         let $longoffsetchar = $dstcallsign.charCodeAt(4);
 
-        if($longoffsetchar >= 0x50) {
+        if($longoffsetchar >= 80) {
             $longitude = $longitude + 100;
         }
 
@@ -1701,13 +1704,13 @@ export default class aprsParser {
         }
 
         // ... and minute decimals
-        $longminutes = $longminutes + '.' + ($packet.charCodeAt(2) - 28);
+        $longminutes = $longminutes + '.' + ($packet.charCodeAt(2) - 28).toString().padStart(2, '0');
 
         // apply position ambiguity to longitude
         if($rethash.posambiguity == 4) {
             // minute is unused -> add 0.5 degrees to longitude
             $longitude += 0.5;
-        } else if ($rethash.posambiguity == 3) {
+        } else if($rethash.posambiguity == 3) {
             let $lontmp = $longminutes.charAt(0) + '5';
             $longitude = $longitude + (parseFloat($lontmp) / 60);
         } else if($rethash.posambiguity == 2) {
@@ -1723,9 +1726,8 @@ export default class aprsParser {
         }
 
         // check the longitude E/W sign
-        let $ewchar = $dstcallsign.charCodeAt(5);
-        if($ewchar >= 0x50) {
-            $longitude = 0 - $longitude;
+        if($dstcallsign.charCodeAt(5) >= 80) {
+            $longitude = $longitude * -1;
         }
 
         // Longitude is finally complete, so store it
@@ -1736,7 +1738,7 @@ export default class aprsParser {
         if(!$mice_fixed) {
             let $speed = (($packet.charCodeAt(3)) - 28) * 10;
             let $coursespeed = ($packet.charCodeAt(4)) - 28;
-            let $coursespeedtmp = Math.round($coursespeed / 10);  // had been parseint... change to math.floor if tests start failing.
+            let $coursespeedtmp = Math.floor($coursespeed / 10);  // had been parseint... changed to math.floor because tests started failing.
 
             $speed += $coursespeedtmp;
             $coursespeed -= $coursespeedtmp * 10;

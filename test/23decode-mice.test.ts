@@ -343,6 +343,42 @@ describe('FAP - Test parsing mic-e packages', () => {
         });
     });
 
+    describe('#parseaprs - Should give an accurate longitude', () => {
+        let parsed = parser.parseaprs('W4RK-9>S8SR5R,KB4VSP-3,WIDE1*,WIDE2-1,qAR,WX0BC-3:`x- n"@>/]"6>}=')
+
+        it('It should have a speed of 37.04', () => {
+            assert.equal(parsed.speed, 37.04)
+        });
+
+        it('It should have a position resolution of 18.52', () => {
+            assert.equal(parsed.posresolution, 18.52)
+        });
+
+        it('It should have a latitude of 38.542', () => {
+            assert.equal(parsed.latitude, 38.542)
+        });
+
+        it('It should have a course of 236', () => {
+            assert.equal(parsed.course, 236)
+        });
+
+        it('It should have a position ambiguity of 0', () => {
+            assert.equal(parsed.posambiguity, 0)
+        });
+
+        it('It should have an altitude of 221 ', () => {
+            assert.equal(parsed.altitude, 221)
+        });
+
+        it('It should have a longitude of -92.284', () => {
+            assert.equal(parsed.longitude, -92.284)
+        });
+
+        it('It should have mbits equaling 101', () => {
+            assert.equal(parsed.mbits, 101)
+        });
+    })
+
     describe('#parseaprs - Decoding a packet which has had a binary byte removed, not accepting broken packet.', () => {
         let parsed: aprsPacket = parser.parseaprs('IV3CVN-9>TU3RY9,IR2AO,WIDE1*,WIDE2,qAR,I1EPJ-10:` )T!6S>/>"5G}Riccardo IV3CVN 73! =');
 

@@ -661,9 +661,13 @@ export default class aprsParser {
             } else if((tmp = $message.match(/^rej([A-Za-z0-9}]{1,5})\s*$/))) {  // check whether this is a message reject
                 retVal.messageReject = tmp[1];
                 return retVal;
-            } else if((tmp = $message.match(/^([^{]*)\{([A-Za-z0-9}]{1,5})\s*$/))) {   // separate message-id from the body, if present
+            } else if((tmp = $message.match(/^([^{]*)\{([A-Za-z0-9]{1,5})(}[A-Za-z0-9]{1,5}|\}|)\s*$/))) {  // separate message-id from the body, if present
                 retVal.message = tmp[1];
                 retVal.messageId = tmp[2];
+
+                if(tmp.length > 2 && tmp[3] != null && tmp[3] != '') {
+                    retVal.messageAck = tmp[3].substr(1)
+                }
             } else {
                 retVal.message = $message;
             }
@@ -1525,6 +1529,7 @@ export default class aprsParser {
         }
 
         // Store the locations
+        // TODO: Are these supposed to be fixed to 4 decimal places?
         $rethash.latitude = $latitude;
         $rethash.longitude = $longitude;
 
@@ -2465,44 +2470,56 @@ export default class aprsParser {
      *
      * Parses a telemetry packet.
      */
-    private _telemetry_parse($s: string, $rh: aprsPacket): aprsPacket {
-        let $t: telemetry = new telemetry();
-        let tmp: string[];
+    private _telemetry_parse(s: string, rh: aprsPacket): aprsPacket {
+        // warn "did match\n";
+		let $t: telemetry = new telemetry()
+        let tmp: string[]
 
-        if((tmp = $s.match(/^(\d+),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),(-|)(\d{1,6}|\d+\.\d+|\.\d+|),([01]{0,8})/))) {
-            $t.seq = parseInt(tmp[1]);
+        if((tmp = s.match(/^(\d+),([\-\d\,\.]+)/))) {
+            $t.seq = parseInt(tmp[0])
 
+            //let $vals: string[] = [ (tmp[2] + tmp[3]), (tmp[4] + tmp[5]), (tmp[6] + tmp[7])
+            //        , (tmp[8] + tmp[9]), (tmp[10] + tmp[11]) ];
+            let vals: string[] = tmp[2].split(',')
+            let vout: number[] = []
 
-            let $vals: string[] = [ (tmp[2] + tmp[3]), (tmp[4] + tmp[5]), (tmp[6] + tmp[7])
-                    , (tmp[8] + tmp[9]), (tmp[10] + tmp[11]) ];
+            for(let i = 0; i <= 4; i++) {
+                let v: number
 
-            for(let $i = 0; $i < $vals.length; $i++) {
-                //$vals[$i] = $vals[$i] == '' ? 0 : sprintf('%.2f', $vals[$i]);
-                if($vals[$i] == '') {
-                    $vals[$i] = '0'
-                } else {
-                    $vals[$i] = parseFloat($vals[$i]).toFixed(2);
+                if(i < vals.length && vals[i] != null && vals[i] != undefined && vals[i] != '') {
+                    if(vals[i].match(/^-{0,1}(\d+|\d*\.\d+)$/)) {
+                        v = parseFloat(vals[i])
+                        // TODO: What happens with non numerics?
+                        // NOTE: http://blog.aprs.fi/2020/03/aprsfi-supports-kenneths-proposed.html
+                        if(parseFloat(vals[i]) < -2147483648 || parseFloat(vals[i]) > 2147483647) {
+                            return this.addError(rh, 'tlm_large')
+                        }
+                    } else {
+                        return this.addError(rh, 'tlm_inv')
+                    }
                 }
 
-                if(parseFloat($vals[$i]) >= 999999 || parseFloat($vals[$i]) <= -999999) {
-                    return this.addError($rh, 'tlm_large');
-                }
+                vout.push(v)
             }
 
-            $t.vals = (<Array<number>> <Array<any>> $vals);
-            $t.bits = tmp[12];
+            $t.vals = vout
 
-            // expand bits to 8 bits if some are missing
-            if($t.bits.length < 8) {
-                $t.bits += '0x' + (8 - $t.bits.length);
+            // TODO: validate bits
+            if(vals[5] && vals[5] != '') {
+                $t.bits = vals[5]
+
+                // expand bits to 8 bits if some are missing
+                if($t.bits.length < 8) {
+                    $t.bits += '0x' + (8 - $t.bits.length);
+                }
             }
         } else {
-            return this.addError($rh, 'tlm_inv');
+            return this.addError(rh, 'tlm_inv');
         }
 
-        $rh.telemetry = $t;
+        rh.telemetry = $t;
 
         //warn 'ok: ' . Dumper(\%t);
-        return $rh;
+        return rh;
     }
 }

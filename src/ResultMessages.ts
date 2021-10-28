@@ -39,7 +39,7 @@ export const RESULT_MESSAGES: any = {
     , 'item_dec_err': 'Error in item location decoding'
     , 'loc_short': 'Too short uncompressed location'
     , 'loc_inv': 'Invalid uncompressed location'
-    , 'loc_large': 'Degree value too large'
+    , 'loc_large': 'Degree value in coordinates too large'
     , 'loc_amb_inv': 'Invalid position ambiguity'
     , 'mice_short': 'Too short mic-e packet'
     , 'mice_inv': 'Invalid characters in mic-e packet'

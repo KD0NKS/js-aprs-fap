@@ -18,12 +18,12 @@ describe('FAP - Test parsing capabilities packet', () => {
     })
 
     describe('#parseaprs - packet has type capabilities', () => {
-        // TODO: Complete the rest of testing once the capabilities parsing is complete
         let parsed: aprsPacket = parser.parseaprs("K3AWS-C>APJI40,TCPIP*,qAC,K3AWS-GS:<IGATE,MSG_CNT=0,LOC_CNT=0")
-        console.log(parsed)
 
         it('#parseaprs - Capabilities packet should have a type', () => {
             assert.equal(parsed.type, "capabilities")
         })
+
+        // TODO: Complete the rest of testing once the capabilities parsing is complete
     })
 })

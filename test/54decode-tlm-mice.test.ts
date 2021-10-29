@@ -109,4 +109,10 @@ describe('FAP - Test decoding mic-e packet with sequence 00, 5 channels of telem
             assert.equal($comment, parsed.comment);
         });
     });
+
+    // TODO: THIS SHOULD BE VALID!!!
+    //describe('#it should be valid', () => {
+    //    let parsed: aprsPacket = parser.parseaprs("KA0GFC-14>S8UR5V,KC0MGG-3,WIDE1*,WIDE2-2,qAR,KE0WVG:'xR;o6`k/]\"6P}")
+    //    console.log(parsed)
+    //})
 });

@@ -13,10 +13,10 @@ describe('FAP - Test parsing object', () => {
     let parser = new aprsParser();
 
     describe('#parseaprs - Test object parsing', () => {
-        let $srccall = "OH2KKU-1";
-        let $dstcall = "APRS";
-        let $comment = "Kaupinmaenpolku9,open M-Th12-17,F12-14 lcl";
-        let $aprspacket = $srccall + '>';
+        const srccall = "OH2KKU-1";
+        const dstcall = "APRS";
+        const comment = "Kaupinmaenpolku9,open M-Th12-17,F12-14 lcl";
+        let $aprspacket = srccall + '>';
 
         let tmp = "415052532C54435049502A2C7141432C46495253543A3B5352414C20485120202A3130303932377A533025452F5468345F612020414B617570696E6D61656E706F6C6B75392C6F70656E204D2D546831322D31372C4631322D3134206C636C".match(/.{2}/g);
         tmp.forEach(x => {
@@ -25,16 +25,16 @@ describe('FAP - Test parsing object', () => {
 
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
-        it('Should return srccallsign: ' + $srccall, () => {
-            assert.equal($srccall, parsed.sourceCallsign);
+        it('Should return srccallsign: ' + srccall, () => {
+            assert.equal(srccall, parsed.sourceCallsign);
         });
 
         it('Should return a null result code.', () => {
             assert.equal(null, parsed.resultCode);
         });
 
-        it('Should return a dstcall: ' + $dstcall, () => {
-            assert.equal($dstcall, parsed.destCallsign);
+        it('Should return a dstcall: ' + dstcall, () => {
+            assert.equal(dstcall, parsed.destCallsign);
         });
 
         it('Should return type value: object', () => {
@@ -79,16 +79,40 @@ describe('FAP - Test parsing object', () => {
             assert.equal(null, parsed.phg);
         });
 
-        it('Should return the comment: ' + $comment, () => {
-            assert.equal($comment, parsed.comment);
+        it('Should return the comment: ' + comment, () => {
+            assert.equal(comment, parsed.comment);
         });
     });
 
     describe('Test object where there is an issue parsing the object location', () => {
-        let parsed: aprsPacket = parser.parseaprs('K8ETN-S>APJIO4,TCPIP*,qAC,K8ETN-GS:;K8ETN  C *080015z    .  ND     .  EaRNG0045 2m Voice 145.200 -0.600 MHz');
+        const parsed: aprsPacket = parser.parseaprs('K8ETN-S>APJIO4,TCPIP*,qAC,K8ETN-GS:;K8ETN  C *080015z    .  ND     .  EaRNG0045 2m Voice 145.200 -0.600 MHz');
 
         it('Should return a resultCode: "obj_dec_err"', () => {
             expect(parsed.resultCode).to.equal("obj_dec_err");
         });
     });
+
+    describe('Regular APRS position - alive', () => {
+        const parsed: aprsPacket = parser.parseaprs('OH2KKU-1>APRS,TCPIP*,qAC,OH2KKU-1:;LEADER   *092345z4903.50N/07201.75W>088/036')
+
+        assert.equal(null, parsed.resultCode)
+        assert.equal('object', parsed.type)
+        assert.equal('LEADER   ', parsed.objectname)
+        assert.equal(true, parsed.alive)
+        // TODO: Potential bug.  Should these be trimmed to 4 decimal places?
+        assert.equal(49.05833333333333, parsed.latitude)
+        assert.equal(-72.02916666666667, parsed.longitude)
+        assert.equal(18.520, parsed.posresolution)
+        assert.equal(null, parsed.phg)
+        assert.equal(null, parsed.comment)
+    })
+
+    describe('Regular APRS position - killed', () => {
+        const parsed: aprsPacket = parser.parseaprs('OH2KKU-1>APRS,TCPIP*,qAC,OH2KKU-1:;LEADER   _092345z4903.50N/07201.75W>088/036')
+
+        assert.equal(null, parsed.resultCode)
+        assert.equal('object', parsed.type)
+        assert.equal('LEADER   ', parsed.objectname)
+        assert.equal(false, parsed.alive)
+    })
 });

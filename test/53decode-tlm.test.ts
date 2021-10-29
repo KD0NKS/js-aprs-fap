@@ -79,6 +79,49 @@ describe('FAP - Telemetry packet parsing', () => {
         })
     });
 
+    describe('#parseaprs - Telemetry test, tlm_large (too big)', () => {
+        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,2147483649,038,257,255,50.12,01000001');
+
+        it('Should return a result code: tlm_large', () => {
+            assert.equal('tlm_large', parsed.resultCode);
+        });
+    });
+
+    describe('#parseaprs - Telemetry test, tlm_large (too small)', () => {
+        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,-2147483649,038,257,255,50.12,01000001');
+
+        it('Should return a result code: tlm_large', () => {
+            assert.equal('tlm_large', parsed.resultCode);
+        });
+    });
+
+    describe('#parseaprs - Telemetry test, tlm_large (too small)', () => {
+        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,ABC,ABC,ABC,ABC,ABC,01000001');
+
+        it('Should return a result code: tlm_inv', () => {
+            assert.equal('tlm_inv', parsed.resultCode);
+        });
+    });
+
+    describe('#parseaprs - Telemetry test, bits padding short', () => {
+        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,000,038,257,255,50.12,0100');
+
+        it('Should pad the telemetry at index 5 to be 8 bits', () => {
+            assert.equal('01000000', parsed.telemetry.bits);
+        });
+    });
+
+    /*
+    describe('#parseaprs - Telemetry test, tlm_large (too small)', () => {
+        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,000,038,257,255,50.12,000011110');
+        console.log(parsed)
+
+        it('Should pad the telemetry at index 5 to be 8 bits', () => {
+            assert.equal('01000000', parsed.telemetry.bits);
+        });
+    });
+    */
+
     // rng
     //W9CFV-B>APDG02,TCPIP*,qAC,W9CFV-BS:!4311.53ND09019.67W&RNG0001 440 Voice 432.62500MHz +0.0000MHz
 });

@@ -649,31 +649,31 @@ export default class aprsParser {
         // Check format
         // x20 - x7e, x80 - xfe
         if((tmp = packet.match(/^:([A-Za-z0-9_ -]{9}):([ -~]+)$/))) { // match all ascii printable characters for now
-            let $message = tmp[2];
+            const message = tmp[2];
             retVal.destination = tmp[1].trim();
 
             // check whether this is an ack
-            if((tmp = $message.match(/^ack([A-Za-z0-9}]{1,5})\s*$/))) {
+            if((tmp = message.match(/^ack([A-Za-z0-9}]{1,5})\s*$/))) {
                 // trailing spaces are allowed because some
                 // broken software insert them..
                 retVal.messageAck = tmp[1];
                 return retVal;
-            } else if((tmp = $message.match(/^rej([A-Za-z0-9}]{1,5})\s*$/))) {  // check whether this is a message reject
+            } else if((tmp = message.match(/^rej([A-Za-z0-9}]{1,5})\s*$/))) {  // check whether this is a message reject
                 retVal.messageReject = tmp[1];
                 return retVal;
-            } else if((tmp = $message.match(/^([^{]*)\{([A-Za-z0-9]{1,5})(}[A-Za-z0-9]{1,5}|\}|)\s*$/))) {  // separate message-id from the body, if present
+            } else if((tmp = message.match(/^([^{]*)\{([A-Za-z0-9]{1,5})(}[A-Za-z0-9]{1,5}|\}|)\s*$/))) {  // separate message-id from the body, if present
                 retVal.message = tmp[1];
                 retVal.messageId = tmp[2];
 
-                if(tmp.length > 2 && tmp[3] != null && tmp[3] != '') {
+                if(tmp.length > 2 && tmp[3] != null && tmp[3].length > 1) {
                     retVal.messageAck = tmp[3].substr(1)
                 }
             } else {
-                retVal.message = $message;
+                retVal.message = message;
             }
 
             // catch telemetry messages
-            if(/^(BITS|PARM|UNIT|EQNS)\./i.test($message)) {
+            if(/^(BITS|PARM|UNIT|EQNS)\./i.test(message)) {
                 retVal.type = PacketTypeEnum.TELEMETRY_MESSAGE
             }
 

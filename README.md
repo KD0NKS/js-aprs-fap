@@ -44,6 +44,8 @@ imporove performance.
 ## May have issues
 - _wx_parse
   - comments/software - trimming may not be accurate
+- Uncompressed positions
+  - Do lat/long need to be trimmed to 4 decimal places?
 
 ## USAGE
 ### Demo

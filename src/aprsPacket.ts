@@ -3,6 +3,10 @@ import telemetry from './telemetry'
 import wx from './wx'
 
 export default class aprsPacket {
+    constructor() {
+        this.receivedTime = Date.now()
+    }
+
     public id: string
 
     public alive?: boolean

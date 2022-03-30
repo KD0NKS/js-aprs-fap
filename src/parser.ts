@@ -256,7 +256,7 @@ export default class aprsParser {
             if(paclen >= 9) {
                 retVal.type = PacketTypeEnum.LOCATION
 
-                retVal = this.miceToDecimal(body.substr(1), dstcallsign, srcCallsign, retVal, options);
+                retVal = this.miceToDecimal(body.substring(1), dstcallsign, srcCallsign, retVal, options);
                 //return $rethash;
             }
         // Normal or compressed location packet, with or without
@@ -272,18 +272,18 @@ export default class aprsParser {
                 if(packettype == '/' || packettype == '@') {
                     // With a prepended timestamp, check it and jump over.
                     // If the timestamp is invalid, it will be set to zero.
-                    retVal.timestamp = this.parseTimestamp(options, body.substr(1, 7));
+                    retVal.timestamp = this.parseTimestamp(options, body.substring(1, 8));
 
                     // TODO: this can be hit if this condition is not met: /^(\d{2})(\d{2})(\d{2})(z|h|\/)$/
                     if(retVal.timestamp == 0) {
                         this.addWarning(retVal, 'timestamp_inv_loc');
                     }
 
-                    body = body.substr(7);
+                    body = body.substring(7);
                 }
 
                 // remove the first character
-                body = body.substr(1);
+                body = body.substring(1);
 
                 // grab the ascii value of the first byte of body
                 let poschar = body.charCodeAt(0);
@@ -298,10 +298,10 @@ export default class aprsParser {
                         // weather as comment)
                         // if the comments don't parse, don't raise an error
                         if((retVal.resultCode === undefined && !retVal.resultCode)  && retVal.symbolcode != '_') {
-                            retVal = this._comments_to_decimal(body.substr(19), srcCallsign, retVal);
+                            retVal = this._comments_to_decimal(body.substring(19), srcCallsign, retVal);
                         } else {
-                            // warn "maybe a weather report?\n" . substr($body, 19) . "\n";
-                            retVal = this._wx_parse(body.substr(19), retVal);
+                            // warn "maybe a weather report?\n" . substring($body, 19) . "\n";
+                            retVal = this._wx_parse(body.substring(19), retVal);
                         }
                     }
 
@@ -311,17 +311,17 @@ export default class aprsParser {
                         || (poschar >= 97 && poschar <= 106)) {
                     // compressed position
                     if(body.length >= 13) {
-                        retVal = this._compressed_to_decimal(body.substr(0, 13), srcCallsign, retVal);
+                        retVal = this._compressed_to_decimal(body.substring(0, 13), srcCallsign, retVal);
 
                         // continue parsing with possible comments, but only
                         // if this is not a weather report (course/speed mixup,
                         // weather as comment)
                         // if the comments don't parse, don't raise an error
                         if((retVal.resultCode === undefined && !retVal.resultCode) && retVal.symbolcode != '_') {
-                            retVal = this._comments_to_decimal(body.substr(13), srcCallsign, retVal);
+                            retVal = this._comments_to_decimal(body.substring(13), srcCallsign, retVal);
                         } else {
-                            // warn "maybe a weather report?\n" . substr($body, 13) . "\n";
-                            retVal = this._wx_parse(body.substr(13), retVal);
+                            // warn "maybe a weather report?\n" . substring($body, 13) . "\n";
+                            retVal = this._wx_parse(body.substring(13), retVal);
                         }
                     } else {
                         return this.addError(retVal, 'packet_invalid', 'Body is too short.');
@@ -330,7 +330,7 @@ export default class aprsParser {
                     // Weather report from Ultimeter 2000
                     retVal.type = PacketTypeEnum.WEATHER
 
-                    retVal = this._wx_parse_peet_logging(body.substr(1), srcCallsign, retVal);
+                    retVal = this._wx_parse_peet_logging(body.substring(1), srcCallsign, retVal);
                 } else {
                     return this.addError(retVal, 'packet_invalid');
                 }
@@ -342,7 +342,7 @@ export default class aprsParser {
             if(/_(\d{8})c[\- \.\d]{1,3}s[\- \.\d]{1,3}/.test(body)) {
                 retVal.type = PacketTypeEnum.WEATHER
 
-                retVal = this._wx_parse(body.substr(9), retVal);
+                retVal = this._wx_parse(body.substring(9), retVal);
             } else {
                 return this.addError(retVal, 'wx_unsupp', 'Positionless');
             }
@@ -355,15 +355,15 @@ export default class aprsParser {
         // NMEA data
         } else if(packettype == '$') {
             // don't try to parse the weather stations, require "$GP" start
-            if(body.substr(0, 3) == '$GP') {
+            if(body.substring(0, 3) == '$GP') {
                 // dstcallsign can contain the APRS symbol to use,
                 // so read that one too
                 retVal.type = PacketTypeEnum.LOCATION
 
-                retVal = this._nmea_to_decimal(options, body.substr(1), srcCallsign, dstcallsign, retVal);
-            } else if(body.substr(0, 5) == '$ULTW') {
+                retVal = this._nmea_to_decimal(options, body.substring(1), srcCallsign, dstcallsign, retVal);
+            } else if(body.substring(0, 5) == '$ULTW') {
                 retVal.type = PacketTypeEnum.WEATHER
-                retVal = this._wx_parse_peet_packet(body.substr(5), srcCallsign, retVal);
+                retVal = this._wx_parse_peet_packet(body.substring(5), srcCallsign, retVal);
             }
             /*
             else {
@@ -393,7 +393,7 @@ export default class aprsParser {
             if(paclen >= 2) {
                 retVal.type = PacketTypeEnum.CAPABILITIES
 
-                retVal = this._capabilities_parse(body.substr(1), srcCallsign, retVal);
+                retVal = this._capabilities_parse(body.substring(1), srcCallsign, retVal);
             }
 
             // TODO: add an error to the packet?
@@ -403,13 +403,13 @@ export default class aprsParser {
             // if($paclen >= 1) { NOTE: this cannot ever hit the else case, because the body will be empty and return an error
                 retVal.type = PacketTypeEnum.STATUS
 
-                retVal = this._status_parse(options, body.substr(1), srcCallsign, retVal)
+                retVal = this._status_parse(options, body.substring(1), srcCallsign, retVal)
             //}
         // Telemetry
         } else if(/^T#(.*?),(.*)$/.test(body)) {
             retVal.type = PacketTypeEnum.TELEMETRY
 
-            retVal = this._telemetry_parse(body.substr(2), retVal);
+            retVal = this._telemetry_parse(body.substring(2), retVal);
         // DX spot
         }
         /*
@@ -434,28 +434,28 @@ export default class aprsParser {
                 retVal.type = PacketTypeEnum.LOCATION
                 retVal.messaging = false;
 
-                let pChar = body.substr(pos + 1, 1);
+                let pChar = body.substring(pos + 1, pos + 2);
 
                 if(/^[\/\\A-Za-j]$/.test(pChar)) {
                     // compressed position
                     if(body.length >= (pos + 1 + 13)) {
-                        retVal = this._compressed_to_decimal(body.substr(pos + 1, 13), srcCallsign, retVal);
+                        retVal = this._compressed_to_decimal(body.substring(pos + 1, pos + 13), srcCallsign, retVal);
 
                         // check the APRS data extension and comment,
                         // if not weather data
                         if(retVal.resultCode === undefined && !retVal.resultCode && retVal.symbolcode != '_') {
-                            retVal = this._comments_to_decimal(body.substr(pos + 14), srcCallsign, retVal);
+                            retVal = this._comments_to_decimal(body.substring(pos + 14), srcCallsign, retVal);
                         }
                     }
                 } else if(/^\d$/i.test(pChar)) {
                     // normal uncompressed position
                     if(body.length >= (pos + 1 + 19)) {
-                        retVal = this._normalpos_to_decimal(body.substr(pos + 1), srcCallsign, retVal);
+                        retVal = this._normalpos_to_decimal(body.substring(pos + 1), srcCallsign, retVal);
 
                         // check the APRS data extension and comment,
                         // if not weather data
                         if(!retVal.resultMessage && retVal.symbolcode != '_') {
-                            retVal =  this._comments_to_decimal(body.substr(pos + 20), srcCallsign, retVal);
+                            retVal =  this._comments_to_decimal(body.substring(pos + 20), srcCallsign, retVal);
                         }
                     }
                 }
@@ -485,7 +485,7 @@ export default class aprsParser {
                 rethash = this.addWarning(rethash, 'timestamp_inv_sta') ;
             }
 
-            packet = packet.substr(7);
+            packet = packet.substring(7);
         }
 
         // TODO: handle beam heading and maidenhead grid locator status reports
@@ -666,7 +666,7 @@ export default class aprsParser {
                 retVal.messageId = tmp[2];
 
                 if(tmp.length > 2 && tmp[3] != null && tmp[3].length > 1) {
-                    retVal.messageAck = tmp[3].substr(1)
+                    retVal.messageAck = tmp[3].substring(1)
                 }
             } else {
                 retVal.message = message;
@@ -728,11 +728,11 @@ export default class aprsParser {
 
         if(/^[\/\\A-Za-j]$/.test(locationChar)) {
             // compressed
-            retVal = this._compressed_to_decimal(packet.substr(18, 13), srcCallsign, retVal);
+            retVal = this._compressed_to_decimal(packet.substring(18, 31), srcCallsign, retVal);
             locationOffset = 31; // now points to APRS data extension/comment
         } else if(/^\d$/i.test(locationChar)) {
             // normal
-            retVal = this._normalpos_to_decimal(packet.substr(18), srcCallsign, retVal);
+            retVal = this._normalpos_to_decimal(packet.substring(18), srcCallsign, retVal);
             locationOffset = 37; // now points to APRS data extension/comment
         } else {
             // error
@@ -748,10 +748,10 @@ export default class aprsParser {
         // unless it is a weather report (we don't want erroneus
         // course/speed figures and weather in the comments..)
         if(retVal.symbolcode != '_') {
-            retVal = this._comments_to_decimal(packet.substr(locationOffset), srcCallsign, retVal);
+            retVal = this._comments_to_decimal(packet.substring(locationOffset), srcCallsign, retVal);
         } else {
             // possibly a weather object, try to parse
-            retVal = this._wx_parse(packet.substr(locationOffset), retVal);
+            retVal = this._wx_parse(packet.substring(locationOffset), retVal);
         }
 
         return retVal;
@@ -847,12 +847,12 @@ export default class aprsParser {
 
         if(tmp = dstCallsign.match(/^(GPS|SPC)([A-Z0-9]{2,3})/)) {
             let leftoverstring = tmp[2];
-            let type = leftoverstring.substr(0, 1);
+            let type = leftoverstring.substring(0, 1);
             let sublength = leftoverstring.length;
 
             if(sublength === 3) {
                 if(type === 'C' || type === 'E') {
-                    let numberid = leftoverstring.substr(1, 2);
+                    let numberid = leftoverstring.substring(1, 2);
 
                     if((tmp = numberid.match(/^(\d{2})$/)) && parseInt(numberid) > 0 && parseInt(numberid) < 95) {
                         code = String.fromCharCode(parseInt(tmp[1]) + 32);
@@ -871,14 +871,14 @@ export default class aprsParser {
                     // secondary symbol table, with overlay
                     // Check first that we really are in the
                     // secondary symbol table
-                    let dsttype = leftoverstring.substr(0, 2);
-                    let overlay = leftoverstring.substr(2, 1);
+                    let dsttype = leftoverstring.substring(0, 2);
+                    let overlay = leftoverstring.substring(2, 3);
 
                     if((type === 'O' || type === 'A' || type === 'N'
                             || type === 'D' || type === 'S' || type === 'Q')
                             && (/^[A-Z0-9]$/).test(overlay)) {
                         if(dsttype in DST_SYMBOLS) {
-                            code = DST_SYMBOLS[dsttype].substr(1, 1);
+                            code = DST_SYMBOLS[dsttype].substring(1, 2);
                             return [ overlay, code ];
                         } else {
                             return [ null, null ];
@@ -891,8 +891,8 @@ export default class aprsParser {
                 // primary or secondary symbol table, no overlay
                 if(leftoverstring in DST_SYMBOLS) {
                     let dstsymbol = DST_SYMBOLS[leftoverstring];
-                    table = dstsymbol.substr(0, 1);
-                    code = dstsymbol.substr(1, 1);
+                    table = dstsymbol.substring(0, 1);
+                    code = dstsymbol.substring(1, 2);
                     return [ table, code ];
                 } else {
                     return [ null, null ];
@@ -1220,19 +1220,19 @@ export default class aprsParser {
                     rethash.speed = parseInt(speed) * ConversionConstantEnum.KNOT_TO_KMH;
                 }
 
-                rest = rest.substr(7);
+                rest = rest.substring(7);
             } else if((tmprest = rest.match(/^PHG(\d[\x30-\x7e]\d\d[0-9A-Z])\//))) {
                 // PHGR
                 rethash.phg = tmprest[1];
-                rest = rest.substr(8);
+                rest = rest.substring(8);
             } else if((tmprest = rest.match(/^PHG(\d[\x30-\x7e]\d\d)/))) {
                 // don't do anything fancy with PHG, just store it
                 rethash.phg = tmprest[1];
-                rest = rest.substr(7);
+                rest = rest.substring(7);
             } else if((tmprest = rest.match(/^RNG(\d{4})/))) {
                 // radio range, in miles, so convert to km
                 rethash.radiorange = parseInt(tmprest[1]) * ConversionConstantEnum.MPH_TO_KMH;
-                rest = rest.substr(7);
+                rest = rest.substring(7);
             }
         }
 
@@ -1371,11 +1371,11 @@ export default class aprsParser {
 
         if(/^[\/\\A-Za-j]$/.test(locationchar)) {
             // compressed
-            rethash = this._compressed_to_decimal(packet.substr(locationoffset, 13), srccallsign, rethash);
+            rethash = this._compressed_to_decimal(packet.substring(locationoffset, locationoffset + 13), srccallsign, rethash);
             locationoffset += 13;
         } else if(/^\d$/i.test(locationchar)) {
             // normal
-            rethash = this._normalpos_to_decimal(packet.substr(locationoffset), srccallsign, rethash);
+            rethash = this._normalpos_to_decimal(packet.substring(locationoffset), srccallsign, rethash);
             locationoffset += 19;
         } else {
             // error
@@ -1391,7 +1391,7 @@ export default class aprsParser {
         // unless it is a weather report (we don't want erroneus
         // course/speed figures and weather in the comments..)
         if(rethash.symbolcode != '_') {
-            rethash = this._comments_to_decimal(packet.substr(locationoffset), srccallsign, rethash);
+            rethash = this._comments_to_decimal(packet.substring(locationoffset), srccallsign, rethash);
         }
 
         return rethash;
@@ -1481,8 +1481,8 @@ export default class aprsParser {
             longitude = parseFloat(lon_deg) + 0.5;
         } else if(rethash.posambiguity == 1) {
             // the last digit is not used
-            lat_min = lat_min.substr(0, 4);
-            lon_min = lon_min.substr(0, 4);
+            lat_min = lat_min.substring(0, 4);
+            lon_min = lon_min.substring(0, 4);
 
             if(lat_min.match(/ /i) || lon_min.match(/ /i)) {
                 return this.addError(rethash, 'loc_amb_inv', 'lat/lon 1');
@@ -1492,8 +1492,8 @@ export default class aprsParser {
             longitude = parseFloat(lon_deg) + ((parseFloat(lon_min) + 0.05) / 60);
         } else if(rethash.posambiguity == 2) {
             // the minute decimals are not used
-            lat_min = lat_min.substr(0, 2);
-            lon_min = lon_min.substr(0, 2);
+            lat_min = lat_min.substring(0, 2);
+            lon_min = lon_min.substring(0, 2);
 
             if(lat_min.match(/ /i) || lon_min.match(/ /i)) {
                 return this.addError(rethash, 'loc_amb_inv', 'lat/lon 2');
@@ -1652,10 +1652,10 @@ export default class aprsParser {
         tmplat = tmplat.replace(/_/g, '0'); // the rest are changed to digit 0
 
         // get the degrees
-        let latitude = tmplat.substr(0, 2);
+        let latitude = tmplat.substring(0, 2);
 
         // the minutes
-        let latminutes = tmplat.substr(2, 2) + '.' + tmplat.substr(4, 2);
+        let latminutes = tmplat.substring(2, 4) + '.' + tmplat.substring(4, 6);
 
         // convert the minutes to decimal degrees and combine
         latitude = parseFloat(latitude) + (parseFloat(latminutes) / 60);
@@ -1674,7 +1674,7 @@ export default class aprsParser {
         // Get the message bits. 1 is standard one-bit and
         // 2 is custom one-bit. mice_messagetypes provides
         // the mappings to message names
-        let mbitstring = dstcallsign.substr(0, 3);
+        let mbitstring = dstcallsign.substring(0, 3);
 
         mbitstring = mbitstring.replace(/[0-9L]/g, '0');
         mbitstring = mbitstring.replace(/[P-Z]/g, '1');
@@ -1716,10 +1716,10 @@ export default class aprsParser {
             let $lontmp = longminutes.charAt(0) + '5';
             longitude = longitude + (parseFloat($lontmp) / 60);
         } else if(rethash.posambiguity == 2) {
-            let $lontmp = longminutes.substr(0, 2) + '.5';
+            let $lontmp = longminutes.substring(0, 2) + '.5';
             longitude = longitude + (parseFloat($lontmp) / 60);
         } else if(rethash.posambiguity == 1) {
-            let $lontmp = longminutes.substr(0, 4) + '5';
+            let $lontmp = longminutes.substring(0, 4) + '5';
             longitude = (longitude + (parseFloat($lontmp) / 60));
         } else if(rethash.posambiguity == 0) {
             longitude = longitude + (parseFloat(longminutes) / 60);
@@ -1774,7 +1774,7 @@ export default class aprsParser {
         // x are the base-91 digits in meters, origin is 10000 meters
         // below sea.
         if(packet.length > 8) {
-            let rest = packet.substr(8);
+            let rest = packet.substring(8);
 
             // check for Mic-E Telemetry Data
             if((tmp = rest.match(/^'([0-9a-f]{2})([0-9a-f]{2})(.*)$/i))) {
@@ -2210,7 +2210,7 @@ export default class aprsParser {
 
         if(/^[a-zA-Z0-9\-_]{3,5}$/.test(s)) {
             if(s != '') {
-                w.soft = s.substr(0, 16);
+                w.soft = s.substring(0, 16);
             }
         } else {
             rethash.comment = s.trim();

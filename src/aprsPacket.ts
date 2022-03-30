@@ -7,7 +7,7 @@ export default class aprsPacket {
         this.receivedTime = Date.now()
     }
 
-    public id: string
+    public id: string | number
 
     public alive?: boolean
     public altitude?: number

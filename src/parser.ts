@@ -409,7 +409,7 @@ export default class aprsParser {
         } else if(/^T#(.*?),(.*)$/.test(body)) {
             retVal.type = PacketTypeEnum.TELEMETRY
 
-            retVal = this._telemetry_parse(body.substring(2), retVal);
+            retVal = this._telemetry_parse(body.substring(2), retVal)
         // DX spot
         }
         /*
@@ -918,8 +918,7 @@ export default class aprsParser {
         */
 
         // verify checksum first, if it is provided
-        // trimRight would be preferred, but not supported in all browser engines.
-        body = body.trimRight() // NOTE: Perl version only trims spaces, not all whitespace
+        body = body.trimEnd() // NOTE: Perl version only trims spaces, not all whitespace
 
         if ((tmp = body.match(/^([\x20-\x7e]+)\*([0-9A-F]{2})$/i))) {
             const checksumarea = tmp[1];

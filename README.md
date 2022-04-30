@@ -65,3 +65,14 @@ npm install js-aprs-fap --save
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
+
+# 1.x to 2.x migration
+TODO: Namespacing
+
+## Parser changes - aprsParser
+- Class has been renamed to AprsParser
+- parseaprs => parseAprs
+
+## Packet changes
+
+

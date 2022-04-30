@@ -7,12 +7,12 @@ import * as chai from 'chai';
 const assert = require('assert');
 const should = chai.should();
 
-import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/PacketTypeEnum';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/AprsPacket';
+import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Test decoding GPRMC NMEA', () => {
-    let parser = new aprsParser();
+    let parser = new AprsParser();
 
     describe('#parseaprs - Test parsing a GPRMC NMEA packet', () => {
         let $srccall = "OH7LZB-11";
@@ -22,7 +22,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
 
         let $aprspacket = `${$header}:${$body}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         // the parser always appends an SSID - make sure the behaviour doesn't change
         $dstcall += '-0';
@@ -90,7 +90,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
     describe('#parseaprs - Test parsing a GPRMC NMEA packet', () => {
         let $aprspacket = `OH7LZB-11>APRS,W4GR*,WIDE2-1,qAR,WA4DSY:$GPRMC,145526,A,3349.0378,S,08406.2617,E,23.726,27.9,121207,4.9,W*75`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return latitude value, that when rounded should equal: -33.8173', () => {
             assert.equal(-33.8173, parsed.latitude.toFixed(4));
@@ -102,7 +102,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
     });
 
     describe('#parseaprs - Test parsing a GPRMC packet with an invalid position', () => {
-        let parsed: aprsPacket = parser.parseaprs("AE4XO-14>GPSLK,WIDE1-1,WIDE2-2,qAR,AE4XO:$GPRMC,,V,3237.1002,N,08340.7972,W,,,,3.2,W*62");
+        let parsed: AprsPacket = parser.parseAprs("AE4XO-14>GPSLK,WIDE1-1,WIDE2-2,qAR,AE4XO:$GPRMC,,V,3237.1002,N,08340.7972,W,,,,3.2,W*62");
 
         it('Should return a result code: gprmc_nofix', () => {
             assert.equal("gprmc_nofix", parsed.resultCode);
@@ -110,7 +110,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
     });
 
     describe('#parseaprs - Test parsing a GPRMC packet with an invalid timestamp', () => {
-        let parsed: aprsPacket = parser.parseaprs("KB9WGA-2>APRS,W9DOR-10*,WIDE2-1,qAR,KB8ZXE-1:$GPRMC,A2,A,,,,,,,,, W * 0");
+        let parsed: AprsPacket = parser.parseAprs("KB9WGA-2>APRS,W9DOR-10*,WIDE2-1,qAR,KB8ZXE-1:$GPRMC,A2,A,,,,,,,,, W * 0");
 
         it('Should return a result code: gprmc_inv_time - 2nd path', () => {
             assert.equal("gprmc_inv_time", parsed.resultCode);
@@ -118,7 +118,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
     });
 
     describe('#parseaprs - Test parsing a GPRMC packet with an invalid timestamp', () => {
-        let parsed: aprsPacket = parser.parseaprs("KB9WGA-2>APRS,W9DOR-10*,WIDE2-1,qAR,KI8KR-10:$GPRMC,11,A,4458.2127,N,08720.8152,W,0.000,0.0,120,2.2, W * 0");
+        let parsed: AprsPacket = parser.parseAprs("KB9WGA-2>APRS,W9DOR-10*,WIDE2-1,qAR,KI8KR-10:$GPRMC,11,A,4458.2127,N,08720.8152,W,0.000,0.0,120,2.2, W * 0");
 
         it('Should return a result code: gprmc_inv_time - 2nd path', () => {
             assert.equal("gprmc_inv_time", parsed.resultCode);
@@ -126,7 +126,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
     });
 
     describe('#parseaprs - Test parsing a GPRMC packet with an invalid date', () => {
-        let parsed: aprsPacket = parser.parseaprs("KD6VKF-12>GPSLK,KF6ILA*,KF6ILA-10*,WIDE2*,qAR,KK6TV-10:$GPRMC,153041.000,A,3300.8386,N,11656.7468,W,6.72,27.02,id`fbnXXX�Thh�");
+        let parsed: AprsPacket = parser.parseAprs("KD6VKF-12>GPSLK,KF6ILA*,KF6ILA-10*,WIDE2*,qAR,KK6TV-10:$GPRMC,153041.000,A,3300.8386,N,11656.7468,W,6.72,27.02,id`fbnXXX�Thh�");
 
         it('Should return a result code: gprmc_inv_date', () => {
             assert.equal("gprmc_inv_date", parsed.resultCode);
@@ -141,7 +141,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
 
         let $aprspacket = `${$header}:${$body}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return a result code: nmea_large_ew', () => {
             assert.equal("nmea_large_ew", parsed.resultCode);
@@ -156,7 +156,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
 
         let $aprspacket = `${$header}:${$body}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return a result code: nmea_large_ns', () => {
             assert.equal("nmea_large_ns", parsed.resultCode);
@@ -171,7 +171,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
 
         let $aprspacket = `${$header}:${$body}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return a result code: gprmc_fewfields', () => {
             assert.equal("gprmc_fewfields", parsed.resultCode);
@@ -186,7 +186,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
 
         let $aprspacket = `${$header}:${$body}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return a result code: nmea_inv_sign', () => {
             assert.equal("nmea_inv_sign", parsed.resultCode);
@@ -194,7 +194,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
     });
 
     describe('#parseaprs - Test parsing a GPRMC packet with an invalid coordinate.', () => {
-        let parsed: aprsPacket = parser.parseaprs(`KD6VKF-12>GPSLK,KF6ILA*,KF6ILA-10*,WIDE2*,qAR,KK6TV-10:$GPRMC,145526,A,9049.0D78,N,18406.2617,W,180,27.9,121207,4.9,W*20`)
+        let parsed: AprsPacket = parser.parseAprs(`KD6VKF-12>GPSLK,KF6ILA*,KF6ILA-10*,WIDE2*,qAR,KK6TV-10:$GPRMC,145526,A,9049.0D78,N,18406.2617,W,180,27.9,121207,4.9,W*20`)
 
         it('Should return a result code: nmea_inv_sign', () => {
             assert.equal("nmea_inv_cval", parsed.resultCode);
@@ -202,7 +202,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
     });
 
     describe('#parseaprs - Test parsing a GPRMC packet with an invalid time.', () => {
-        let parsed: aprsPacket = parser.parseaprs(`OH7LZB-11>APRS,W4GR*,WIDE2-1,qAR,WA4DSY:$GPRMC,545526,A,3349.0378,S,08406.2617,E,23.726,27.9,121207,4.9,W*113`)
+        let parsed: AprsPacket = parser.parseAprs(`OH7LZB-11>APRS,W4GR*,WIDE2-1,qAR,WA4DSY:$GPRMC,545526,A,3349.0378,S,08406.2617,E,23.726,27.9,121207,4.9,W*113`)
 
         it('Should return a result code: gprmc_inv_time', () => {
             assert.equal("gprmc_inv_time", parsed.resultCode);
@@ -210,7 +210,7 @@ describe('FAP - Test decoding GPRMC NMEA', () => {
     });
 
     describe('#parseaprs - Test parsing a GPRMC packet with an invalid time.', () => {
-        let parsed: aprsPacket = parser.parseaprs(`OH7LZB-11>APRS,W4GR*,WIDE2-1,qAR,WA4DSY:$GPMY,145526,A,3349.0378,S,08406.2617,E,23.726,27.9,121207,4.9,W*113`)
+        let parsed: AprsPacket = parser.parseAprs(`OH7LZB-11>APRS,W4GR*,WIDE2-1,qAR,WA4DSY:$GPMY,145526,A,3349.0378,S,08406.2617,E,23.726,27.9,121207,4.9,W*113`)
 
         it('Should return a result code: nmea_unsupp', () => {
             assert.equal("nmea_unsupp", parsed.resultCode);

@@ -3,11 +3,11 @@
  */
 const assert = require('assert');
 
-import aprsPacket from '../src/aprsPacket';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/aprsPacket';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Test decoding mic-e packet with sequence 00, 5 channels of telemetry and one channel of binary bits', function() {
-    let parser: aprsParser = new aprsParser();
+    let parser: AprsParser = new AprsParser();
 
     describe('#parseaprs - Test parsing a mic-e packet packet', function() {
         let $srccall = "OH7LZB-13";
@@ -22,7 +22,7 @@ describe('FAP - Test decoding mic-e packet with sequence 00, 5 channels of telem
 
         let $aprspacket = `${$header}:${$body} ${$comment} ${$tlm}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it(`Should return the comment: ${$comment}`, function() {
             assert.equal($comment, parsed.comment);
@@ -60,7 +60,7 @@ describe('FAP - Test decoding mic-e packet with sequence 00, 5 channels of telem
 
         let $aprspacket = `${$header}:${$body} ${$comment} ${$tlm}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it(`Should return the comment: ${$comment}`, function() {
             assert.equal($comment, parsed.comment);
@@ -83,7 +83,7 @@ describe('FAP - Test decoding mic-e packet with sequence 00, 5 channels of telem
 
     describe('#parseaprs - Test parsing a harder one', function() {
         let $aprspacket = "N6BG-1>S6QTUX:`+,^l!cR/'\";z}||ss11223344bb!\"|!w>f!|3";
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it(`Should return a telemetry bits: '10000000'`, function() {
             assert.equal('10000000', parsed.telemetry.bits);
@@ -103,7 +103,7 @@ describe('FAP - Test decoding mic-e packet with sequence 00, 5 channels of telem
 
         let $aprspacket = `${$header}:${$body} ${$comment} ${$tlm}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it(`Should return the comment: ${$comment}`, function() {
             assert.equal($comment, parsed.comment);
@@ -112,7 +112,7 @@ describe('FAP - Test decoding mic-e packet with sequence 00, 5 channels of telem
 
     // TODO: THIS SHOULD BE VALID!!!
     //describe('#it should be valid', () => {
-    //    let parsed: aprsPacket = parser.parseaprs("KA0GFC-14>S8UR5V,KC0MGG-3,WIDE1*,WIDE2-2,qAR,KE0WVG:'xR;o6`k/]\"6P}")
+    //    let parsed: aprsPacket = parser.parseAprs("KA0GFC-14>S8UR5V,KC0MGG-3,WIDE1*,WIDE2-2,qAR,KE0WVG:'xR;o6`k/]\"6P}")
     //    console.log(parsed)
     //})
 });

@@ -1,13 +1,13 @@
 const assert = require('assert');
 
-import aprsPacket from '../src/aprsPacket';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/AprsPacket';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - test warning message function', () => {
-    let parser = new aprsParser();
+    let parser = new AprsParser();
 
     describe('#parseaprs - test where the result messages does not contain the error code.', () => {
-        let parsed: aprsPacket = new aprsPacket();
+        let parsed: AprsPacket = new AprsPacket();
 
         parsed = parser.addError(parsed, 'test');
 

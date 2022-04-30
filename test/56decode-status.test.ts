@@ -1,13 +1,15 @@
-import aprsPacket from '../src/aprsPacket'
-import aprsParser from '../src/parser'
 import * as chai from 'chai';
-import { RESULT_MESSAGES } from '../src/ResultMessages'
+
+import { RESULT_MESSAGES } from '../src/enums/ResultMessages'
+
+import { AprsPacket } from '../src/models/AprsPacket'
+import { AprsParser } from '../src/parsers/AprsParser';
 
 const assert = chai.assert;
 const should = chai.should();
 
 describe('FAP - Status message decoding', function() {
-    let parser = new aprsParser()
+    let parser = new AprsParser()
 
     describe('#parseaprs - Status message\'s timestamp is not affected by the raw_timestamp flag.', function() {
         let $now = new Date()
@@ -24,7 +26,7 @@ describe('FAP - Status message decoding', function() {
         let $msg = '>>Nashville,TN>>Toronto,ON'
         let $aprspacket = 'KB3HVP-14>APU25N,WIDE2-2,qAR,LANSNG:>' + $tstamp + $msg
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket, { 'raw_timestamp': 1 })
+        let parsed: AprsPacket = parser.parseAprs($aprspacket, { 'raw_timestamp': 1 })
 
         it('Should return the type: status', function() {
             assert.equal('status', parsed.type)
@@ -41,7 +43,7 @@ describe('FAP - Status message decoding', function() {
 
     describe('#parseaprs - Status message\'s timestamp is invalid.', function () {
         let $aprspacket = 'KB3HVP-14>APU25N,WIDE2-2,qAR,LANSNG:>000000z>>Nashville,TN>>Toronto,ON'
-        let parsed: aprsPacket = parser.parseaprs($aprspacket, { 'raw_timestamp': 1 })
+        let parsed: AprsPacket = parser.parseAprs($aprspacket, { 'raw_timestamp': 1 })
 
         it('Should return a warning code \'timestamp_inv_sta', function () {
             assert.equal('timestamp_inv_sta', parsed.warningCodes[0])
@@ -54,7 +56,7 @@ describe('FAP - Status message decoding', function() {
 
     describe('#parseaprs - Status message has no timestamp', function () {
         let $aprspacket = 'KB3HVP-14>APU25N,WIDE2-2,qAR,LANSNG:>Nashville,TN>>Toronto,ON'
-        let parsed: aprsPacket = parser.parseaprs($aprspacket, { 'raw_timestamp': 1 })
+        let parsed: AprsPacket = parser.parseAprs($aprspacket, { 'raw_timestamp': 1 })
 
         it('Should not have a timestamp', function () {
             should.not.exist(parsed.timestamp)
@@ -63,7 +65,7 @@ describe('FAP - Status message decoding', function() {
 
     describe('#parseaprs - Status message has no body', function () {
         let $aprspacket = 'KB3HVP-14>APU25N,WIDE2-2,qAR,LANSNG:>'
-        let parsed: aprsPacket = parser.parseaprs($aprspacket)
+        let parsed: AprsPacket = parser.parseAprs($aprspacket)
 
         it('#parseaprse - Status message should not have an error or warning', function () {
             should.not.exist(parsed.resultCode)

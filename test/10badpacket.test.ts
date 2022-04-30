@@ -5,12 +5,12 @@ import * as chai from 'chai';
 const assert = require('assert');
 const should = chai.should();
 
-import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/PacketTypeEnum';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/AprsPacket';
+import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - test bad packets', () => {
-    let parser = new aprsParser();
+    let parser = new AprsParser();
 
     describe('#parseaprs - corrupted uncompressed packet', () => {
         let $srccall = "OH2RDP-1";
@@ -18,7 +18,7 @@ describe('FAP - test bad packets', () => {
 
         let $aprspacket = `${$srccall}>${$dstcall},OH2RDG*,WIDE:!60ff.51N/0250akh3r99hfae`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return a resultcode: loc_inv', () => {
             assert.equal('loc_inv', parsed.resultCode);
@@ -52,7 +52,7 @@ describe('FAP - test bad packets', () => {
     describe('#parseaprs - bad source call', () => {
         let $aprspacket = `K6IFR_S>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return a resultcode: srccall_badchars', () => {
             assert.equal('srccall_badchars', parsed.resultCode);
@@ -70,7 +70,7 @@ describe('FAP - test bad packets', () => {
     describe('#parseaprs - bad digipeater call', () => {
         let $aprspacket = `SV2BRF-6>APU25N,TCPXX*,qAX,SZ8L_GREE:=/:\$U#T<:G- BVagelis, qrv:434.350, tsq:77 {UIV32N}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return a resultcode: digicall_badchars', () => {
             assert.equal('digicall_badchars', parsed.resultCode);
@@ -88,7 +88,7 @@ describe('FAP - test bad packets', () => {
     describe('#parseaprs - bad symbol table', () => {
         let $aprspacket = `ASDF>DSALK,OH2RDG*,WIDE:!6028.51N,02505.68E#`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return a resultcode: sym_inv_table', () => {
             assert.equal('sym_inv_table', parsed.resultCode);
@@ -100,7 +100,7 @@ describe('FAP - test bad packets', () => {
     });
 
     describe('#parsepars - no packet', () => {
-        let parsed: aprsPacket = parser.parseaprs(undefined);
+        let parsed: AprsPacket = parser.parseAprs(undefined);
 
         it('Should return a resultCode: "packet_no"', () => {
             assert.equal('packet_no', parsed.resultCode);
@@ -108,7 +108,7 @@ describe('FAP - test bad packets', () => {
     });
 
     describe('#parseaprs - packet too short', () => {
-        let parsed: aprsPacket = parser.parseaprs('');
+        let parsed: AprsPacket = parser.parseAprs('');
 
         it('Should return a resultCode: "packet_short"', () => {
             assert.equal('packet_short', parsed.resultCode);
@@ -116,7 +116,7 @@ describe('FAP - test bad packets', () => {
     });
 
     describe('#parseaprs - packet no body', () => {
-        let parsed: aprsPacket = parser.parseaprs('!6028.51N,02505.68E#');
+        let parsed: AprsPacket = parser.parseAprs('!6028.51N,02505.68E#');
 
         it('Should return a resultCode: "packet_nobody"', () => {
             assert.equal('packet_nobody', parsed.resultCode);
@@ -124,7 +124,7 @@ describe('FAP - test bad packets', () => {
     });
 
     describe('#parseaprs - packet with invalid destCallsign', () => {
-        let parsed: aprsPacket = parser.parseaprs('None>None,qAR,TACO:!3751.90NS12213.23W#PHG7500/W2,NCAn, WA6TLW, Berkeley, CA A=001720');
+        let parsed: AprsPacket = parser.parseAprs('None>None,qAR,TACO:!3751.90NS12213.23W#PHG7500/W2,NCAn, WA6TLW, Berkeley, CA A=001720');
 
         it('Should return a resultCode: "dstcall_noax25"', () => {
             assert.equal('dstcall_noax25', parsed.resultCode);
@@ -132,7 +132,7 @@ describe('FAP - test bad packets', () => {
     });
 
     describe('#parseaprs - packet with no destCallsign', () => {
-        let parsed: aprsPacket = parser.parseaprs('None>:!3751.90NS12213.23W#PHG7500/W2,NCAn, WA6TLW, Berkeley, CA A=001720');
+        let parsed: AprsPacket = parser.parseAprs('None>:!3751.90NS12213.23W#PHG7500/W2,NCAn, WA6TLW, Berkeley, CA A=001720');
 
         it('Should return a resultCode: "dstcall_none"', () => {
             assert.equal('dstcall_none', parsed.resultCode);
@@ -140,7 +140,7 @@ describe('FAP - test bad packets', () => {
     });
 
     describe('Test trying to parse an invalid location packet', () => {
-        let parsed: aprsPacket = parser.parseaprs('PY5LF-13>APTT4,WIDE1-1,WIDE2-1,qAR,PU5SZN-2:! Weather Station ISS Davis CURITIBA - PR');
+        let parsed: AprsPacket = parser.parseAprs('PY5LF-13>APTT4,WIDE1-1,WIDE2-1,qAR,PU5SZN-2:! Weather Station ISS Davis CURITIBA - PR');
 
         it('Should return a resultCode: "packet_invalid"', () => {
             assert.equal('packet_invalid', parsed.resultCode);
@@ -148,7 +148,7 @@ describe('FAP - test bad packets', () => {
     });
 
     describe('#parseaprs - packet with invalid destination callsign', () => {
-        let parsed: aprsPacket = parser.parseaprs('BH8SEL-3>Office,qAS,BG6CQ:=2503.22N/10130.90E_000/000g000t057r000p000h48b08209ESP8266 MAC 84:0d:8e:84:26:c3 RSSI: -43');
+        let parsed: AprsPacket = parser.parseAprs('BH8SEL-3>Office,qAS,BG6CQ:=2503.22N/10130.90E_000/000g000t057r000p000h48b08209ESP8266 MAC 84:0d:8e:84:26:c3 RSSI: -43');
 
         it('Should return a resultCode: "dstcall_noax25"', () => {
             assert.equal('dstcall_noax25', parsed.resultCode);

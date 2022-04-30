@@ -5,12 +5,12 @@ import * as chai from 'chai';
 const assert = require('assert')
 const expect = chai.expect
 
-import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/PacketTypeEnum';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/AprsPacket';
+import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Test parsing object', () => {
-    let parser = new aprsParser();
+    let parser = new AprsParser();
 
     describe('#parseaprs - Test object parsing', () => {
         const srccall = "OH2KKU-1";
@@ -23,7 +23,7 @@ describe('FAP - Test parsing object', () => {
             $aprspacket += String.fromCharCode(parseInt(x, 16));
         });
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return srccallsign: ' + srccall, () => {
             assert.equal(srccall, parsed.sourceCallsign);
@@ -85,7 +85,7 @@ describe('FAP - Test parsing object', () => {
     });
 
     describe('Test object where there is an issue parsing the object location', () => {
-        const parsed: aprsPacket = parser.parseaprs('K8ETN-S>APJIO4,TCPIP*,qAC,K8ETN-GS:;K8ETN  C *080015z    .  ND     .  EaRNG0045 2m Voice 145.200 -0.600 MHz');
+        const parsed: AprsPacket = parser.parseAprs('K8ETN-S>APJIO4,TCPIP*,qAC,K8ETN-GS:;K8ETN  C *080015z    .  ND     .  EaRNG0045 2m Voice 145.200 -0.600 MHz');
 
         it('Should return a resultCode: "obj_dec_err"', () => {
             expect(parsed.resultCode).to.equal("obj_dec_err");
@@ -93,7 +93,7 @@ describe('FAP - Test parsing object', () => {
     });
 
     describe('Regular APRS position - alive', () => {
-        const parsed: aprsPacket = parser.parseaprs('OH2KKU-1>APRS,TCPIP*,qAC,OH2KKU-1:;LEADER   *092345z4903.50N/07201.75W>088/036')
+        const parsed: AprsPacket = parser.parseAprs('OH2KKU-1>APRS,TCPIP*,qAC,OH2KKU-1:;LEADER   *092345z4903.50N/07201.75W>088/036')
 
         assert.equal(null, parsed.resultCode)
         assert.equal('object', parsed.type)
@@ -108,7 +108,7 @@ describe('FAP - Test parsing object', () => {
     })
 
     describe('Regular APRS position - killed', () => {
-        const parsed: aprsPacket = parser.parseaprs('OH2KKU-1>APRS,TCPIP*,qAC,OH2KKU-1:;LEADER   _092345z4903.50N/07201.75W>088/036')
+        const parsed: AprsPacket = parser.parseAprs('OH2KKU-1>APRS,TCPIP*,qAC,OH2KKU-1:;LEADER   _092345z4903.50N/07201.75W>088/036')
 
         assert.equal(null, parsed.resultCode)
         assert.equal('object', parsed.type)

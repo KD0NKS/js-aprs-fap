@@ -7,11 +7,11 @@ import * as chai from 'chai';
 const assert = require('assert');
 const should = chai.should();
 
-import aprsPacket from '../src/aprsPacket';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/aprsPacket';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Test decoding uncompressed packets', () => {
-    let parser = new aprsParser();
+    let parser = new AprsParser();
 
     describe('#parseaprs - Test parsing uncompressed packet', () => {
         let $srccall = "OH2RDP-1";
@@ -21,7 +21,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
 
         let $aprspacket = $srccall + '>' + $dstcall + ',OH2RDG*,WIDE:!6028.51N/02505.68E#PHG' + $phg + '/' + $comment;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return a format type: uncompressed', () => {
             assert.equal('uncompressed', parsed.format);
@@ -76,7 +76,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
 
         let $aprspacket = $srccall + '>' + $dstcall + ',OH2RDG*,WIDE:!6028.51S/02505.68W#PHG' + $phg + '/' + $comment;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: -60.4752', () => {
@@ -100,7 +100,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
 
         let $aprspacket = $srccall + '>' + $dstcall + ',OH2RDG*,WIDE:!602 .  S/0250 .  W#PHG' + $phg + '/' + $comment;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: -60.4167', () => {
@@ -128,7 +128,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
 
         let $aprspacket = $srccall + '>' + $dstcall + ',OH2RDG*,WIDE:!60  .  S/025  .  W#PHG' + $phg + '/' + $comment;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: -60.5000', () => {
@@ -156,7 +156,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
 
         let $aprspacket = $srccall + '>' + $dstcall + ",OH2RDG*,WIDE:hoponassualku!6028.51S/02505.68W#PHG" + $phg + $comment;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: -60.4752', () => {
@@ -180,7 +180,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
             , () => {
         let $aprspacket = 'A0RID-1>KC0PID-7,WIDE1,qAR,NX0R-6:=3851.38N/09908.75W_Home of KA0RID';
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: 38.8563', () => {
@@ -203,7 +203,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
     describe('#parseaprs - Test parsing packet position with timestamp and altitude.', () => {
         let $aprspacket = 'YB1RUS-9>APOTC1,WIDE2-2,qAS,YC0GIN-1:/180000z0609.31S/10642.85E>058/010/A=000079 13.8V 15CYB1RUS-9 Mobile Tracker';
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: -6.15517', () => {
@@ -222,7 +222,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
     describe('#parseaprs - Test parsing position with timestamp and altitude', () => {
         let $aprspacket = 'YB1RUS-9>APOTC1,WIDE2-2,qAS,YC0GIN-1:/180000z0609.31S/10642.85E>058/010/A=-00079 13.8V 15CYB1RUS-9 Mobile Tracker';
 
-        let parsed = parser.parseaprs($aprspacket);
+        let parsed = parser.parseAprs($aprspacket);
 
         it('Should return altitude: -24.07920', () => {
             assert.equal(-24.07920, parsed.altitude);
@@ -232,7 +232,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
     describe('#parseaprs - Test parsing a rather basic position packet', () => {
         let $aprspacket = 'YC0SHR>APU25N,TCPIP*,qAC,ALDIMORI:=0606.23S/10644.61E-GW SAHARA PENJARINGAN JAKARTA 147.880 MHz';
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return latitude value, that when rounded should equal: -6.10383', () => {
             assert.equal(-6.10383, parsed.latitude.toFixed(5));
@@ -244,7 +244,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
     });
 
     describe('Test parsing a location packet that is too short', () => {
-        let packet: aprsPacket = parser.parseaprs("DB0GV>APNU19,WIDE1-1,WIDE3-3,DB0ZAV-1,IGATE,qAS,DB0ZAV-1:!5007.86700");
+        let packet: AprsPacket = parser.parseAprs("DB0GV>APNU19,WIDE1-1,WIDE3-3,DB0ZAV-1,IGATE,qAS,DB0ZAV-1:!5007.86700");
 
         it('Should return a packet with a result code: packet_short', () => {
             assert.equal("packet_short", packet.resultCode);
@@ -252,7 +252,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
     });
 
     describe('Test parsing a location packet that is too short', () => {
-        let packet: aprsPacket = parser.parseaprs("DB0ZEH>APNDBB,DB0LDS*,WIDE3-2,qAR,DB0ZEH:;800-ZEH  *111111z5258.75N/01319.9");
+        let packet: AprsPacket = parser.parseAprs("DB0ZEH>APNDBB,DB0LDS*,WIDE3-2,qAR,DB0ZEH:;800-ZEH  *111111z5258.75N/01319.9");
 
         it('Should return a packet with a result code: loc_short', () => {
             assert.equal("loc_short", packet.resultCode);
@@ -260,7 +260,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
     });
 
     describe('Test parsing an uncompressed packet where the location is too large', () => {
-        let packet: aprsPacket = parser.parseaprs("N6BMW-1>APRS,DMR*,qAS,n3fe-10:=3426.19N/24051.47E[Dan - Ojai CA");
+        let packet: AprsPacket = parser.parseAprs("N6BMW-1>APRS,DMR*,qAS,n3fe-10:=3426.19N/24051.47E[Dan - Ojai CA");
 
         it('Should return a packet with a result code: loc_large', () => {
             assert.equal("loc_large", packet.resultCode);
@@ -268,7 +268,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
     });
 
     describe('Test parsing a packet where the location where the decimals are not used and is ambiguous', () => {
-        let packet: aprsPacket = parser.parseaprs("SPBLTZ>APRS,TCPIP*,qAC,T2POLAND:;SPBLTZ   *112050z5210.  N/021  .  E? Informacje burzowe, op. Pawel SP5MNC");
+        let packet: AprsPacket = parser.parseAprs("SPBLTZ>APRS,TCPIP*,qAC,T2POLAND:;SPBLTZ   *112050z5210.  N/021  .  E? Informacje burzowe, op. Pawel SP5MNC");
 
         it('Should return a packet with a result code: loc_amb_inv', () => {
             assert.equal("loc_amb_inv", packet.resultCode);
@@ -280,7 +280,7 @@ describe('FAP - Test decoding uncompressed packets', () => {
     });
 
     describe('Test parsing a packet where the location where the packet body is too short', () => {
-        let parsed: aprsPacket = parser.parseaprs('IR1AX-11>APNU19,WIDE1-1,WIDE2-2,qAR,IZ1REU-11:=4429.38N/00&11.');
+        let parsed: AprsPacket = parser.parseAprs('IR1AX-11>APNU19,WIDE1-1,WIDE2-2,qAR,IZ1REU-11:=4429.38N/00&11.');
 
         it('Should not have a longitude', () => {
             should.not.exist(parsed.longitude);

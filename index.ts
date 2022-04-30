@@ -1,19 +1,19 @@
-import aprsPacket from './src/aprsPacket'
-import aprsParser from './src/parser'
-import { ConversionConstantEnum } from './src/ConversionConstantEnum'
-import { PacketTypeEnum } from './src/PacketTypeEnum'
-import digipeater from './src/digipeater'
-import telemetry from './src/telemetry'
-import { ConversionUtil } from './src/ConversionUtil'
-import wx from './src/wx'
+import { AprsPacket } from './src/models/AprsPacket'
+import { AprsParser } from './src/parsers/AprsParser'
+import { ConversionConstantEnum } from './src/enums/ConversionConstantEnum'
+import { PacketTypeEnum } from './src/enums/PacketTypeEnum'
+import Digipeater from './src/models/Digipeater'
+import Telemetry from './src/models/Telemetry'
+import { ConversionUtil } from './src/utils/ConversionUtil'
+import Weather from './src/models/Weather'
 
 export {
-    aprsPacket
-    , aprsParser
+    AprsPacket
+    , AprsParser
     , ConversionConstantEnum
     , ConversionUtil
-    , digipeater
+    , Digipeater
     , PacketTypeEnum
-    , telemetry
-    , wx
+    , Telemetry
+    , Weather
 }

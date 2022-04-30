@@ -4,19 +4,19 @@
  * a cut 'n paste operation
  * Tue Dec 11 2007, Hessu, OH7LZB
  */
-import aprsPacket from '../src/aprsPacket'
-import aprsParser from '../src/parser'
+import { AprsPacket } from '../src/models/aprsPacket'
+import { AprsParser } from '../src/parsers/AprsParser';
 import * as chai from 'chai'
-import { PacketTypeEnum } from '../src/PacketTypeEnum'
+import { PacketTypeEnum } from '../src/enums/PacketTypeEnum'
 
 const assert = chai.assert;
 
 describe('FAP - Test parsing a bad packet', function() {
-    const parser: aprsParser = new aprsParser();
+    const parser: AprsParser = new AprsParser();
 
     describe('#parseaprs - Test parsing a bad packet', function() {
         const $aprspacket = `OH2KKU-1>APRS,TCPIP*,qAC,FIRST:;SRAL HQ *110507zS0%E/Th4_a AKaupinmaenpolku9,open M-Th12-17,F12-14 lcl`
-        const parsed: aprsPacket = parser.parseaprs($aprspacket)
+        const parsed: AprsPacket = parser.parseAprs($aprspacket)
 
         it('Should return a resultcode: obj_inv', function() {
             assert.equal('obj_inv', parsed.resultCode);
@@ -31,7 +31,7 @@ describe('FAP - Test parsing a bad packet', function() {
     // because it is less than 31 characters
     describe('#parseaprs - Test parsing a bad packet', function () {
         const $aprspacket = `OH2KKU-1>APRS:;110507zS0%E/Th4_a AK`
-        const parsed: aprsPacket = parser.parseaprs($aprspacket, { isax25: true })
+        const parsed: AprsPacket = parser.parseAprs($aprspacket, { isax25: true })
 
         it('Should return a resultcode: obj_short', function () {
             assert.equal('obj_short', parsed.resultCode);
@@ -44,7 +44,7 @@ describe('FAP - Test parsing a bad packet', function() {
 
     describe('#parseaprs - Test parsing a bad packet', function () {
         const $aprspacket = `K8ETN-S>APJIO4,TCPIP*,qAC,K8ETN-GS:;K8ETN  C *240015h    .  ND     .  EaRNG0045 2m Voice 145.200 -0.600 MHz`
-        const parsed: aprsPacket = parser.parseaprs($aprspacket)
+        const parsed: AprsPacket = parser.parseAprs($aprspacket)
 
         it('Should return a warning code \'timestamp_inv_obj', function () {
             assert.equal('timestamp_inv_obj', parsed.warningCodes[0])

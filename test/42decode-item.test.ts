@@ -2,12 +2,12 @@
 // Tue Dec 11 2007, Hessu, OH7LZB
 const assert = require('assert');
 
-import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/PacketTypeEnum';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/AprsPacket';
+import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Test item parsing', function() {
-    let parser = new aprsParser();
+    let parser = new AprsParser();
 
     describe('#parseaprs - Test parsing uncompressed item', function() {
         let $srccall = "OH2KKU-1";
@@ -16,7 +16,7 @@ describe('FAP - Test item parsing', function() {
         let $body = ")AID #2!4903.50N/07201.75WA";
         let $aprspacket = $header + ':' + $body;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return srccallsign: ' + $srccall, function() {
             assert.equal($srccall, parsed.sourceCallsign);
@@ -74,7 +74,7 @@ describe('FAP - Test item parsing', function() {
         let $body = ")AID #2_4903.50N/07201.75WA";
         let $aprspacket = $header + ':' + $body;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return srccallsign: ' + $srccall, function() {
             assert.equal($srccall, parsed.sourceCallsign);
@@ -132,7 +132,7 @@ describe('FAP - Test item parsing', function() {
         let $body = ")MOBIL!\\5L!!<*e79 sT";
         let $aprspacket = $header + ':' + $body;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return srccallsign: ' + $srccall, function() {
             assert.equal($srccall, parsed.sourceCallsign);
@@ -184,7 +184,7 @@ describe('FAP - Test item parsing', function() {
     });
 
     describe('#parseaprs - Test parsing an item with an error in decoding location', () => {
-        let packet: aprsPacket = parser.parseaprs('FR5GS>APZDMR,QTH*,TCPIP*,qAU,T2STRAS:)FR5GS-DP!-21-4.88S/05541.66rRNG0034 IPSC2-FRANCE 3 MMDVM 439.9500@-9.4 MHz ');
+        let packet: AprsPacket = parser.parseAprs('FR5GS>APZDMR,QTH*,TCPIP*,qAU,T2STRAS:)FR5GS-DP!-21-4.88S/05541.66rRNG0034 IPSC2-FRANCE 3 MMDVM 439.9500@-9.4 MHz ');
 
         it('Should return a resultCode: item_dec_err', () => {
             assert.equal("item_dec_err", packet.resultCode);
@@ -192,7 +192,7 @@ describe('FAP - Test item parsing', function() {
     });
 
     describe('#parseaprs - Test parsing an item with an error in decoding location', () => {
-        let packet: aprsPacket = parser.parseaprs('HS3LSE-10>APZMDM,WIDE1-1,WIDE2-1,RELAY,WIDE,WIDE2-1*,qAR,DU6DKL-5:)SRNEMT02!1453.16N/103');
+        let packet: AprsPacket = parser.parseAprs('HS3LSE-10>APZMDM,WIDE1-1,WIDE2-1,RELAY,WIDE,WIDE2-1*,qAR,DU6DKL-5:)SRNEMT02!1453.16N/103');
 
         it('Should return a resultCode: loc_short', () => {
             assert.equal("loc_short", packet.resultCode);
@@ -201,7 +201,7 @@ describe('FAP - Test item parsing', function() {
 
     // The perl parser cannot hit this scenario.
     describe("#parseaprs - Test parsing an item that's too short", () => {
-        let packet: aprsPacket = parser.parseaprs('HS3LSE-10>APZMDM,WIDE1-1,WIDE2-1,RELAY,WIDE,WIDE2-1*,qAR,DU6DKL-5:)SRNEMT02!1453.16');
+        let packet: AprsPacket = parser.parseAprs('HS3LSE-10>APZMDM,WIDE1-1,WIDE2-1,RELAY,WIDE,WIDE2-1*,qAR,DU6DKL-5:)SRNEMT02!1453.16');
 
         it('Should return a resultCode: item_short', () => {
             assert.equal("item_short", packet.resultCode);

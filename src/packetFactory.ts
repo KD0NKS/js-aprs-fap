@@ -520,29 +520,44 @@
     /**
      * TODO: Move to factory class
      *
-     * =item make_position($lat, $lon, $speed, $course, $altitude, $symbols, $usecompression, $posambiguity)
      * Creates an APRS position for position/object/item. Parameters:
-     *  1st: latitude in decimal degrees
-     *  2nd: longitude in decimal degrees
-     *  3rd: speed in km/h, -1 == don't include
-     *  4th: course in degrees, -1 == don't include. zero == unknown course, 360 == north
-     *  5th: altitude in meters above mean sea level, -10000 or under == don't use
-     *  6th: aprs symbols to use, first table/overlay and then code (two bytes). If string length is zero (""), uses default.
-     *  7th: use compression (1) or not (0)
-     *  8th: use amount (0..4) of position ambiguity. Note that position ambiguity and compression can't be used at the same time.
+     *
+     * 1st: latitude in decimal degrees
+     * 2nd: longitude in decimal degrees
+     * 3rd: speed in km/h, -1 == don't include
+     * 4th: course in degrees, -1 == don't include. zero == unknown course, 360 == north
+     * 5th: altitude in meters above mean sea level, -10000 or under == don't use
+     * 6th: aprs symbol to use, first table/overlay and then code (two bytes). If string length is zero (""), uses default.
+     * 7th: hash reference for options:
+     *
+     * "compressed": 1 for compressed format
+     * "ambiguity": Use amount (0..4) of position ambiguity. Note that position ambiguity and compression can't be used at the same time.
+     * "dao": Use !DAO! extension for improved precision
+     *
      * Returns a string such as "1234.56N/12345.67E/CSD/SPD" or in
      * compressed form "F*-X;n_Rv&{-A" or undef on error.
+     *
      * Please note: course/speed/altitude are not supported yet, and neither is compressed format or position ambiguity.
+     *
      * This function API will probably change in the near future. The long list of
      * parameters should be changed to hash with named parameters.
      *
     private make_position($lat: number, $lon: number, $speed: number, $course: number
             , $altitude: number, $symbols: string, $usecompression: boolean, $posambiguity: number) {
 
-        // FIXME: course/speed/altitude are not supported yet,
-        //        neither is compressed format or position ambiguity
+        # FIXME: course/speed/altitude are not supported yet,
+        # neither is compressed format or position ambiguity
+        my($lat, $lon, $speed, $course, $altitude, $symbol, $options) = @_;
 
-        /*
+        if (!$options) {
+            $options = { };
+        }
+
+        if ($options->{'ambiguity'}) {
+            # can't be ambiguous and then add precision with !DAO!
+            delete $options->{'dao'};
+        }
+
         if ($lat < -89.99999 ||
             $lat > 89.99999 ||
             $lon < -179.99999 ||
@@ -553,18 +568,17 @@
 
         my $symboltable = "";
         my $symbolcode = "";
-        if (length($symbols) == 0) {
+        if (length($symbol) == 0) {
             $symboltable = "/";
             $symbolcode = "/";
-        } elsif ($symbols =~ /^([\/\\A-Z0-9])([\x21-\x7b\x7d])$/o) {
+        } elsif ($symbol =~ /^([\/\\A-Z0-9])([\x21-\x7b\x7d])$/o) {
             $symboltable = $1;
             $symbolcode = $2;
         } else {
             return undef;
         }
 
-
-        if ($usecompression == 1) {
+        if ($options->{'compression'}) {
             my $latval = 380926 * (90 - $lat);
             my $lonval = 190463 * (180 + $lon);
             my $latstring = "";
@@ -581,7 +595,7 @@
             }
             # encode overlay character if it is a number
             $symboltable =~ tr/0-9/a-j/;
-            # FIXME: no speed/course/altitude/radiorange encoding
+            # FIXME: no altitude/radiorange encoding
             my $retstring = $symboltable . $latstring . $lonstring . $symbolcode;
             if ($speed >= 0 && $course > 0 && $course <= 360) {
                 # In APRS spec unknown course is zero normally (and north is 360),
@@ -614,9 +628,24 @@
                 $isnorth = 0;
             }
             my $latdeg = int($lat);
-            my $latmin = sprintf("%04d", ($lat - $latdeg) * 6000);
-            my $latstring = sprintf("%02d%02d.%02d", $latdeg, substr($latmin, 0, 2), substr($latmin, 2, 2));
-            if ($posambiguity > 0 || $posambiguity <= 4) {
+            my $latmin = ($lat - $latdeg) * 60;
+            my $latmin_s;
+            my $latmin_dao;
+            # if we're doing DAO, round to 6 digits and grab the last 2 characters for DAO
+            if ($options->{'dao'}) {
+                $latmin_s = sprintf("%06.0f", $latmin * 10000);
+                $latmin_dao = substr($latmin_s, 4, 2);
+            } else {
+                $latmin_s = sprintf("%04.0f", $latmin * 100);
+            }
+            # check for rouding to 60 minutes and fix to 59.99 and DAO to 99
+            if ($latmin_s =~ /^60/) {
+                $latmin_s = "5999";
+                $latmin_dao = "99";
+            }
+            my $latstring = sprintf("%02d%02d.%02d", $latdeg, substr($latmin_s, 0, 2), substr($latmin_s, 2, 2));
+            my $posambiguity = $options->{'ambiguity'};
+            if (defined $posambiguity && $posambiguity > 0 && $posambiguity <= 4) {
                 # position ambiguity
                 if ($posambiguity <= 2) {
                     # only minute decimals are blanked
@@ -638,9 +667,23 @@
                 $iseast = 0;
             }
             my $londeg = int($lon);
-            my $lonmin = sprintf("%04d", ($lon - $londeg) * 6000);
-            my $lonstring = sprintf("%03d%02d.%02d", $londeg, substr($lonmin, 0, 2), substr($lonmin, 2, 2));
-            if ($posambiguity > 0 || $posambiguity <= 4) {
+            my $lonmin = ($lon - $londeg) * 60;
+            my $lonmin_s;
+            my $lonmin_dao;
+            # if we're doing DAO, round to 6 digits and grab the last 2 characters for DAO
+            if ($options->{'dao'}) {
+                $lonmin_s = sprintf("%06.0f", $lonmin * 10000);
+                $lonmin_dao = substr($lonmin_s, 4, 2);
+            } else {
+                $lonmin_s = sprintf("%04.0f", $lonmin * 100);
+            }
+            # check for rouding to 60 minutes and fix to 59.99 and DAO to 99
+            if ($lonmin_s =~ /^60/) {
+                $lonmin_s = "5999";
+                $lonmin_dao = "99";
+            }
+            my $lonstring = sprintf("%03d%s.%s", $londeg, substr($lonmin_s, 0, 2), substr($lonmin_s, 2, 2));
+            if (defined $posambiguity && $posambiguity > 0 && $posambiguity <= 4) {
                 # position ambiguity
                 if ($posambiguity <= 2) {
                     # only minute decimals are blanked
@@ -661,7 +704,7 @@
 
             if ($options->{'timestamp'}) {
                 my $now = time();
-                $retstring = sprintf('/%02d%02d%02dh', $hour, $min, $sec);
+
                 return undef if ($options->{'timestamp'} > $now+10);
 
                 my $age = $now - $options->{'timestamp'};
@@ -679,7 +722,7 @@
             $retstring .= $latstring . $symboltable . $lonstring . $symbolcode;
 
             # add course/speed, if given
-            if ($speed >= 0 && $course >= 0) {
+            if (defined $speed && defined $course && $speed >= 0 && $course >= 0) {
                 # convert speed to knots
                 $speed = $speed / $knot_to_kmh;
                 if ($speed > 999) {
@@ -690,6 +733,28 @@
                 }
                 $retstring .= sprintf("%03d/%03d", $course, $speed);
             }
+
+            if (defined $altitude) {
+                $altitude = $altitude / $feet_to_meters;
+                # /A=(-\d{5}|\d{6})
+                if ($altitude >= 0) {
+                    $retstring .= sprintf("/A=%06.0f", $altitude);
+                } else {
+                    $retstring .= sprintf("/A=-%05.0f", $altitude * -1);
+                }
+            }
+
+            if ($options->{'comment'}) {
+                $retstring .= $options->{'comment'};
+            }
+
+            if ($options->{'dao'}) {
+                # !DAO! extension, use Base91 format for best precision
+                # /1.1 : scale from 0.99 to 0..90 for base91, int(... + 0.5): round to nearest integer
+                my $dao = '!w' . chr(int($latmin_dao/1.1 + 0.5) + 33) . chr(int($lonmin_dao/1.1 + 0.5) + 33) . '!';
+                $retstring .= $dao;
+            }
+
             return $retstring;
         }
         *

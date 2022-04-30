@@ -2,10 +2,10 @@
 // Tue Dec 11 2007, Hessu, OH7LZB
 const assert = require('assert');
 
-import aprsParser from '../src/parser';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Test parsing beacons', function() {
-    let parser = new aprsParser();
+    let parser = new AprsParser();
 
     describe('#parseaprs - Test a beacon parsing', function() {
         let srccall = "OH2RDU";
@@ -13,7 +13,7 @@ describe('FAP - Test parsing beacons', function() {
         let message = " UIDIGI 1.9";
 
         let aprspacket = srccall + '>' + dstcall + ':' + message;
-        let retVal = parser.parseaprs(aprspacket);
+        let retVal = parser.parseAprs(aprspacket);
 
         it('Should return srccallsign: ' + srccall, function() {
             assert.equal(srccall, retVal.sourceCallsign);

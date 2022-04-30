@@ -8,12 +8,12 @@ const assert = require('assert');
 const should = chai.should();
 const expect = chai.expect;
 
-import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/PacketTypeEnum';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/AprsPacket';
+import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Test decoding compressed packets', function() {
-    let parser = new aprsParser();
+    let parser = new AprsParser();
 
     describe('#parseaprs - Test parsing a compressed packet', function() {
         let $srccall = "OH2KKU-15";
@@ -26,7 +26,7 @@ describe('FAP - Test decoding compressed packets', function() {
 
         let $aprspacket = `${$header}:${$body}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it(`Should return the source call sign: ${$srccall}`, function() {
             assert.equal($srccall, parsed.sourceCallsign);
@@ -126,7 +126,7 @@ describe('FAP - Test decoding compressed packets', function() {
 
         let $aprspacket = `${$header}:${$body}`;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it(`Should return the source call sign: ${$srccall}`, function() {
             assert.equal($srccall, parsed.sourceCallsign);
@@ -209,7 +209,7 @@ describe('FAP - Test decoding compressed packets', function() {
              + ' is otherwise valid. It\'s just missing 2 bytes of padding.', function() {
         let $aprspacket = 'KJ4ERJ-AL>APWW05,TCPIP*,qAC,FOURTH:@075111h/@@.Y:*lol ';
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return resultcode: packet_invalid', function() {
             assert.equal('packet_invalid', parsed.resultCode);
@@ -219,7 +219,7 @@ describe('FAP - Test decoding compressed packets', function() {
     describe('#parseaprs - Test parsing a compressed packet with weather', function() {
         let $aprspacket = 'SV4IKL-2>APU25N,WIDE2-2,qAR,SV6EXB-1:@011444z/:JF!T/W-_e!bg000t054r000p010P010h65b10073WS 2300 {UIV32N}';
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return the symbol table code: /', function() {
             assert.equal('/', parsed.symboltable);
@@ -234,20 +234,20 @@ describe('FAP - Test decoding compressed packets', function() {
         });
 
         it('Should return temp: 12.2', function() {
-            assert.equal(12.2, parsed.wx.temp);
+            assert.equal(12.2, parsed.weather.temp);
         });
 
         it('Should return humidity: 65', function() {
-            assert.equal(65, parsed.wx.humidity);
+            assert.equal(65, parsed.weather.humidity);
         });
 
         it('Should return pressure: 1007.3', function() {
-            assert.equal(1007.3, parsed.wx.pressure);
+            assert.equal(1007.3, parsed.weather.pressure);
         });
     });
 
     describe('Test parsing an invalid location packet... packet length > 106', () => {
-        let packet: aprsPacket = parser.parseaprs("I5NOD-5>APMI06,TCPIP*,qAS,I5NOD:@ARI Altopascio Montecarlo Monte Cascetto Lucca slm 950 metri");
+        let packet: AprsPacket = parser.parseAprs("I5NOD-5>APMI06,TCPIP*,qAS,I5NOD:@ARI Altopascio Montecarlo Monte Cascetto Lucca slm 950 metri");
 
         it('Should return a packet with a result code: packet_invalid', () => {
             expect(packet.resultCode).to.equal("packet_invalid");
@@ -255,7 +255,7 @@ describe('FAP - Test decoding compressed packets', function() {
     });
 
     describe('Test parsing an invalid compressed location packet', () => {
-        let packet: aprsPacket = parser.parseaprs("SR3NRI>APNW01,SR3NJE*,qAR,SR3NDG:/111959zNEW SOFT WX3In1+ TEST");
+        let packet: AprsPacket = parser.parseAprs("SR3NRI>APNW01,SR3NJE*,qAR,SR3NDG:/111959zNEW SOFT WX3In1+ TEST");
 
         it('Should return a packet with a result code: comp_inv', () => {
             expect(packet.resultCode).to.equal("comp_inv");

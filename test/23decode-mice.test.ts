@@ -1,13 +1,13 @@
 const assert = require('assert');
 
-import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/PacketTypeEnum';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/AprsPacket';
+import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 // a mic-e decoding test
 // Tue Dec 11 2007, Hessu, OH7LZB
 describe('FAP - Test parsing mic-e packages', () => {
-    let parser: aprsParser = new aprsParser();
+    let parser: AprsParser = new AprsParser();
 
     describe('#parseaprs - Non-moving target mic-e packet test.', () => {
         let $srccall = "OH7LZB-13";
@@ -16,7 +16,7 @@ describe('FAP - Test parsing mic-e packages', () => {
         let $body = "'I',l \x1C>/]";
         let $aprspacket = $header + ':' + $body;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return a non-null packet without any error messages.', () => {
             assert.equal(null, parsed.resultCode);
@@ -116,7 +116,7 @@ describe('FAP - Test parsing mic-e packages', () => {
         let $body = "`c51!f?>/]\"3x}=";
         let $aprspacket = $header + ':' + $body;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return the source call sign: ' + $srccall, () => {
             assert.equal($srccall, parsed.sourceCallsign);
@@ -215,7 +215,7 @@ describe('FAP - Test parsing mic-e packages', () => {
         let $body = "`'O<l!{,,\"4R}";
         let $aprspacket = $header + ':' + $body;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return the source call sign: ' + $srccall, () => {
             assert.equal($srccall, parsed.sourceCallsign);
@@ -260,7 +260,7 @@ describe('FAP - Test parsing mic-e packages', () => {
         let $body = '`c51!f?>/' + $telemetry + $comment;
         let $aprspacket = $header + ':' + $body;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         // let's skip all the working stuff...
 
@@ -288,7 +288,7 @@ describe('FAP - Test parsing mic-e packages', () => {
         let $body = '`c51!f?>/' + $telemetry + ' ' + $comment;
         let $aprspacket = $header + ':' + $body;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return the comment: ' + $comment, () => {
             assert.equal($comment, parsed.comment);
@@ -307,7 +307,7 @@ describe('FAP - Test parsing mic-e packages', () => {
         let $comment = ']Greetings via ISS=';
         let $aprspacket = "KD0KZE>TUPX9R,RS0ISS*,qAR,K0GDI-6:'yaIl -/" + $comment;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket, { accept_broken_mice: 1 });
+        let parsed: AprsPacket = parser.parseAprs($aprspacket, { accept_broken_mice: 1 });
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: 45.1487', () => {
@@ -344,7 +344,7 @@ describe('FAP - Test parsing mic-e packages', () => {
     });
 
     describe('#parseaprs - Should give an accurate longitude', () => {
-        let parsed = parser.parseaprs('W4RK-9>S8SR5R,KB4VSP-3,WIDE1*,WIDE2-1,qAR,WX0BC-3:`x- n"@>/]"6>}=')
+        let parsed = parser.parseAprs('W4RK-9>S8SR5R,KB4VSP-3,WIDE1*,WIDE2-1,qAR,WX0BC-3:`x- n"@>/]"6>}=')
 
         it('It should have a speed of 37.04', () => {
             assert.equal(parsed.speed, 37.04)
@@ -380,7 +380,7 @@ describe('FAP - Test parsing mic-e packages', () => {
     })
 
     describe('#parseaprs - Should give an accurate latitude', () => {
-        let parsed = parser.parseaprs('N5ZRU>S8ST3U,KB4VSP-3,WIDE1*,WIDE2-1,qAR,WX0BC-3:`x)em}J>/`"63}_%')
+        let parsed = parser.parseAprs('N5ZRU>S8ST3U,KB4VSP-3,WIDE1*,WIDE2-1,qAR,WX0BC-3:`x)em}J>/`"63}_%')
 
         it('It should have a speed of 35.188', () => {
             assert.equal(parsed.speed, 35.188)
@@ -417,7 +417,7 @@ describe('FAP - Test parsing mic-e packages', () => {
 
 
     describe('#parseaprs - Decoding a packet which has had a binary byte removed, not accepting broken packet.', () => {
-        let parsed: aprsPacket = parser.parseaprs('IV3CVN-9>TU3RY9,IR2AO,WIDE1*,WIDE2,qAR,I1EPJ-10:` )T!6S>/>"5G}Riccardo IV3CVN 73! =');
+        let parsed: AprsPacket = parser.parseAprs('IV3CVN-9>TU3RY9,IR2AO,WIDE1*,WIDE2,qAR,I1EPJ-10:` )T!6S>/>"5G}Riccardo IV3CVN 73! =');
 
         // check for undefined value, when there is no such data in the packet
         it('Should return resultCode: mice_inv_info', () => {
@@ -426,7 +426,7 @@ describe('FAP - Test parsing mic-e packages', () => {
     });
 
     describe('#parseaprs - Test parsing a mic-e packet with invalid symbol table code', () => {
-        let packet: aprsPacket = parser.parseaprs("K1LEF-1>S2QPVR,qAR,N7HND:`\'[!>fk/]\"<j}=", { accept_broken_mice: true });
+        let packet: AprsPacket = parser.parseAprs("K1LEF-1>S2QPVR,qAR,N7HND:`\'[!>fk/]\"<j}=", { accept_broken_mice: true });
 
         it('Should return a resultCode: sym_inv_table', () => {
             assert.equal(packet.resultCode, "sym_inv_table");
@@ -434,7 +434,7 @@ describe('FAP - Test parsing mic-e packages', () => {
     });
 
     describe('#parseaprs - Test parsing a mic-e packet with invalid position ambiguity', () => {
-        let packet: aprsPacket = parser.parseaprs('KM6LOU-9>SSULXR,N6EX-4,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`-S@m_Ok/]"4q}=', { accept_broken_mice: true });
+        let packet: AprsPacket = parser.parseAprs('KM6LOU-9>SSULXR,N6EX-4,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`-S@m_Ok/]"4q}=', { accept_broken_mice: true });
 
         it('Should return a resultCode: mice_amb_inv', () => {
             assert.equal(packet.resultCode, "mice_amb_inv");
@@ -442,7 +442,7 @@ describe('FAP - Test parsing mic-e packages', () => {
     });
 
     describe('#parseaprs - Test parsing a mic-e packet with invalid characters in the last 3 chars of the dest callsign.', () => {
-        let packet: aprsPacket = parser.parseaprs('N9317>SS5RWI,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`.1?shd\'/":l}K6SBZ', { accept_broken_mice: true });
+        let packet: AprsPacket = parser.parseAprs('N9317>SS5RWI,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`.1?shd\'/":l}K6SBZ', { accept_broken_mice: true });
 
         it('Should return a resultCode: mice_inv', () => {
             assert.equal(packet.resultCode, "mice_inv");
@@ -450,7 +450,7 @@ describe('FAP - Test parsing mic-e packages', () => {
     });
 
     describe('#parseaprs - Test parsing a mic-e packet where the dest callsign is too short', () => {
-        let packet: aprsPacket = parser.parseaprs('PU2WAT-9>CMD,qAR,PU2WAT-1:`JAXm{=k/]"<=}=', { accept_broken_mice: true });
+        let packet: AprsPacket = parser.parseAprs('PU2WAT-9>CMD,qAR,PU2WAT-1:`JAXm{=k/]"<=}=', { accept_broken_mice: true });
 
         it('Should return a resultCode: mice_short', () => {
             assert.equal(packet.resultCode, "mice_short");

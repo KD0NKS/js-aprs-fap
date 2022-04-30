@@ -3,14 +3,14 @@ import * as chai from 'chai';
 const assert = require('assert');
 const should = chai.should();
 
-import aprsPacket from '../src/aprsPacket';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/AprsPacket';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Telemetry packet parsing', () => {
-    let parser: aprsParser = new aprsParser();
+    let parser: AprsParser = new AprsParser();
 
     describe('#parseaprs - Telemetry parse test', () => {
-        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,000,038,257,255,50.12,01000001');
+        const parsed: AprsPacket = parser.parseAprs('SRCCALL>APRS:T#324,000,038,257,255,50.12,01000001');
 
         it('Should return a result code: null', () => {
             assert.equal(null, parsed.resultCode);
@@ -52,7 +52,7 @@ describe('FAP - Telemetry packet parsing', () => {
     /* TODO: Is this actually invalid?
     describe('Invalid telemetry parse test', () => {
         let packet = 'E27BXY-1>APESPG,TCPIP*,qAC,APRSTH:T#002,18,164,6,-76,NAPA SAMPHAN,000000000';
-        let parsed: aprsPacket = parser.parseaprs(packet);
+        let parsed: aprsPacket = parser.parseAprs(packet);
 
         console.log(parsed)
 
@@ -64,7 +64,7 @@ describe('FAP - Telemetry packet parsing', () => {
 
     describe('Invalid telemetry parse test', () => {
         let packet = 'E27BXY-1>APESPG,TCPIP*,qAC,APRSTH:T#324,,,,,,01000001';
-        let parsed: aprsPacket = parser.parseaprs(packet);
+        let parsed: AprsPacket = parser.parseAprs(packet);
 
         it('Should have 5 items telemetry vals array', () => {
             assert.equal(5, parsed.telemetry.vals.length);
@@ -80,7 +80,7 @@ describe('FAP - Telemetry packet parsing', () => {
     });
 
     describe('#parseaprs - Telemetry test, tlm_large (too big)', () => {
-        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,2147483649,038,257,255,50.12,01000001');
+        const parsed: AprsPacket = parser.parseAprs('SRCCALL>APRS:T#324,2147483649,038,257,255,50.12,01000001');
 
         it('Should return a result code: tlm_large', () => {
             assert.equal('tlm_large', parsed.resultCode);
@@ -88,7 +88,7 @@ describe('FAP - Telemetry packet parsing', () => {
     });
 
     describe('#parseaprs - Telemetry test, tlm_large (too small)', () => {
-        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,-2147483649,038,257,255,50.12,01000001');
+        const parsed: AprsPacket = parser.parseAprs('SRCCALL>APRS:T#324,-2147483649,038,257,255,50.12,01000001');
 
         it('Should return a result code: tlm_large', () => {
             assert.equal('tlm_large', parsed.resultCode);
@@ -96,7 +96,7 @@ describe('FAP - Telemetry packet parsing', () => {
     });
 
     describe('#parseaprs - Telemetry test, tlm_large (too small)', () => {
-        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,ABC,ABC,ABC,ABC,ABC,01000001');
+        const parsed: AprsPacket = parser.parseAprs('SRCCALL>APRS:T#324,ABC,ABC,ABC,ABC,ABC,01000001');
 
         it('Should return a result code: tlm_inv', () => {
             assert.equal('tlm_inv', parsed.resultCode);
@@ -104,7 +104,7 @@ describe('FAP - Telemetry packet parsing', () => {
     });
 
     describe('#parseaprs - Telemetry test, bits padding short', () => {
-        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,000,038,257,255,50.12,0100');
+        const parsed: AprsPacket = parser.parseAprs('SRCCALL>APRS:T#324,000,038,257,255,50.12,0100');
 
         it('Should pad the telemetry at index 5 to be 8 bits', () => {
             assert.equal('01000000', parsed.telemetry.bits);
@@ -113,7 +113,7 @@ describe('FAP - Telemetry packet parsing', () => {
 
     /*
     describe('#parseaprs - Telemetry test, tlm_large (too small)', () => {
-        const parsed: aprsPacket = parser.parseaprs('SRCCALL>APRS:T#324,000,038,257,255,50.12,000011110');
+        const parsed: aprsPacket = parser.parseAprs('SRCCALL>APRS:T#324,000,038,257,255,50.12,000011110');
         console.log(parsed)
 
         it('Should pad the telemetry at index 5 to be 8 bits', () => {

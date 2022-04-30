@@ -7,12 +7,12 @@ import * as chai from 'chai';
 const assert = require('assert');
 const should = chai.should();
 
-import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/PacketTypeEnum';
-import aprsParser from '../src/parser';
+import { AprsPacket } from '../src/models/AprsPacket';
+import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Test decoding uncompressed packets', function() {
-    let parser: aprsParser = new aprsParser();
+    let parser: AprsParser = new AprsParser();
 
     describe('#parseaprs - Test parsing uncompressed packet', function() {
         let $srccall = "OH7FDN";
@@ -25,7 +25,7 @@ describe('FAP - Test decoding uncompressed packets', function() {
 
         let $aprspacket = $header + ':' + $body;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return the source call sign: ' + $srccall, function() {
             assert.equal($srccall, parsed.sourceCallsign);
@@ -115,7 +115,7 @@ describe('FAP - Test decoding uncompressed packets', function() {
 
         let $aprspacket = $header + ':' + $body;
 
-        let parsed: aprsPacket = parser.parseaprs($aprspacket);
+        let parsed: AprsPacket = parser.parseAprs($aprspacket);
 
         it('Should return course: 0', function () {
             assert.equal(0, parsed.course);

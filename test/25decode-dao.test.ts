@@ -4,15 +4,15 @@
  */
 const assert = require('assert');
 
-import aprsParser from '../src/parser';
+import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Test decoding DAO', function() {
-    let parser = new aprsParser();
+    let parser = new AprsParser();
 
     describe('#parseaprs - Test parsing an uncompressed packet with human-readable DAO; DAO in beginning of comment', function() {
         let $aprspacket = "K0ELR-15>APOT02,WIDE1-1,WIDE2-1,qAo,K0ELR:/102033h4133.03NX09029.49Wv204/000!W33! 12.3V 21C/A=000665";
 
-        let parsed = parser.parseaprs($aprspacket);
+        let parsed = parser.parseAprs($aprspacket);
 
         it('Should return a daodatumbyte: W', function() {
             assert.equal('W', parsed.daodatumbyte);
@@ -42,7 +42,7 @@ describe('FAP - Test decoding DAO', function() {
     describe('#parseaprs - Test parsing a compressed packet with BASE91 DAO; DAO in end of comment', function() {
         let $aprspacket = "OH7LZB-9>APZMDR,WIDE2-2,qAo,OH2RCH:!/0(yiTc5y>{2O http://aprs.fi/!w11!";
 
-        let parsed = parser.parseaprs($aprspacket);
+        let parsed = parser.parseAprs($aprspacket);
 
         it('Should return a daodatumbyte: W', function() {
             assert.equal('W', parsed.daodatumbyte);
@@ -68,7 +68,7 @@ describe('FAP - Test decoding DAO', function() {
     describe('#parseaprs - Test parsing a mic-e packet with BASE91 DAO; DAO in middle of comment', function() {
         let $aprspacket = "OH2JCQ-9>VP1U88,TRACE2-2,qAR,OH2RDK-5:'5'9\"^Rj/]\"4-}Foo !w66!Bar";
 
-        let parsed = parser.parseaprs($aprspacket);
+        let parsed = parser.parseAprs($aprspacket);
 
         it('Should return a daodatumbyte: W', function() {
             assert.equal('W', parsed.daodatumbyte);

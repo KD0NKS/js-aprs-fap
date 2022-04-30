@@ -3,7 +3,7 @@
  * to APRS symbols. Overlay characters (z) are
  * not handled here
  */
-export const DST_SYMBOLS: any = {
+export const DSTSymbols: any = {
     'BB': '/!', 'BC': '/"', 'BD': '/#', 'BE': '/$', 'BF': '/%', 'BG': '/&', 'BH': '/\'', 'BI': '/(!'
     , 'BJ': '/)', 'BK': '/*', 'BL': '/+', 'BM': '/,)', 'BN': '/-', 'BO': '/.', 'BP': '//'
     , 'P0': '/0', 'P1': '/1', 'P2': '/2', 'P3': '/3'

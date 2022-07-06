@@ -2,11 +2,14 @@ const assert = require('assert');
 
 import { AprsPacket } from '../src/models/AprsPacket';
 import { AprsParser } from '../src/parsers/AprsParser';
+import { ParserOptions } from '../src/parsers/ParserOptions';
 
 // validate the check_ax25_call function
 
 describe('FAP - Validate the check_ax25_call function', function() {
     let parser = new AprsParser();
+    let parserOptions = new ParserOptions();
+    parserOptions.isAx25 = true
 
     // successes
     describe('#check_ax25_call - Check valid call signs.', function() {
@@ -41,22 +44,22 @@ describe('FAP - Validate the check_ax25_call function', function() {
     // full packets
     // successes
     describe('#parseaprs - Valid ax25 source call', () => {
-        let $aprspacket = `OH7LZB>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
-        let parsed: AprsPacket = parser.parseAprs($aprspacket, { isax25: true });
+        let aprspacket = `OH7LZB>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
+        let parsed: AprsPacket = parser.parseAprs(aprspacket, parserOptions);
 
         it('Should return sourceCallsign: OH7LZB', function() {
             assert.equal('OH7LZB', parsed.sourceCallsign);
         });
 
-        let $aprspacket2 = `OH7LZB-9>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
-        let parsed2: AprsPacket = parser.parseAprs($aprspacket2, { isax25: true });
+        let aprspacket2 = `OH7LZB-9>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
+        let parsed2: AprsPacket = parser.parseAprs(aprspacket2, parserOptions);
 
         it('Should return sourceCallsign: OH7LZB-9', function() {
             assert.equal('OH7LZB-9', parsed2.sourceCallsign);
         });
 
-        let $aprspacket3 = `OH7LZB-15>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
-        let parsed3: AprsPacket = parser.parseAprs($aprspacket3, { isax25: true });
+        let aprspacket3 = `OH7LZB-15>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
+        let parsed3: AprsPacket = parser.parseAprs(aprspacket3, parserOptions);
 
         it('Should return sourceCallsign: OH7LZB-15', function() {
             assert.equal('OH7LZB-15', parsed3.sourceCallsign);
@@ -66,23 +69,23 @@ describe('FAP - Validate the check_ax25_call function', function() {
     // fails
     describe('#parseaprs - Invalid ax25 source call', () => {
         //srccall_noax25
-        let $aprspacket = `OH7LZB-16>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
-        let parsed: AprsPacket = parser.parseAprs($aprspacket, { isax25: true });
+        let aprspacket = `OH7LZB-16>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
+        let parsed: AprsPacket = parser.parseAprs(aprspacket, parserOptions);
 
         it('Should return a resultcode: srccall_noax25', () => {
             assert.equal('srccall_noax25', parsed.resultCode);
         });
 
         // bad chars
-        let $aprspacket2 = `OH7LZB-166>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
-        let parsed2: AprsPacket = parser.parseAprs($aprspacket2, { isax25: true });
+        let aprspacket2 = `OH7LZB-166>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
+        let parsed2: AprsPacket = parser.parseAprs(aprspacket2, parserOptions);
 
         it('Should return a resultcode: srccall_noax25', () => {
             assert.equal('srccall_badchars', parsed2.resultCode);
         });
 
-        let $aprspacket3 = `OH7LZBXXX>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
-        let parsed3: AprsPacket = parser.parseAprs($aprspacket3, { isax25: true });
+        let aprspacket3 = `OH7LZBXXX>APJS10,TCPIP*,qAC,K6IFR-BS:;K6IFR B *250300z3351.79ND11626.40WaRNG0040 440 Voice 447.140 -5.00 Mhz`;
+        let parsed3: AprsPacket = parser.parseAprs(aprspacket3, parserOptions);
 
         it('Should return a resultcode: srccall_noax25', () => {
             assert.equal('srccall_noax25', parsed3.resultCode);

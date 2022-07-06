@@ -7,10 +7,9 @@ import Telemetry from '../models/Telemetry'
 import Weather from '../models/Weather'
 import { PacketTypeEnum } from '../enums/PacketTypeEnum'
 import { ParserUtil } from './ParserUtil'
+import { ParserOptions } from './ParserOptions'
 
 export class AprsParser {
-    constructor() { }
-
     /**
      * Used to add error messages to a packet.
      *
@@ -107,9 +106,8 @@ export class AprsParser {
      * my ret = parseaprs("OH2XYZ>APRS,RELAY*,WIDE:!2345.56N/12345.67E-PHG0123 hi",
      * \%hash, 'isax25' => 0, 'accept_broken_mice' => 0);
      */
-    parseAprs(packet: string, options?: any): AprsPacket {
+    parseAprs(packet: string, options: ParserOptions = new ParserOptions()): AprsPacket {
         let retVal: AprsPacket = new AprsPacket();
-        let isax25 = (options && options['isax25'] != undefined) ? options['isax25'] : false;
 
         // save the original packet
         retVal.origpacket = packet;
@@ -142,7 +140,7 @@ export class AprsParser {
         if(($header = header.match(/^([A-Z0-9-]{1,9})>(.*)$/i))) {
             rest = $header[2];
 
-            if(isax25 == false) {
+            if(options.isAx25 == false) {
                 srcCallsign = $header[1];
             } else {
                 srcCallsign = this.checkAX25Call($header[1].toUpperCase());
@@ -165,7 +163,7 @@ export class AprsParser {
 
         // More than 9 (dst callsign + 8 digipeaters) path components
         // from AX.25 or less than 1 from anywhere is invalid.
-        if(isax25 == true) {
+        if(options.isAx25 == true) {
             if(pathcomponents.length > 9) {
                 // too many fields to be from AX.25
                 return this.addError(retVal, 'dstpath_toomany');
@@ -180,7 +178,7 @@ export class AprsParser {
 
         // Destination callsign. We are strict here, there
         // should be no need to use a non-AX.25 compatible
-        //# destination callsigns in the APRS-IS.
+        //# destination callsigns in APRS-IS.
         let dstcallsign = this.checkAX25Call(pathcomponents.shift());
 
         if(!dstcallsign) {
@@ -192,7 +190,7 @@ export class AprsParser {
         // digipeaters
         let digipeaters = [];
 
-        if(isax25 == true) {
+        if(options.isAx25 == true) {
             for(let digi of pathcomponents) {
                 let d;
 
@@ -271,7 +269,7 @@ export class AprsParser {
                 if(packettype == '/' || packettype == '@') {
                     // With a prepended timestamp, check it and jump over.
                     // If the timestamp is invalid, it will be set to zero.
-                    retVal.timestamp = this.parseTimestamp(options, body.substring(1, 8));
+                    retVal.timestamp = this.parseTimestamp(body.substring(1, 8), options);
 
                     // TODO: this can be hit if this condition is not met: /^(\d{2})(\d{2})(\d{2})(z|h|\/)$/
                     if(retVal.timestamp == 0) {
@@ -350,7 +348,7 @@ export class AprsParser {
             // if(paclen >= 31) { is there a case where this couldn't be
             retVal.type = PacketTypeEnum.OBJECT
 
-            retVal = this.objectToDecimal(options, body, retVal);
+            retVal = this.objectToDecimal(body, retVal, options);
         // NMEA data
         } else if(packettype == '$') {
             // don't try to parse the weather stations, require "$GP" start
@@ -359,7 +357,7 @@ export class AprsParser {
                 // so read that one too
                 retVal.type = PacketTypeEnum.LOCATION
 
-                retVal = this.nmeaToDecimal(options, body.substring(1), dstcallsign, retVal);
+                retVal = this.nmeaToDecimal(body.substring(1), dstcallsign, retVal);
             } else if(body.substring(0, 5) == '$ULTW') {
                 retVal.type = PacketTypeEnum.WEATHER
                 retVal = this.weatherParsePeetPacket(body.substring(5), retVal);
@@ -402,7 +400,7 @@ export class AprsParser {
             // if($paclen >= 1) { NOTE: this cannot ever hit the else case, because the body will be empty and return an error
                 retVal.type = PacketTypeEnum.STATUS
 
-                retVal = this.parseStatus(body.substring(1), retVal)
+                retVal = this.parseStatus(body.substring(1), retVal, options)
             //}
         // Telemetry
         } else if(/^T#(.*?),(.*)$/.test(body)) {
@@ -470,7 +468,7 @@ export class AprsParser {
      * and text report are supported. Maidenhead,
      * beam headings and symbols are not.
      */
-    private parseStatus(packet: string, rethash: AprsPacket): AprsPacket {
+    private parseStatus(packet: string, rethash: AprsPacket, options: ParserOptions): AprsPacket {
         let tmp;
 
         // Remove CRs, LFs and trailing spaces
@@ -478,7 +476,9 @@ export class AprsParser {
 
         // Check for a timestamp
         if((tmp = packet.match(/^(\d{6}z)/))) {
-            rethash.timestamp = this.parseTimestamp({}, tmp[1]);
+            // Use default parser options for parsing the timestamp here per the original code.
+            // $rethash->{'timestamp'} = _parse_timestamp({}, $1)
+            rethash.timestamp = this.parseTimestamp(tmp[1], new ParserOptions());
 
             if(rethash.timestamp == 0) {
                 rethash = this.addWarning(rethash, 'timestamp_inv_sta') ;
@@ -502,13 +502,13 @@ export class AprsParser {
      * @param {string} stamp 6 digit number followed by z, h, or /
      * @returns {number} A unix timestamp
      */
-    private parseTimestamp = function(options: any, stamp: any): number {
+    private parseTimestamp(stamp: any, options: ParserOptions): number {
         // Check initial format
         if(!(stamp = stamp.match(/^(\d{2})(\d{2})(\d{2})(z|h|\/)$/))) {
             return 0;
         }
 
-        if(options && options['raw_timestamp']) {
+        if(options.isRawTimestamp == true) {
             return stamp[1] + stamp[2] + stamp[3];
         }
 
@@ -690,7 +690,7 @@ export class AprsParser {
     /**
      * Parse an object
      */
-    private objectToDecimal(options: any, packet: string, retVal: AprsPacket): AprsPacket {
+    private objectToDecimal(packet: string, retVal: AprsPacket, options: ParserOptions): AprsPacket {
         let tmp;
 
         // Minimum length for an object is 31 characters
@@ -715,7 +715,7 @@ export class AprsParser {
         // Check the timestamp for validity and convert
         // to UNIX epoch. If the timestamp is invalid, set it
         // to zero.
-        retVal.timestamp = this.parseTimestamp(options, timeStamp);
+        retVal.timestamp = this.parseTimestamp(timeStamp, options);
 
         if(retVal.timestamp == 0) {
             retVal = this.addWarning(retVal, 'timestamp_inv_obj');
@@ -821,7 +821,7 @@ export class AprsParser {
     /**
      * Parse an NMEA location
      */
-    private nmeaToDecimal(options: any, body: string, dstcallsign: string, rethash: AprsPacket): AprsPacket {
+    private nmeaToDecimal(body: string, dstcallsign: string, rethash: AprsPacket): AprsPacket {
         let tmp;
 
         // verify checksum first, if it is provided
@@ -1447,7 +1447,7 @@ export class AprsParser {
     /**
      * convert a mic-encoder packet
      */
-    private miceToDecimal(packet: string, dstcallsign: string, rethash: AprsPacket, options: any): AprsPacket {
+    private miceToDecimal(packet: string, dstcallsign: string, rethash: AprsPacket, options: ParserOptions): AprsPacket {
         let tmp: any;
         rethash.format = 'mice';
 
@@ -1480,7 +1480,7 @@ export class AprsParser {
             // replaces the single space with two spaces, so that the rest
             // of the code can still parse the position data.
 
-            if(options && options['accept_broken_mice']
+            if(options.isAcceptBrokenMice == true
                     && (packet = packet.replace(/^([\x26-\x7f][\x26-\x61][\x1c-\x7f]{2})\x20([\x21-\x7b\x7d][\/\\A-Z0-9])(.*)/, '$1\x20\x20$2$3'))) {
                 mice_fixed = 1;
                 // Now the symbol table identifier is again in the correct spot...
@@ -1744,48 +1744,48 @@ export class AprsParser {
     /**
      * convert a compressed position to decimal degrees
      */
-    private compressedPositionToDecimal(packet: string, rethash: AprsPacket): AprsPacket {
+    private compressedPositionToDecimal(data: string, retVal: AprsPacket): AprsPacket {
         // A compressed position is always 13 characters long.
         // Make sure we get at least 13 characters and that they are ok.
         // Also check the allowed base-91 characters at the same time.
-        if(!(/^[\/\\A-Za-j]{1}[\x21-\x7b]{8}[\x21-\x7b\x7d]{1}[\x20-\x7b]{3}/.test(packet))) {
-            return this.addError(rethash, 'comp_inv');
+        if(!(/^[\/\\A-Za-j]{1}[\x21-\x7b]{8}[\x21-\x7b\x7d]{1}[\x20-\x7b]{3}/.test(data))) {
+            return this.addError(retVal, 'comp_inv');
         }
 
-        rethash.format = 'compressed';
+        retVal.format = 'compressed';
 
-        let lat1 = packet.charCodeAt(1) - 33;
-        let lat2 = packet.charCodeAt(2) - 33;
-        let lat3 = packet.charCodeAt(3) - 33;
-        let lat4 = packet.charCodeAt(4) - 33;
-        let long1 = packet.charCodeAt(5) - 33;
-        let long2 = packet.charCodeAt(6) - 33;
-        let long3 = packet.charCodeAt(7) - 33;
-        let long4 = packet.charCodeAt(8) - 33;
-        let symbolcode = packet.charAt(9);
-        let c1 = packet.charCodeAt(10) - 33;
-        let s1 = packet.charCodeAt(11) - 33;
-        let comptype = packet.charCodeAt(12) - 33;
+        let lat1 = data.charCodeAt(1) - 33;
+        let lat2 = data.charCodeAt(2) - 33;
+        let lat3 = data.charCodeAt(3) - 33;
+        let lat4 = data.charCodeAt(4) - 33;
+        let long1 = data.charCodeAt(5) - 33;
+        let long2 = data.charCodeAt(6) - 33;
+        let long3 = data.charCodeAt(7) - 33;
+        let long4 = data.charCodeAt(8) - 33;
+        let symbolcode = data.charAt(9);
+        let c1 = data.charCodeAt(10) - 33;
+        let s1 = data.charCodeAt(11) - 33;
+        let comptype = data.charCodeAt(12) - 33;
 
         // save the symbol table and code
-        rethash.symbolcode = symbolcode;
+        retVal.symbolcode = symbolcode;
 
         // the symbol table values a..j are really 0..9
-        if(/a-j/.test(packet.charAt(0))) {
-            rethash.symboltable =  (packet.charCodeAt(0) - 97).toString();
+        if(/a-j/.test(data.charAt(0))) {
+            retVal.symboltable =  (data.charCodeAt(0) - 97).toString();
         } else {
-            rethash.symboltable =  packet.charAt(0);
+            retVal.symboltable =  data.charAt(0);
         }
 
         // calculate latitude and longitude
-        rethash.latitude = 90 - ((
+        retVal.latitude = 90 - ((
                 lat1 * Math.pow(91, 3)
                 + lat2 * Math.pow(91, 2)
                 + lat3 * 91
                 + lat4
                 ) / 380926);
 
-        rethash.longitude = -180 + ((
+        retVal.longitude = -180 + ((
                 long1 * Math.pow(91, 3)
                 + long2 * Math.pow(91, 2)
                 + long3 * 91
@@ -1795,14 +1795,14 @@ export class AprsParser {
         // save best-case position resolution in meters
         // 1852 meters * 60 minutes in a degree * 180 degrees
         // / 91 ** 4
-        rethash.posresolution = 0.291;
+        retVal.posresolution = 0.291;
 
         // GPS fix status, only if csT is used
         if(c1 != -1) {
             if((comptype & 0x20) == 0x20) {
-                rethash.gpsfixstatus = true;
+                retVal.gpsfixstatus = true;
             } else {
-                rethash.gpsfixstatus = false;
+                retVal.gpsfixstatus = false;
             }
         }
 
@@ -1818,35 +1818,35 @@ export class AprsParser {
             // cs is altitude
             let cs = c1 * 91 + s1;
             // convert directly to meters
-            rethash.altitude = Math.pow(1.002, cs) * ConversionConstantEnum.FEET_TO_METERS;
+            retVal.altitude = Math.pow(1.002, cs) * ConversionConstantEnum.FEET_TO_METERS;
         } else if(c1 >= 0 && c1 <= 89) {
             if(c1 == 0) {
                 // special case of north, APRS spec
                 // uses zero for unknown and 360 for north.
                 // so remember to convert north here.
-                rethash.course = 360;
+                retVal.course = 360;
             } else {
-                rethash.course = c1 * 4;
+                retVal.course = c1 * 4;
             }
 
             // convert directly to km/h
-            rethash.speed = (Math.pow(1.08, s1) - 1) * ConversionConstantEnum.KNOT_TO_KMH;
+            retVal.speed = (Math.pow(1.08, s1) - 1) * ConversionConstantEnum.KNOT_TO_KMH;
         } else if(c1 == 90) {
             // convert directly to km
-            rethash.radiorange = (2 * Math.pow(1.08, s1)) * ConversionConstantEnum.MPH_TO_KMH;
+            retVal.radiorange = (2 * Math.pow(1.08, s1)) * ConversionConstantEnum.MPH_TO_KMH;
         }
 
-        return rethash;
+        return retVal;
     }
 
     /**
      * Parse a possible !DAO! extension (datum and extra
      * lat/lon digits). Returns 1 if a valid !DAO! extension was
-     * detected in the test subject (and stored in $rethash), 0 if not.
+     * detected in the test subject (and stored in retVal), 0 if not.
      * Only the "DAO" should be passed as the candidate parameter,
      * not the delimiting exclamation marks.
      */
-    private parseDao(daocandidate: string, rethash: AprsPacket): [ AprsPacket, boolean ] {
+    private parseDao(daocandidate: string, retVal: AprsPacket): [ AprsPacket, boolean ] {
         // datum character is the first character and also
         // defines how the rest is interpreted
         let latoff;
@@ -1855,45 +1855,45 @@ export class AprsParser {
 
         if((tmp = daocandidate.match(/^([A-Z])(\d)(\d)$/))) {
             // human readable (datum byte A...Z)
-            rethash.posresolution = ParserUtil.calculatePositionResolution(3);
-            rethash.daodatumbyte = tmp[1];
+            retVal.posresolution = ParserUtil.calculatePositionResolution(3);
+            retVal.daodatumbyte = tmp[1];
 
             latoff = parseInt(tmp[2]) * 0.001 / 60;
             lonoff = parseInt(tmp[3]) * 0.001 / 60;
         } else if((tmp = daocandidate.match(/^([a-z])([\x21-\x7b])([\x21-\x7b])$/))) {
             // base-91 (datum byte a...z)
             // store the datum in upper case, still
-            rethash.daodatumbyte = tmp[1].toUpperCase();
+            retVal.daodatumbyte = tmp[1].toUpperCase();
 
             // close enough.. not exact:
-            rethash.posresolution = ParserUtil.calculatePositionResolution(4);
+            retVal.posresolution = ParserUtil.calculatePositionResolution(4);
 
             // do proper scaling of base-91 values
             latoff = (tmp[2].charCodeAt(0) - 33) / 91 * 0.01 / 60;
             lonoff = (tmp[3].charCodeAt(0) - 33) / 91 * 0.01 / 60;
         } else if((tmp = daocandidate.match(/^([\x21-\x7b])\s\s$/))) {
             // only datum information, no lat/lon digits
-            rethash.daodatumbyte = tmp[1].toUpperCase();
+            retVal.daodatumbyte = tmp[1].toUpperCase();
 
-            return [ rethash, true ];
+            return [ retVal, true ];
         } else {
-            return [ rethash, false ];
+            return [ retVal, false ];
         }
 
         // check N/S and E/W
-        if(rethash.latitude < 0) {
-            rethash.latitude -= latoff;
+        if(retVal.latitude < 0) {
+            retVal.latitude -= latoff;
         } else {
-            rethash.latitude += latoff;
+            retVal.latitude += latoff;
         }
 
-        if(rethash.longitude < 0) {
-            rethash.longitude -= lonoff;
+        if(retVal.longitude < 0) {
+            retVal.longitude -= lonoff;
         } else {
-            rethash.longitude += lonoff;
+            retVal.longitude += lonoff;
         }
 
-        return [ rethash, true ];
+        return [ retVal, true ];
     }
 
     /**
@@ -1944,64 +1944,64 @@ export class AprsParser {
      *
      * Parses a normal uncompressed weather report packet.
      */
-    private parseWeather(s: string, rethash: AprsPacket): AprsPacket {
+    private parseWeather(data: string, retVal: AprsPacket): AprsPacket {
         // 257/007g013t055r000P000p000h56b10160v31
         // 045/000t064r000p000h35b10203.open2300v1.10
         // 175/007g007p...P000r000t062h32b10224wRSW
-        let w = new Weather();
-        let wind_dir;
-        let wind_speed;
+        let wx = new Weather();
+        let windDir;
+        let windSpeed;
         let temp;
-        let wind_gust;
+        let windGust;
         let tmp;
 
-        if((tmp = s.match(/^_{0,1}([\d \.\-]{3})\/([\d \.]{3})g([\d \.]+)t(-{0,1}[\d \.]+)/))
-                || (tmp = s.match(/^_{0,1}c([\d \.\-]{3})s([\d \.]{3})g([\d \.]+)t(-{0,1}[\d \.]+)/))) {
+        if((tmp = data.match(/^_{0,1}([\d \.\-]{3})\/([\d \.]{3})g([\d \.]+)t(-{0,1}[\d \.]+)/))
+                || (tmp = data.match(/^_{0,1}c([\d \.\-]{3})s([\d \.]{3})g([\d \.]+)t(-{0,1}[\d \.]+)/))) {
             // TODO: warn "wind $1 / $2 gust $3 temp $4\n";
-            wind_dir = tmp[1];
-            wind_speed = tmp[2];
-            wind_gust = tmp[3];
+            windDir = tmp[1];
+            windSpeed = tmp[2];
+            windGust = tmp[3];
 
             if(tmp[0]) {
-                s = s.replace(tmp[0], '');
+                data = data.replace(tmp[0], '');
             }
 
             temp = tmp[4];
-        } else if((tmp = s.match(/^_{0,1}([\d \.\-]{3})\/([\d \.]{3})t(-{0,1}[\d \.]+)/))) {
+        } else if((tmp = data.match(/^_{0,1}([\d \.\-]{3})\/([\d \.]{3})t(-{0,1}[\d \.]+)/))) {
             // TODO: warn "$initial\nwind $1 / $2 temp $3\n";
-            wind_dir = tmp[1];
-            wind_speed = tmp[2];
+            windDir = tmp[1];
+            windSpeed = tmp[2];
 
             if(tmp[0]) {
-                s = s.replace(tmp[0], '');
+                data = data.replace(tmp[0], '');
             }
 
             temp = tmp[3];
-        } else if((tmp = s.match(/^_{0,1}([\d \.\-]{3})\/([\d \.]{3})g([\d \.]+)/))) {
+        } else if((tmp = data.match(/^_{0,1}([\d \.\-]{3})\/([\d \.]{3})g([\d \.]+)/))) {
             // TODO: warn "$initial\nwind $1 / $2 gust $3\n";
-            wind_dir = tmp[1];
-            wind_speed = tmp[2];
-            wind_gust = tmp[3];
+            windDir = tmp[1];
+            windSpeed = tmp[2];
+            windGust = tmp[3];
 
             if(tmp[0]) {
-                s = s.replace(tmp[0], '');
+                data = data.replace(tmp[0], '');
             }
-        } else if((tmp = s.match(/^g([\d .]+)t(-{0,1}[\d \.]+)/))) {
+        } else if((tmp = data.match(/^g([\d .]+)t(-{0,1}[\d \.]+)/))) {
             // g000t054r000p010P010h65b10073WS 2300 {UIV32N}
-            wind_gust = tmp[1];
+            windGust = tmp[1];
 
             if(tmp[0]) {
-                s = s.replace(tmp[0], '');
+                data = data.replace(tmp[0], '');
             }
 
             temp = tmp[2];
         } else {
             // TODO: warn "wx_parse: no initial match: $s\n";
-            return rethash;
+            return retVal;
         }
 
         if(!temp) {
-            s = s.replace(/t(-{0,1}\d{1,3})/, function(a, b) {
+            data = data.replace(/t(-{0,1}\d{1,3})/, function(a, b) {
                 if(b) {
                     temp = b;
                 }
@@ -2010,77 +2010,77 @@ export class AprsParser {
             });
         }
 
-        if(/^\d+$/.test(wind_gust)) {
-            w.wind_gust = (parseFloat(wind_gust) * ConversionConstantEnum.MPH_TO_MS).toFixed(1);
+        if(/^\d+$/.test(windGust)) {
+            wx.wind_gust = (parseFloat(windGust) * ConversionConstantEnum.MPH_TO_MS).toFixed(1);
         }
 
-        if(/^\d+$/.test(wind_dir)) {
-            w.wind_direction = parseFloat(wind_dir).toFixed(0);
+        if(/^\d+$/.test(windDir)) {
+            wx.wind_direction = parseFloat(windDir).toFixed(0);
         }
 
-        if(/^\d+$/.test(wind_speed)) {
-            w.wind_speed = (parseFloat(wind_speed) * ConversionConstantEnum.MPH_TO_MS).toFixed(1);
+        if(/^\d+$/.test(windSpeed)) {
+            wx.wind_speed = (parseFloat(windSpeed) * ConversionConstantEnum.MPH_TO_MS).toFixed(1);
         }
 
         if(/^-{0,1}\d+$/.test(temp)) {
-            w.temp = ConversionUtil.FahrenheitToCelsius(parseInt(temp)).toFixed(1) ;
+            wx.temp = ConversionUtil.FahrenheitToCelsius(parseInt(temp)).toFixed(1) ;
         }
 
-        s = s.replace(/r(\d{1,3})/, function($a, b) {
+        data = data.replace(/r(\d{1,3})/, function($a, b) {
             if(b) {
-                w.rain_1h = (parseFloat(b) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // during last 1h
+                wx.rain_1h = (parseFloat(b) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // during last 1h
             }
 
             return '';
         });
 
-        s = s.replace(/p(\d{1,3})/, function(a, b) {
+        data = data.replace(/p(\d{1,3})/, function(a, b) {
             if(b) {
-                w.rain_24h = (parseFloat(b) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // during last 24h
+                wx.rain_24h = (parseFloat(b) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // during last 24h
             }
 
             return '';
         });
 
-        s = s.replace(/P(\d{1,3})/, function(a, b) {
+        data = data.replace(/P(\d{1,3})/, function(a, b) {
             if(b) {
-                w.rain_midnight = (parseFloat(b) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // since midnight
+                wx.rain_midnight = (parseFloat(b) * ConversionConstantEnum.HINCH_TO_MM).toFixed(1); // since midnight
             }
 
             return '';
         });
 
-        s = s.replace(/h(\d{1,3})/, function(a, b) {
+        data = data.replace(/h(\d{1,3})/, function(a, b) {
             if(b) {
-                w.humidity = parseInt(b); // percentage
+                wx.humidity = parseInt(b); // percentage
 
-                if(w.humidity == 0) {
-                    w.humidity = 100;
+                if(wx.humidity == 0) {
+                    wx.humidity = 100;
                 }
 
-                if(w.humidity > 100 || w.humidity < 1) {
-                    w.humidity = null;
+                if(wx.humidity > 100 || wx.humidity < 1) {
+                    wx.humidity = null;
                 }
             }
 
             return '';
         });
 
-        s = s.replace(/b(\d{4,5})/, function(a, b) {
+        data = data.replace(/b(\d{4,5})/, function(a, b) {
             if(b) {
-                w.pressure = (b / 10).toFixed(1); // results in millibars
+                wx.pressure = (b / 10).toFixed(1); // results in millibars
             }
 
             return '';
         });
 
-        s = s.replace(/([lL])(\d{1,3})/, function(a, b, c) {
+        data = data.replace(/([lL])(\d{1,3})/, function(a, b, c) {
             if(c) {
-                w.luminosity = parseFloat(c).toFixed(0); // watts / m2
+                wx.luminosity = parseFloat(c).toFixed(0); // watts / m2
             }
 
             if(b && b == 'l') {
-                w.luminosity += 1000;
+                wx.luminosity += 1000;
             }
 
             return '';
@@ -2092,10 +2092,10 @@ export class AprsParser {
         }
         */
 
-        s = s.replace(/s(\d{1,3})/, function(a, b) {
+        data = data.replace(/s(\d{1,3})/, function(a, b) {
             // snowfall
             if(b) {
-                w.snow_24h = (b * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
+                wx.snow_24h = (b * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
             }
 
             return '';
@@ -2107,25 +2107,25 @@ export class AprsParser {
         }
         */
 
-        tmp = s.match(/^([rPphblLs#][\. ]{1,5})+/);
+        tmp = data.match(/^([rPphblLs#][\. ]{1,5})+/);
 
         //$s =~ s/^\s+//;
         //$s =~ s/\s+/ /;
 
-        if(/^[a-zA-Z0-9\-_]{3,5}$/.test(s)) {
-            if(s != '') {
-                w.soft = s.substring(0, 16);
+        if(/^[a-zA-Z0-9\-_]{3,5}$/.test(data)) {
+            if(data != '') {
+                wx.soft = data.substring(0, 16);
             }
         } else {
-            rethash.comment = s.trim();
+            retVal.comment = data.trim();
         }
 
-        if(w.temp || (w.wind_speed && w.wind_direction)) {
+        if(wx.temp || (wx.wind_speed && wx.wind_direction)) {
             // warn "ok: $initial\n$s\n";
-            rethash.weather = w;
+            retVal.weather = wx;
         }
 
-        return rethash;
+        return retVal;
     }
 
     /**
@@ -2133,15 +2133,15 @@ export class AprsParser {
      *
      * Parses a Peet bros Ultimeter weather packet ($ULTW header).
      */
-    private weatherParsePeetPacket(s: string, rethash: AprsPacket): AprsPacket {
+    private weatherParsePeetPacket(data: string, rethash: AprsPacket): AprsPacket {
         // warn "\$ULTW: $s\n";
         // 0000000001FF000427C70002CCD30001026E003A050F00040000
-        let w = new Weather();
-        let t;
+        let wx = new Weather();
+        let tmp;
         let vals: number[] = [];
 
-        while(/^([0-9a-f]{4}|----)/i.test(s)) {
-            s = s.replace(/^([0-9a-f]{4}|----)/i, function(a, b) {
+        while(/^([0-9a-f]{4}|----)/i.test(data)) {
+            data = data.replace(/^([0-9a-f]{4}|----)/i, function(a, b) {
                 if(b == '----') {
                     vals.push(null);
                 } else {
@@ -2172,29 +2172,29 @@ export class AprsParser {
             return null;
         }
 
-        t = vals.shift();
-        if(t != null) {
-            w.wind_gust = (t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
+        tmp = vals.shift();
+        if(tmp != null) {
+            wx.wind_gust = (tmp * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
-        t = vals.shift();
-        if(t != null) {
-            w.wind_direction = ((t & 0xff) * 1.41176).toFixed(0);  // 1/255 => 1/360
+        tmp = vals.shift();
+        if(tmp != null) {
+            wx.wind_direction = ((tmp & 0xff) * 1.41176).toFixed(0);  // 1/255 => 1/360
         }
 
-        t = vals.shift();
-        if(t != null) {
-            w.temp = ConversionUtil.FahrenheitToCelsius(t / 10).toFixed(1);   // 1/255 => 1/360
+        tmp = vals.shift();
+        if(tmp != null) {
+            wx.temp = ConversionUtil.FahrenheitToCelsius(tmp / 10).toFixed(1);   // 1/255 => 1/360
         }
 
-        t = vals.shift();
-        if(t != null) {
-            w.rain_midnight = (t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
+        tmp = vals.shift();
+        if(tmp != null) {
+            wx.rain_midnight = (tmp * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
-        t = vals.shift();
-        if(t && t >= 10) {
-            w.pressure = (t / 10).toFixed(1);
+        tmp = vals.shift();
+        if(tmp && tmp >= 10) {
+            wx.pressure = (tmp / 10).toFixed(1);
         }
 
         // Do we care about these?
@@ -2202,12 +2202,12 @@ export class AprsParser {
         vals.shift(); // Barometer Corr. Factor (LSW)
         vals.shift(); // Barometer Corr. Factor (MSW)
 
-        t = vals.shift();
-        if(t) {
-            w.humidity = Math.floor(t / 10);    // .toFixed(0) percentage
+        tmp = vals.shift();
+        if(tmp) {
+            wx.humidity = Math.floor(tmp / 10);    // .toFixed(0) percentage
 
-            if(w.humidity > 100 || w.humidity < 1) {
-                delete w.humidity;
+            if(wx.humidity > 100 || wx.humidity < 1) {
+                delete wx.humidity;
             }
         }
 
@@ -2215,22 +2215,22 @@ export class AprsParser {
         vals.shift(); // date
         vals.shift(); // time
 
-        t = vals.shift();
-        if(t) {
-            w.rain_midnight = (t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
+        tmp = vals.shift();
+        if(tmp) {
+            wx.rain_midnight = (tmp * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
-        t = vals.shift();
-        if(t) {
-            w.wind_speed = (t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
+        tmp = vals.shift();
+        if(tmp) {
+            wx.wind_speed = (tmp * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
-        if(w.temp
-                || (w.wind_speed && w.wind_direction)
-                || w.pressure
-                || w.humidity
+        if(wx.temp
+                || (wx.wind_speed && wx.wind_direction)
+                || wx.pressure
+                || wx.humidity
                 ) {
-            rethash.weather = w;
+            rethash.weather = wx;
 
             //return $rethash;
         }
@@ -2244,15 +2244,15 @@ export class AprsParser {
      *
      * Parses a Peet bros Ultimeter weather logging frame (!! header).
      */
-    private parseWeatherPeetLogging(s: string, rethash: AprsPacket): AprsPacket {
+    private parseWeatherPeetLogging(data: string, retVal: AprsPacket): AprsPacket {
         // warn "\!!: $s\n";
         // 0000000001FF000427C70002CCD30001026E003A050F00040000
-        let w = new Weather();
-        let t;
+        let wx = new Weather();
+        let tmp;
         let vals: number[] = [];
 
-        while(/^([0-9a-f]{4}|----)/i.test(s)) {
-            s = s.replace(/^([0-9a-f]{4}|----)/i, function(a, b) {
+        while(/^([0-9a-f]{4}|----)/i.test(data)) {
+            data = data.replace(/^([0-9a-f]{4}|----)/i, function(a, b) {
                 if(b == '----') {
                     vals.push(null);
                 } else {
@@ -2280,90 +2280,90 @@ export class AprsParser {
         }
 
         if(!vals || vals.length == 0) {
-            return rethash; // TODO: do we need to signal an error?
+            return retVal; // TODO: do we need to signal an error?
         }
 
         //0000 0066 013D 0000 2871 0166 ---- ---- 0158 0532 0120 0210
 
-        t = vals.shift(); // instant wind speed
-        if(t != null) {
-            w.wind_speed = (t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
+        tmp = vals.shift(); // instant wind speed
+        if(tmp != null) {
+            wx.wind_speed = (tmp * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
-        t = vals.shift();
-        if(t != null) {
-            w.wind_direction = ((t & 0xff) * 1.41176).toFixed(0); // 1/255 => 1/360
+        tmp = vals.shift();
+        if(tmp != null) {
+            wx.wind_direction = ((tmp & 0xff) * 1.41176).toFixed(0); // 1/255 => 1/360
         }
 
-        t = vals.shift();
-        if(t) {
-            w.temp = ConversionUtil.FahrenheitToCelsius(t / 10).toFixed(1); // 1/255 => 1/360
+        tmp = vals.shift();
+        if(tmp) {
+            wx.temp = ConversionUtil.FahrenheitToCelsius(tmp / 10).toFixed(1); // 1/255 => 1/360
         }
 
-        t = vals.shift();
-        if(t) {
-            w.rain_midnight = (t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
+        tmp = vals.shift();
+        if(tmp) {
+            wx.rain_midnight = (tmp * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
-        t = vals.shift();
-        if(t && t >= 10) {
-            w.pressure = (t / 10).toFixed(1);
+        tmp = vals.shift();
+        if(tmp && tmp >= 10) {
+            wx.pressure = (tmp / 10).toFixed(1);
         }
 
-        t = vals.shift();
-        if(t) {
-            w.temp_in = parseFloat(ConversionUtil.FahrenheitToCelsius(t / 10).toFixed(1));   // 1/255 => 1/360
+        tmp = vals.shift();
+        if(tmp) {
+            wx.temp_in = parseFloat(ConversionUtil.FahrenheitToCelsius(tmp / 10).toFixed(1));   // 1/255 => 1/360
         }
 
-        t = vals.shift();
-        if(t) {
-            w.humidity = Math.floor(t / 10);    // .toFixed(0) percentage
+        tmp = vals.shift();
+        if(tmp) {
+            wx.humidity = Math.floor(tmp / 10);    // .toFixed(0) percentage
 
-            if(w.humidity > 100 || w.humidity < 1) {
-                delete w.humidity;
+            if(wx.humidity > 100 || wx.humidity < 1) {
+                delete wx.humidity;
             }
         }
 
-        t = vals.shift();
-        if(t) {
-            w.humidity_in = Math.floor(t / 10); // .toFixed(0) percentage
+        tmp = vals.shift();
+        if(tmp) {
+            wx.humidity_in = Math.floor(tmp / 10); // .toFixed(0) percentage
 
-            if(w.humidity > 100 || w.humidity < 1) {
-                delete w.humidity_in;
+            if(wx.humidity > 100 || wx.humidity < 1) {
+                delete wx.humidity_in;
             }
         }
 
         vals.shift(); // date
         vals.shift(); // time
 
-        t = vals.shift();
-        if(t) {
-            w.rain_midnight = (t * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
+        tmp = vals.shift();
+        if(tmp) {
+            wx.rain_midnight = (tmp * ConversionConstantEnum.HINCH_TO_MM).toFixed(1);
         }
 
         // avg wind speed
-        t = vals.shift();
-        if(t) {
-            w.wind_speed = (t * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
+        tmp = vals.shift();
+        if(tmp) {
+            wx.wind_speed = (tmp * ConversionConstantEnum.KMH_TO_MS / 10).toFixed(1);
         }
 
         // if inside temperature exists but no outside, use inside
-        if(w.temp_in && !w.temp) {
-            w.temp = w.temp_in.toString();
+        if(wx.temp_in && !wx.temp) {
+            wx.temp = wx.temp_in.toString();
         }
 
-        if(w.humidity_in && !w.humidity) {
-            w.humidity = w.humidity_in;
+        if(wx.humidity_in && !wx.humidity) {
+            wx.humidity = wx.humidity_in;
         }
 
-        if(w.temp || w.pressure || w.humidity
-                || (w.wind_speed && w.wind_direction)) {
-            rethash.weather = w;
+        if(wx.temp || wx.pressure || wx.humidity
+                || (wx.wind_speed && wx.wind_direction)) {
+            retVal.weather = wx;
 
             //return 1;
         }
 
-        return rethash; // this originally returned 0, TODO: signal error?
+        return retVal; // this originally returned 0, TODO: signal error?
     }
 
     /**
@@ -2371,12 +2371,12 @@ export class AprsParser {
      *
      * Parses a telemetry packet.
      */
-    private parseTelemetry(s: string, rh: AprsPacket): AprsPacket {
+    private parseTelemetry(data: string, retVal: AprsPacket): AprsPacket {
         // warn "did match\n";
 		let t: Telemetry = new Telemetry()
         let tmp: string[]
 
-        if((tmp = s.match(/^(\d+),([\-\d\,\.]+)/))) {
+        if((tmp = data.match(/^(\d+),([\-\d\,\.]+)/))) {
             t.seq = parseInt(tmp[0])
 
             //let $vals: string[] = [ (tmp[2] + tmp[3]), (tmp[4] + tmp[5]), (tmp[6] + tmp[7])
@@ -2393,11 +2393,11 @@ export class AprsParser {
 
                         // NOTE: http://blog.aprs.fi/2020/03/aprsfi-supports-kenneths-proposed.html
                         if(parseFloat(vals[i]) < -2147483648 || parseFloat(vals[i]) > 2147483647) {
-                            return this.addError(rh, 'tlm_large')
+                            return this.addError(retVal, 'tlm_large')
                         }
                     } else {
                         // TODO: Can this scenario even happen?  The parent if statement should prevent this from happening.
-                        return this.addError(rh, 'tlm_inv')
+                        return this.addError(retVal, 'tlm_inv')
                     }
                 }
 
@@ -2417,12 +2417,12 @@ export class AprsParser {
                 // TODO: What happens if there's more than 8 bits?
             }
         } else {
-            return this.addError(rh, 'tlm_inv');
+            return this.addError(retVal, 'tlm_inv');
         }
 
-        rh.telemetry = t;
+        retVal.telemetry = t;
 
         //warn 'ok: ' . Dumper(\%t);
-        return rh;
+        return retVal;
     }
 }

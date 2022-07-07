@@ -1,3 +1,5 @@
+// @ts-nocheck strictNullChecks
+
 /**
  * a basic uncompressed packet decoding test for a moving target
  * Tue Dec 11 2007, Hessu, OH7LZB

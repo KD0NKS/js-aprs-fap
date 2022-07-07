@@ -1,3 +1,5 @@
+// @ts-nocheck strictNullChecks
+
 import * as chai from 'chai';
 
 const assert = require('assert');

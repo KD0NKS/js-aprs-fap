@@ -1,3 +1,5 @@
+// @ts-nocheck strictNullChecks
+
 // a bad packet test
 // Tue Dec 11 2007, Hessu, OH7LZB
 import * as chai from 'chai';

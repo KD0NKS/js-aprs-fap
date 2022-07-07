@@ -1,3 +1,5 @@
+// @ts-nocheck strictNullChecks
+
 import * as chai from 'chai';
 
 import { RESULT_MESSAGES } from '../src/enums/ResultMessages';

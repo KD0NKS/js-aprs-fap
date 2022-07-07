@@ -1,3 +1,5 @@
+// @ts-nocheck strictNullChecks
+
 /**
  * APRS-IS path special cases
  * Fri Sep 10 2010, Hessu, OH7LZB

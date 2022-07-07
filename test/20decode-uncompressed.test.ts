@@ -2,6 +2,8 @@
 # a basic uncompressed packet decoding test
 # Mon Dec 10 2007, Hessu, OH7LZB
  */
+
+// @ts-nocheck strictNullChecks
 import * as chai from 'chai';
 const should = chai.should();
 

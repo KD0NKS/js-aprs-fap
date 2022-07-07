@@ -1,3 +1,5 @@
+// @ts-nocheck strictNullChecks
+
 import { equal } from 'assert';
 
 import { AprsPacket } from '../src/models/AprsPacket';

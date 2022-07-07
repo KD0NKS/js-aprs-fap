@@ -1,3 +1,5 @@
+// @ts-nocheck strictNullChecks
+
 /**
  * test mic-e telemetry decoding
  */

@@ -17,8 +17,7 @@ describe('FAP - Test parsing a bad packet', function() {
     let parserOptions = new ParserOptions();
 
     describe('#parseaprs - Test parsing a bad packet', function() {
-        const packet = `OH2KKU-1>APRS,TCPIP*,qAC,FIRST:;SRAL HQ *110507zS0%E/Th4_a AKaupinmaenpolku9,open M-Th12-17,F12-14 lcl`
-        const parsed: AprsPacket = parser.parseAprs(packet)
+        const parsed: AprsPacket = parser.parseAprs("OH2KKU-1>APRS,TCPIP*,qAC,FIRST:;SRAL HQ *110507zS0%E/Th4_a AKaupinmaenpolku9,open M-Th12-17,F12-14 lcl")
 
         it('Should return a resultcode: obj_inv', function() {
             equal('obj_inv', parsed.resultCode);
@@ -32,11 +31,9 @@ describe('FAP - Test parsing a bad packet', function() {
     // Note: the perl version will never hit this scenario as it dumps out when trying to decide what type of packet it is
     // because it is less than 31 characters
     describe('#parseaprs - Test parsing a bad packet', function() {
-        const packet = `OH2KKU-1>APRS:;110507zS0%E/Th4_a AK`
-
         parserOptions.isAx25 = true;
 
-        const parsed: AprsPacket = parser.parseAprs(packet, parserOptions)
+        const parsed: AprsPacket = parser.parseAprs("OH2KKU-1>APRS:;110507zS0%E/Th4_a AK", parserOptions)
 
         it('Should return a resultcode: obj_short', function() {
             equal('obj_short', parsed.resultCode);
@@ -48,8 +45,7 @@ describe('FAP - Test parsing a bad packet', function() {
     })
 
     describe('#parseaprs - Test parsing a packet where the object has an invalid timestamp', function() {
-        const packet = `K8ETN-S>APJIO4,TCPIP*,qAC,K8ETN-GS:;K8ETN  C *240015h    .  ND     .  EaRNG0045 2m Voice 145.200 -0.600 MHz`
-        const parsed: AprsPacket = parser.parseAprs(packet)
+        const parsed: AprsPacket = parser.parseAprs("K8ETN-S>APJIO4,TCPIP*,qAC,K8ETN-GS:;K8ETN  C *240015h    .  ND     .  EaRNG0045 2m Voice 145.200 -0.600 MHz")
 
         it('Should return a warning code \'timestamp_inv_obj', function () {
             equal('timestamp_inv_obj', parsed.warningCodes[0])

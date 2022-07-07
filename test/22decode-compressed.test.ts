@@ -13,35 +13,32 @@ import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
 import { AprsParser } from '../src/parsers/AprsParser';
 
 describe('FAP - Test decoding compressed packets', function() {
-    let parser = new AprsParser();
+    const parser = new AprsParser();
 
     describe('#parseaprs - Test parsing a compressed packet', function() {
-        let $srccall = "OH2KKU-15";
-        let $dstcall = "APRS";
-        let $header = `${$srccall}>${$dstcall},TCPIP*,qAC,FOURTH`;
+        const srccall = "OH2KKU-15";
+        const dstcall = "APRS";
+        const header = `${srccall}>${dstcall},TCPIP*,qAC,FOURTH`;
 
         // The comment field contains telemetry just to see that it doesn't break
         // the actual position parsing.
-        let $body = "!I0-X;T_Wv&{-Aigate testing";
+        const body = "!I0-X;T_Wv&{-Aigate testing";
+        const parsed: AprsPacket = parser.parseAprs(`${header}:${body}`);
 
-        let $aprspacket = `${$header}:${$body}`;
-
-        let parsed: AprsPacket = parser.parseAprs($aprspacket);
-
-        it(`Should return the source call sign: ${$srccall}`, function() {
-            assert.equal($srccall, parsed.sourceCallsign);
+        it(`Should return the source call sign: ${srccall}`, function() {
+            assert.equal(srccall, parsed.sourceCallsign);
         });
 
-        it(`Should return the destination call sign: ${$dstcall}`, function() {
-            assert.equal($dstcall, parsed.destCallsign);
+        it(`Should return the destination call sign: ${dstcall}`, function() {
+            assert.equal(dstcall, parsed.destCallsign);
         });
 
-        it(`Should return a header: ${$header}`, function() {
-            assert.equal($header, parsed.header);
+        it(`Should return a header: ${header}`, function() {
+            assert.equal(header, parsed.header);
         });
 
-        it(`Should return a body: ${$body}`, function() {
-            assert.equal($body, parsed.body);
+        it(`Should return a body: ${body}`, function() {
+            assert.equal(body, parsed.body);
         });
 
         it('Should return a type: location', function() {
@@ -87,11 +84,11 @@ describe('FAP - Test decoding compressed packets', function() {
         });
 
         it('Should return latitude value, that when rounded should equal: 60.0520', function() {
-            assert.equal(60.0520, parsed.latitude.toFixed(4));
+            assert.equal(60.0520, parsed.latitude?.toFixed(4));
         });
 
         it('Should return longitude value, that when rounded should equal: 24.5045', function() {
-            assert.equal(24.5045, parsed.longitude.toFixed(4));
+            assert.equal(24.5045, parsed.longitude?.toFixed(4));
         });
 
         it('Should return position resolution: 0.291', function() {
@@ -113,39 +110,36 @@ describe('FAP - Test decoding compressed packets', function() {
     });
 
     describe('#parseaprs - Test parsing another packet', function() {
-        let $srccall = "OH2KKU-10";
-        let $dstcall = "APZMDR";
-        let $header = `${$srccall}>${$dstcall},WIDE3-2,qAo,OH2MQK-1`;
+        const srccall = "OH2KKU-10";
+        const dstcall = "APZMDR";
+        const header = `${srccall}>${dstcall},WIDE3-2,qAo,OH2MQK-1`;
 
         // some telemetry in the comment
-        let $comment = "Tero, Green Volvo 960, GGL-880";
+        const comment = "Tero, Green Volvo 960, GGL-880";
 
         // The comment field contains telemetry just to see that it doesn't break
         // the actual position parsing.
-        let $body = `!//zPHTfVv>!V_ ${$comment}|!!!!!!!!!!!!!!|`;
+        const body = `!//zPHTfVv>!V_ ${comment}|!!!!!!!!!!!!!!|`;
+        const parsed: AprsPacket = parser.parseAprs(`${header}:${body}`);
 
-        let $aprspacket = `${$header}:${$body}`;
-
-        let parsed: AprsPacket = parser.parseAprs($aprspacket);
-
-        it(`Should return the source call sign: ${$srccall}`, function() {
-            assert.equal($srccall, parsed.sourceCallsign);
+        it(`Should return the source call sign: ${srccall}`, function() {
+            assert.equal(srccall, parsed.sourceCallsign);
         });
 
-        it(`Should return the destination call sign: ${$dstcall}`, function() {
-            assert.equal($dstcall, parsed.destCallsign);
+        it(`Should return the destination call sign: ${dstcall}`, function() {
+            assert.equal(dstcall, parsed.destCallsign);
         });
 
-        it(`Should return a header: ${$header}`, function() {
-            assert.equal($header, parsed.header);
+        it(`Should return a header: ${header}`, function() {
+            assert.equal(header, parsed.header);
         });
 
-        it(`Should return a body: ${$body}`, function() {
-            assert.equal($body, parsed.body);
+        it(`Should return a body: ${body}`, function() {
+            assert.equal(body, parsed.body);
         });
 
-        it(`Should return a comment: ${$comment}`, function() {
-            assert.equal($comment, parsed.comment);
+        it(`Should return a comment: ${comment}`, function() {
+            assert.equal(comment, parsed.comment);
         });
 
         it('Should return 3 valid digis', function() {
@@ -179,11 +173,11 @@ describe('FAP - Test decoding compressed packets', function() {
         });
 
         it('Should return latitude value, that when rounded should equal: 60.3582', function() {
-            assert.equal(60.3582, parsed.latitude.toFixed(4));
+            assert.equal(60.3582, parsed.latitude?.toFixed(4));
         });
 
         it('Should return longitude value, that when rounded should equal: 24.8084', function() {
-            assert.equal(24.8084, parsed.longitude.toFixed(4));
+            assert.equal(24.8084, parsed.longitude?.toFixed(4));
         });
 
         it('Should return position resolution: 0.291', function() {
@@ -192,7 +186,7 @@ describe('FAP - Test decoding compressed packets', function() {
 
         // check for undefined value, when there is no such data in the packet
         it('Should return speed: 107.57', function() {
-            assert.equal(107.57, parsed.speed.toFixed(2));
+            assert.equal(107.57, parsed.speed?.toFixed(2));
         });
 
         it('Should return course: 360', function() {
@@ -207,9 +201,7 @@ describe('FAP - Test decoding compressed packets', function() {
     describe('#parseaprs - Test parsing short compressed packet without speed, altitude or course. The APRS 1.01 spec is '
              + 'clear on this - says that compressed packet is always 13 bytes long. Must not decode, even though this packet'
              + ' is otherwise valid. It\'s just missing 2 bytes of padding.', function() {
-        let $aprspacket = 'KJ4ERJ-AL>APWW05,TCPIP*,qAC,FOURTH:@075111h/@@.Y:*lol ';
-
-        let parsed: AprsPacket = parser.parseAprs($aprspacket);
+        const parsed: AprsPacket = parser.parseAprs('KJ4ERJ-AL>APWW05,TCPIP*,qAC,FOURTH:@075111h/@@.Y:*lol ');
 
         it('Should return resultcode: packet_invalid', function() {
             assert.equal('packet_invalid', parsed.resultCode);
@@ -217,9 +209,7 @@ describe('FAP - Test decoding compressed packets', function() {
     });
 
     describe('#parseaprs - Test parsing a compressed packet with weather', function() {
-        let $aprspacket = 'SV4IKL-2>APU25N,WIDE2-2,qAR,SV6EXB-1:@011444z/:JF!T/W-_e!bg000t054r000p010P010h65b10073WS 2300 {UIV32N}';
-
-        let parsed: AprsPacket = parser.parseAprs($aprspacket);
+        const parsed: AprsPacket = parser.parseAprs('SV4IKL-2>APU25N,WIDE2-2,qAR,SV6EXB-1:@011444z/:JF!T/W-_e!bg000t054r000p010P010h65b10073WS 2300 {UIV32N}');
 
         it('Should return the symbol table code: /', function() {
             assert.equal('/', parsed.symboltable);
@@ -234,32 +224,31 @@ describe('FAP - Test decoding compressed packets', function() {
         });
 
         it('Should return temp: 12.2', function() {
-            assert.equal(12.2, parsed.weather.temp);
+            assert.equal(12.2, parsed.weather?.temp);
         });
 
         it('Should return humidity: 65', function() {
-            assert.equal(65, parsed.weather.humidity);
+            assert.equal(65, parsed.weather?.humidity);
         });
 
         it('Should return pressure: 1007.3', function() {
-            assert.equal(1007.3, parsed.weather.pressure);
+            assert.equal(1007.3, parsed.weather?.pressure);
         });
     });
 
-    describe('Test parsing an invalid location packet... packet length > 106', () => {
-        let packet: AprsPacket = parser.parseAprs("I5NOD-5>APMI06,TCPIP*,qAS,I5NOD:@ARI Altopascio Montecarlo Monte Cascetto Lucca slm 950 metri");
+    describe('Test parsing an invalid location packet... packet length > 106', function() {
+        const packet: AprsPacket = parser.parseAprs("I5NOD-5>APMI06,TCPIP*,qAS,I5NOD:@ARI Altopascio Montecarlo Monte Cascetto Lucca slm 950 metri");
 
-        it('Should return a packet with a result code: packet_invalid', () => {
+        it('Should return a packet with a result code: packet_invalid', function() {
             expect(packet.resultCode).to.equal("packet_invalid");
         });
     });
 
-    describe('Test parsing an invalid compressed location packet', () => {
-        let packet: AprsPacket = parser.parseAprs("SR3NRI>APNW01,SR3NJE*,qAR,SR3NDG:/111959zNEW SOFT WX3In1+ TEST");
+    describe('Test parsing an invalid compressed location packet', function() {
+        const packet: AprsPacket = parser.parseAprs("SR3NRI>APNW01,SR3NJE*,qAR,SR3NDG:/111959zNEW SOFT WX3In1+ TEST");
 
-        it('Should return a packet with a result code: comp_inv', () => {
+        it('Should return a packet with a result code: comp_inv', function() {
             expect(packet.resultCode).to.equal("comp_inv");
         });
     });
-
 });

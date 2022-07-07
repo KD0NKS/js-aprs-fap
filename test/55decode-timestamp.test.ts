@@ -19,11 +19,9 @@ describe('FAP - Test decoding timestamps', function() {
                 + (padding + date.getUTCMinutes()).slice(-2)
                 );
 
-        const packet = `KB3HVP-14>APU25N,N8TJG-10*,WIDE2-1,qAR,LANSNG:@${tstamp}z4231.16N/08449.88Wu227/052/A=000941 {UIV32N}`;
-
         parserOptions.isRawTimestamp = true;
 
-        const parsed: AprsPacket = parser.parseAprs(packet, parserOptions);
+        const parsed: AprsPacket = parser.parseAprs(`KB3HVP-14>APU25N,N8TJG-10*,WIDE2-1,qAR,LANSNG:@${tstamp}z4231.16N/08449.88Wu227/052/A=000941 {UIV32N}`, parserOptions);
 
         it(`Should return a timestamp: ${tstamp}`, function() {
             assert.equal(tstamp, parsed.timestamp);
@@ -49,13 +47,14 @@ describe('FAP - Test decoding timestamps', function() {
     });
 
     describe('#parseaprs - Raw again, from a HMS version', function() {
-        const packet = `G4EUM-9>APOTC1,G4EUM*,WIDE2-2,qAS,M3SXA-10:/055816h5134.38N/00019.47W>155/023!W26!/A=000188 14.3V 27C HDOP01.0 SATS09`;
-
         parserOptions.isRawTimestamp = true;
 
-        const parsed: AprsPacket = parser.parseAprs(packet, parserOptions);
+        const parsed: AprsPacket = parser.parseAprs(
+                "G4EUM-9>APOTC1,G4EUM*,WIDE2-2,qAS,M3SXA-10:/055816h5134.38N/00019.47W>155/023!W26!/A=000188 14.3V 27C HDOP01.0 SATS09"
+                , parserOptions
+                );
 
-        it(`Should return a timestamp: 055816`, function() {
+        it("Should return a timestamp: 055816", function() {
             assert.equal('055816', parsed.timestamp);
         });
     });
@@ -71,9 +70,7 @@ describe('FAP - Test decoding timestamps', function() {
                 + (padding + now.getUTCSeconds()).slice(-2)
                 );
 
-        const packet = `G4EUM-9>APOTC1,G4EUM*,WIDE2-2,qAS,M3SXA-10:/${tstamp}h5134.38N/00019.47W>155/023!W26!/A=000188 14.3V 27C HDOP01.0 SATS09`;
-
-        const parsed = parser.parseAprs(packet);
+        const parsed = parser.parseAprs(`G4EUM-9>APOTC1,G4EUM*,WIDE2-2,qAS,M3SXA-10:/${tstamp}h5134.38N/00019.47W>155/023!W26!/A=000188 14.3V 27C HDOP01.0 SATS09`);
 
         it(`Should return a timestamp: ${nowTime}`, function() {
             assert.equal(nowTime, parsed.timestamp);
@@ -81,10 +78,11 @@ describe('FAP - Test decoding timestamps', function() {
     });
 
     describe('#parseaprs - raw again, from a local-time DMH', function() {
-        let packet = `G4EUM-9>APOTC1,G4EUM*,WIDE2-2,qAS,M3SXA-10:/060642/5134.38N/00019.47W>155/023!W26!/A=000188 14.3V 27C HDOP01.0 SATS09`;
-
         parserOptions.isRawTimestamp = true;
-        const parsed: AprsPacket = parser.parseAprs(packet, parserOptions);
+        const parsed: AprsPacket = parser.parseAprs(
+                "G4EUM-9>APOTC1,G4EUM*,WIDE2-2,qAS,M3SXA-10:/060642/5134.38N/00019.47W>155/023!W26!/A=000188 14.3V 27C HDOP01.0 SATS09"
+                , parserOptions
+                );
 
         it(`Should return a timestamp: 060642`, function() {
             assert.equal('060642', parsed.timestamp);
@@ -101,9 +99,7 @@ describe('FAP - Test decoding timestamps', function() {
                 + (padding + now.getMinutes()).slice(-2)
                 );
 
-        const packet = `G4EUM-9>APOTC1,G4EUM*,WIDE2-2,qAS,M3SXA-10:/${tstamp}/5134.38N/00019.47W>155/023!W26!/A=000188 14.3V 27C HDOP01.0 SATS09`;
-
-        const parsed: AprsPacket = parser.parseAprs(packet);
+        const parsed: AprsPacket = parser.parseAprs(`G4EUM-9>APOTC1,G4EUM*,WIDE2-2,qAS,M3SXA-10:/${tstamp}/5134.38N/00019.47W>155/023!W26!/A=000188 14.3V 27C HDOP01.0 SATS09`);
 
         it(`Should return a timestamp: ${tstamp}`, function() {
             assert.equal(outcome, parsed.timestamp);

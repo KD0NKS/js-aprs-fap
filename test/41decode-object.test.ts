@@ -9,43 +9,38 @@ import { AprsPacket } from '../src/models/AprsPacket';
 import { PacketTypeEnum } from '../src/enums/PacketTypeEnum';
 import { AprsParser } from '../src/parsers/AprsParser';
 
-describe('FAP - Test parsing object', () => {
-    let parser = new AprsParser();
+describe('FAP - Test parsing object', function() {
+    const parser = new AprsParser();
 
-    describe('#parseaprs - Test object parsing', () => {
+    describe('#parseaprs - Test object parsing', function() {
         const srccall = "OH2KKU-1";
         const dstcall = "APRS";
+        const body = ",TCPIP*,qAC,FIRST:;SRAL HQ  *100927zS0%E/Th4_a  A";
         const comment = "Kaupinmaenpolku9,open M-Th12-17,F12-14 lcl";
-        let $aprspacket = srccall + '>';
 
-        let tmp = "415052532C54435049502A2C7141432C46495253543A3B5352414C20485120202A3130303932377A533025452F5468345F612020414B617570696E6D61656E706F6C6B75392C6F70656E204D2D546831322D31372C4631322D3134206C636C".match(/.{2}/g);
-        tmp.forEach(x => {
-            $aprspacket += String.fromCharCode(parseInt(x, 16));
-        });
+        const parsed: AprsPacket = parser.parseAprs(`${srccall}>${dstcall}${body}${comment}`);
 
-        let parsed: AprsPacket = parser.parseAprs($aprspacket);
-
-        it('Should return srccallsign: ' + srccall, () => {
+        it(`Should return srccallsign: ${srccall}`, function() {
             assert.equal(srccall, parsed.sourceCallsign);
         });
 
-        it('Should return a null result code.', () => {
+        it('Should return a null result code.', function() {
             assert.equal(null, parsed.resultCode);
         });
 
-        it('Should return a dstcall: ' + dstcall, () => {
+        it(`Should return a dstcall: ${dstcall}`, function() {
             assert.equal(dstcall, parsed.destCallsign);
         });
 
-        it('Should return type value: object', () => {
+        it('Should return type value: object', function() {
             assert.equal(PacketTypeEnum.OBJECT, parsed.type);
         });
 
-        it('Should return object name: \'SRAL HQ  \'', () => {
+        it('Should return object name: \'SRAL HQ  \'', function() {
             assert.equal('SRAL HQ  ', parsed.objectname);
         });
 
-        it('Should return alive value: 1', () => {
+        it('Should return alive value: 1', function() {
             assert.equal(1, parsed.alive);
         });
 
@@ -55,44 +50,44 @@ describe('FAP - Test parsing object', () => {
         // on the time the parsing is executed.
         // ok($h{'timestamp'}, 1197278820, "wrong timestamp");
 
-        it('Should return the symbol table code: S', () => {
+        it('Should return the symbol table code: S', function() {
             assert.equal('S', parsed.symboltable);
         });
 
-        it('Should return the symbol code: a', () => {
+        it('Should return the symbol code: a', function() {
             assert.equal('a', parsed.symbolcode);
         });
 
-        it('Should return latitude value, that when rounded should equal: 60.2305', () => {
-            assert.equal(60.2305, parsed.latitude.toFixed(4));
+        it('Should return latitude value, that when rounded should equal: 60.2305', function() {
+            assert.equal(60.2305, parsed.latitude?.toFixed(4));
         });
 
-        it('Should return longitude value, that when rounded should equal: 24.8790', () => {
-            assert.equal(24.8790, parsed.longitude.toFixed(4));
+        it('Should return longitude value, that when rounded should equal: 24.8790', function() {
+            assert.equal(24.8790, parsed.longitude?.toFixed(4));
         });
 
-        it('Should return position resolution: 0.291', () => {
+        it('Should return position resolution: 0.291', function() {
             assert.equal(0.291, parsed.posresolution);
         });
 
-        it('Should return PHG: null', () => {
+        it('Should return PHG: null', function() {
             assert.equal(null, parsed.phg);
         });
 
-        it('Should return the comment: ' + comment, () => {
+        it(`Should return the comment: ${comment}`, function() {
             assert.equal(comment, parsed.comment);
         });
     });
 
-    describe('Test object where there is an issue parsing the object location', () => {
+    describe('Test object where there is an issue parsing the object location', function() {
         const parsed: AprsPacket = parser.parseAprs('K8ETN-S>APJIO4,TCPIP*,qAC,K8ETN-GS:;K8ETN  C *080015z    .  ND     .  EaRNG0045 2m Voice 145.200 -0.600 MHz');
 
-        it('Should return a resultCode: "obj_dec_err"', () => {
+        it('Should return a resultCode: "obj_dec_err"', function() {
             expect(parsed.resultCode).to.equal("obj_dec_err");
         });
     });
 
-    describe('Regular APRS position - alive', () => {
+    describe('Regular APRS position - alive', function() {
         const parsed: AprsPacket = parser.parseAprs('OH2KKU-1>APRS,TCPIP*,qAC,OH2KKU-1:;LEADER   *092345z4903.50N/07201.75W>088/036')
 
         assert.equal(null, parsed.resultCode)
@@ -107,7 +102,7 @@ describe('FAP - Test parsing object', () => {
         assert.equal(null, parsed.comment)
     })
 
-    describe('Regular APRS position - killed', () => {
+    describe('Regular APRS position - killed', function() {
         const parsed: AprsPacket = parser.parseAprs('OH2KKU-1>APRS,TCPIP*,qAC,OH2KKU-1:;LEADER   _092345z4903.50N/07201.75W>088/036')
 
         assert.equal(null, parsed.resultCode)

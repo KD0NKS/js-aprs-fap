@@ -8,36 +8,35 @@ import { ParserOptions } from '../src/parsers/ParserOptions';
 // a mic-e decoding test
 // Tue Dec 11 2007, Hessu, OH7LZB
 describe('FAP - Test parsing mic-e packages', function() {
-    let parser: AprsParser = new AprsParser();
+    const parser: AprsParser = new AprsParser();
     let parserOptions: ParserOptions = new ParserOptions();
 
     describe('#parseaprs - Non-moving target mic-e packet test.', function() {
-        let srcCall = "OH7LZB-13";
-        let dstCall = "SX15S6";
-        let header = srcCall + '>' + dstCall + ',TCPIP*,qAC,FOURTH';
-        let body = "'I',l \x1C>/]";
-        let packet = header + ':' + body;
+        const srcCall = "OH7LZB-13";
+        const dstCall = "SX15S6";
+        const header = `${srcCall}>${dstCall},TCPIP*,qAC,FOURTH`;
+        const body = "'I',l \x1C>/]";
 
-        let parsed: AprsPacket = parser.parseAprs(packet);
+        const parsed: AprsPacket = parser.parseAprs(`${header}:${body}`);
 
         it('Should return a non-null packet without any error messages.', function() {
             equal(null, parsed.resultCode);
             equal(null, parsed.resultMessage);
         });
 
-        it(`Should return the source call sign: ${ srcCall }`, function() {
+        it(`Should return the source call sign: ${srcCall}`, function() {
             equal(srcCall, parsed.sourceCallsign);
         });
 
-        it(`Should return the destination call sign: ${ dstCall }`, function() {
+        it(`Should return the destination call sign: ${dstCall}`, function() {
             equal(dstCall, parsed.destCallsign);
         });
 
-        it(`Should return the header: ${ header }`, function() {
+        it(`Should return the header: ${header}`, function() {
             equal(header, parsed.header);
         });
 
-        it(`Should return the body: ${ body }`, function() {
+        it(`Should return the body: ${body}`, function() {
             equal(body, parsed.body);
         });
 
@@ -55,7 +54,7 @@ describe('FAP - Test parsing mic-e packages', function() {
 
         // If 1 fails, most likely they will all fail.
         it('Should return 3 valid digis', function() {
-            equal(3, parsed.digipeaters.length);
+            equal(3, parsed.digipeaters?.length);
 
             equal('TCPIP', parsed.digipeaters[0].callsign);
             equal(true, parsed.digipeaters[0].wasDigipeated);
@@ -86,11 +85,11 @@ describe('FAP - Test parsing mic-e packages', function() {
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: -38.2560', function() {
-            equal(-38.2560, parsed.latitude.toFixed(4));
+            equal(-38.2560, parsed.latitude?.toFixed(4));
         });
 
         it('Should return longitude value, that when rounded should equal: 145.1860', function() {
-            equal(145.1860, parsed.longitude.toFixed(4));
+            equal(145.1860, parsed.longitude?.toFixed(4));
         });
 
         it('Should return position resolution: 18.52', function() {
@@ -112,27 +111,26 @@ describe('FAP - Test parsing mic-e packages', function() {
     });
 
     describe('#parseaprs - Moving target mic-e packet test.', function() {
-        let srcCall = "OH7LZB-2";
-        let dstCall = "TQ4W2V";
-        let header = `${ srcCall }>${ dstCall },WIDE2-1,qAo,OH7LZB`;
-        let body = "`c51!f?>/]\"3x}=";
-        let packet = `${ header }:${ body }`;
+        const srcCall = "OH7LZB-2";
+        const dstCall = "TQ4W2V";
+        const header = `${srcCall}>${dstCall},WIDE2-1,qAo,OH7LZB`;
+        const body = "`c51!f?>/]\"3x}=";
 
-        let parsed: AprsPacket = parser.parseAprs(packet);
+        const parsed: AprsPacket = parser.parseAprs(`${header}:${body}`);
 
-        it(`Should return the source call sign: ${ srcCall }`, function() {
+        it(`Should return the source call sign: ${srcCall}`, function() {
             equal(srcCall, parsed.sourceCallsign);
         });
 
-        it(`Should return the destination call sign: ${ dstCall }`, function() {
+        it(`Should return the destination call sign: ${dstCall}`, function() {
             equal(dstCall, parsed.destCallsign);
         });
 
-        it(`Should return the header: ${ header }`, function() {
+        it(`Should return the header: ${header}`, function() {
             equal(header, parsed.header);
         });
 
-        it(`Should return the body: ${ body }`, function() {
+        it(`Should return the body: ${body}`, function() {
             equal(body, parsed.body);
         });
 
@@ -150,7 +148,7 @@ describe('FAP - Test parsing mic-e packages', function() {
 
         // If 1 fails, most likely they will all fail.
         it('Should return 3 valid digis', function() {
-            equal(3, parsed.digipeaters.length);
+            equal(3, parsed.digipeaters?.length);
 
             equal('WIDE2-1', parsed.digipeaters[0].callsign);
             equal(false, parsed.digipeaters[0].wasDigipeated);
@@ -185,11 +183,11 @@ describe('FAP - Test parsing mic-e packages', function() {
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: 41.7877', function() {
-            equal(41.7877, parsed.latitude.toFixed(4));
+            equal(41.7877, parsed.latitude?.toFixed(4));
         });
 
         it('Should return longitude value, that when rounded should equal: -71.4202', function() {
-            equal(-71.4202, parsed.longitude.toFixed(4));
+            equal(-71.4202, parsed.longitude?.toFixed(4));
         });
 
         it('Should return position resolution: 18.52', function() {
@@ -198,7 +196,7 @@ describe('FAP - Test parsing mic-e packages', function() {
 
         // check for undefined value, when there is no such data in the packet
         it('Should return speed: 105.56', function() {
-            equal(105.56, parsed.speed.toFixed(2));
+            equal(105.56, parsed.speed?.toFixed(2));
         });
 
         it('Should return course: 35', function() {
@@ -211,27 +209,26 @@ describe('FAP - Test parsing mic-e packages', function() {
     });
 
     describe('#parseaprs - Decoding a mic-e packet which has an invalid symbol table (\',\').', function() {
-        let srcCall = "OZ2BRN-4";
-        let dstCall = "5U2V08";
-        let header = srcCall + '>' + dstCall + ',OZ3RIN-3,OZ4DIA-2*,WIDE2-1,qAR,DB0KUE';
-        let body = "`'O<l!{,,\"4R}";
-        let packet = header + ':' + body;
+        const srcCall = "OZ2BRN-4";
+        const dstCall = "5U2V08";
+        const header = `${srcCall}>${dstCall},OZ3RIN-3,OZ4DIA-2*,WIDE2-1,qAR,DB0KUE`;
+        const body = "`'O<l!{,,\"4R}";
 
-        let parsed: AprsPacket = parser.parseAprs(packet);
+        const parsed: AprsPacket = parser.parseAprs(`${header}:${body}`);
 
-        it(`Should return the source call sign: ${ srcCall }`, function() {
+        it(`Should return the source call sign: ${srcCall}`, function() {
             equal(srcCall, parsed.sourceCallsign);
         });
 
-        it(`Should return the destination call sign: ${ dstCall }`, function() {
+        it(`Should return the destination call sign: ${dstCall}`, function() {
             equal(dstCall, parsed.destCallsign);
         });
 
-        it(`Should return the header: ${ header }`, function() {
+        it(`Should return the header: ${header}`, function() {
             equal(header, parsed.header);
         });
 
-        it(`Should return the body: ${ body }`, function() {
+        it(`Should return the body: ${body}`, function() {
             equal(body, parsed.body);
         });
 
@@ -254,71 +251,55 @@ describe('FAP - Test parsing mic-e packages', function() {
     });
 
     describe('#parseaprs - Decoding a mice-e packet with 5-channel Mic-E Telemetry', function() {
-        let srcCall = "OZ2BRN-4";
-        let dstCall = "5U2V08";
-        let header = `${ srcCall }>${ dstCall },WIDE2-1,qAo,OH7LZB`;
-        let telemetry = "‘102030FFff";
-        let comment = "commeeeent";
-        let body = `\`c51!f?>/${ telemetry }${ comment}`;
-        let packet = `${ header }:${ body }`;
-
-        let parsed: AprsPacket = parser.parseAprs(packet);
+        const comment = "commeeeent";
+        const parsed: AprsPacket = parser.parseAprs(`OZ2BRN-4>5U2V08,WIDE2-1,qAo,OH7LZB:\`c51!f?>/‘102030FFff${comment}`);
 
         // let's skip all the working stuff...
-
-        it('Should return the comment: ' + comment, function() {
+        it(`Should return the comment: ${comment}`, function() {
             equal(comment, parsed.comment);
         });
 
         it('Should return telemetry values: [16, 32, 48, 255, 255]', function() {
-            equal(5, parsed.telemetry.vals.length);
+            equal(5, parsed.telemetry?.vals?.length);
 
-            equal(16, parsed.telemetry.vals[0]);
-            equal(32, parsed.telemetry.vals[1]);
-            equal(48, parsed.telemetry.vals[2]);
-            equal(255, parsed.telemetry.vals[3]);
-            equal(255, parsed.telemetry.vals[4]);
+            equal(16, parsed.telemetry?.vals[0]);
+            equal(32, parsed.telemetry?.vals[1]);
+            equal(48, parsed.telemetry?.vals[2]);
+            equal(255, parsed.telemetry?.vals[3]);
+            equal(255, parsed.telemetry?.vals[4]);
         });
     });
 
     describe('#parseaprs - Decoding a packet with 2-channel Mic-E Telemetry', function() {
-        let srcCall = "OZ2BRN-4";
-        let dstCall = "5U2V08";
-        let header = `${ srcCall }>${ dstCall },WIDE2-1,qAo,OH7LZB`;
-        let telemetry = "'1020";
-        let comment = "commeeeent";
-        let body = `\`c51!f?>/${ telemetry } ${ comment }`;
-        let packet = header + ':' + body;
+        const comment = "commeeeent";
+        const parsed: AprsPacket = parser.parseAprs(`OZ2BRN-4>5U2V08,WIDE2-1,qAo,OH7LZB:\`c51!f?>/'1020 ${comment}`);
 
-        let parsed: AprsPacket = parser.parseAprs(packet);
-
-        it(`Should return the comment: ${ comment }`, function() {
+        it(`Should return the comment: ${comment}`, function() {
             equal(comment, parsed.comment);
         });
 
         it('Should return telemetry values: [16, 0, 32]', function() {
-            equal(3, parsed.telemetry.vals.length);
+            equal(3, parsed.telemetry?.vals?.length);
 
-            equal(16, parsed.telemetry.vals[0]);
-            equal(0, parsed.telemetry.vals[1]);
-            equal(32, parsed.telemetry.vals[2]);
+            equal(16, parsed.telemetry?.vals[0]);
+            equal(0, parsed.telemetry?.vals[1]);
+            equal(32, parsed.telemetry?.vals[2]);
         });
     });
 
     describe('#parseaprs - Decoding a packet which has had a binary byte removed', function() {
-        let comment = ']Greetings via ISS=';
-        let aprsPacket = `KD0KZE>TUPX9R,RS0ISS*,qAR,K0GDI-6:'yaIl -/${ comment }`;
-
         parserOptions.isAcceptBrokenMice = true
-        let parsed: AprsPacket = parser.parseAprs(aprsPacket, parserOptions);
+
+        const comment = ']Greetings via ISS=';
+        const parsed: AprsPacket = parser.parseAprs(`KD0KZE>TUPX9R,RS0ISS*,qAR,K0GDI-6:'yaIl -/${comment}`, parserOptions);
 
         // check for undefined value, when there is no such data in the packet
         it('Should return latitude value, that when rounded should equal: 45.1487', function() {
-            equal(45.1487, parsed.latitude.toFixed(4));
+            equal(45.1487, parsed.latitude?.toFixed(4));
         });
 
         it('Should return longitude value, that when rounded should equal: -93.1575', function() {
-            equal(-93.1575, parsed.longitude.toFixed(4));
+            equal(-93.1575, parsed.longitude?.toFixed(4));
         });
 
         it('Should return the symbol table code: /', function() {
@@ -329,7 +310,7 @@ describe('FAP - Test parsing mic-e packages', function() {
             equal('-', parsed.symbolcode);
         });
 
-        it(`Should return the comment: ${ comment }`, function() {
+        it(`Should return the comment: ${comment}`, function() {
             equal(comment, parsed.comment);
         });
 
@@ -347,7 +328,7 @@ describe('FAP - Test parsing mic-e packages', function() {
     });
 
     describe('#parseaprs - Should give an accurate longitude', function() {
-        let parsed = parser.parseAprs('W4RK-9>S8SR5R,KB4VSP-3,WIDE1*,WIDE2-1,qAR,WX0BC-3:`x- n"@>/]"6>}=')
+        const parsed = parser.parseAprs('W4RK-9>S8SR5R,KB4VSP-3,WIDE1*,WIDE2-1,qAR,WX0BC-3:`x- n"@>/]"6>}=')
 
         it('It should have a speed of 37.04', function() {
             equal(parsed.speed, 37.04)
@@ -383,7 +364,7 @@ describe('FAP - Test parsing mic-e packages', function() {
     });
 
     describe('#parseaprs - Should give an accurate latitude', function() {
-        let parsed = parser.parseAprs('N5ZRU>S8ST3U,KB4VSP-3,WIDE1*,WIDE2-1,qAR,WX0BC-3:`x)em}J>/`"63}_%')
+        const parsed = parser.parseAprs('N5ZRU>S8ST3U,KB4VSP-3,WIDE1*,WIDE2-1,qAR,WX0BC-3:`x)em}J>/`"63}_%')
 
         it('It should have a speed of 35.188', function() {
             equal(parsed.speed, 35.188)
@@ -419,10 +400,7 @@ describe('FAP - Test parsing mic-e packages', function() {
     });
 
     describe('#parseaprs - Decoding a packet which has had a binary byte removed, not accepting broken packet.', function() {
-        //parserOptions.isAcceptBrokenMice = false
-        //parser.options = parserOptions
-
-        let parsed: AprsPacket = parser.parseAprs('IV3CVN-9>TU3RY9,IR2AO,WIDE1*,WIDE2,qAR,I1EPJ-10:` )T!6S>/>"5G}Riccardo IV3CVN 73! =');
+        const parsed: AprsPacket = parser.parseAprs('IV3CVN-9>TU3RY9,IR2AO,WIDE1*,WIDE2,qAR,I1EPJ-10:` )T!6S>/>"5G}Riccardo IV3CVN 73! =');
 
         // check for undefined value, when there is no such data in the packet
         it('Should return resultCode: mice_inv_info', function() {
@@ -433,7 +411,7 @@ describe('FAP - Test parsing mic-e packages', function() {
     describe('#parseaprs - Test parsing a mic-e packet with invalid symbol table code', function() {
         parserOptions.isAcceptBrokenMice = true;
 
-        let packet: AprsPacket = parser.parseAprs("K1LEF-1>S2QPVR,qAR,N7HND:`\'[!>fk/]\"<j}=", parserOptions);
+        const packet: AprsPacket = parser.parseAprs("K1LEF-1>S2QPVR,qAR,N7HND:`\'[!>fk/]\"<j}=", parserOptions);
 
         it('Should return a resultCode: sym_inv_table', function() {
             equal(packet.resultCode, "sym_inv_table");
@@ -441,7 +419,7 @@ describe('FAP - Test parsing mic-e packages', function() {
     });
 
     describe('#parseaprs - Test parsing a mic-e packet with invalid position ambiguity', function() {
-        let packet: AprsPacket = parser.parseAprs('KM6LOU-9>SSULXR,N6EX-4,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`-S@m_Ok/]"4q}=');
+        const packet: AprsPacket = parser.parseAprs('KM6LOU-9>SSULXR,N6EX-4,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`-S@m_Ok/]"4q}=');
 
         it('Should return a resultCode: mice_amb_inv', function() {
             equal(packet.resultCode, "mice_amb_inv");
@@ -451,7 +429,7 @@ describe('FAP - Test parsing mic-e packages', function() {
     describe('#parseaprs - Test parsing a mic-e packet with invalid characters in the last 3 chars of the dest callsign.', function() {
         parserOptions.isAcceptBrokenMice = true;
 
-        let packet: AprsPacket = parser.parseAprs('N9317>SS5RWI,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`.1?shd\'/":l}K6SBZ', parserOptions);
+        const packet: AprsPacket = parser.parseAprs('N9317>SS5RWI,KF6ILA-10,WIDE2*,qAR,KF6NXQ-15:`.1?shd\'/":l}K6SBZ', parserOptions);
 
         it('Should return a resultCode: mice_inv', function() {
             equal(packet.resultCode, "mice_inv");
@@ -461,7 +439,7 @@ describe('FAP - Test parsing mic-e packages', function() {
     describe('#parseaprs - Test parsing a mic-e packet where the dest callsign is too short', function() {
         parserOptions.isAcceptBrokenMice = true;
 
-        let packet: AprsPacket = parser.parseAprs('PU2WAT-9>CMD,qAR,PU2WAT-1:`JAXm{=k/]"<=}=', parserOptions);
+        const packet: AprsPacket = parser.parseAprs('PU2WAT-9>CMD,qAR,PU2WAT-1:`JAXm{=k/]"<=}=', parserOptions);
 
         it('Should return a resultCode: mice_short', function() {
             equal(packet.resultCode, "mice_short");

@@ -80,14 +80,12 @@ export class PacketFactory {
     */
 
     /**
-     * TODO: Move to factory class
-     *
-     * =item make_timestamp($timestamp, $format)
      * Create an APRS (UTC) six digit (DHM or HMS) timestamp from a unix timestamp.
-     * The first parameter is the unix timestamp to use, or zero to use
-     * current time. Second parameter should be one for
-     * HMS format, zero for DHM format.
-     * Returns a 7-character string (e.g. "291345z") or undef on error.
+     *
+     * @param {number} timestamp = unix timestamp
+     * @param {TimeFormatEnum} timeFormat - format to use for timestamp
+     *
+     * @returns {string} - 7 character time string (e.g. "291345z")
      */
     public makeTimestamp(timestamp: number, timeFormat: TimeFormatEnum): string {
         let date: Date
@@ -120,17 +118,10 @@ export class PacketFactory {
     }
 
     /**
-     * DO NOT USE THIS DIRECTLY TO MAKE POSITION REPORTS!
+     * Creates an APRS position for position/object/item.
      *
-     * =item make_position($lat, $lon, $speed, $course, $altitude, $symbols, $optionref)
-     * Creates an APRS position for position/object/item. Parameters:
-     *
-     *
-     * Returns a string such as "1234.56N/12345.67E/CSD/SPD" or in
-     * compressed form "F*-X;n_Rv&{-A" or undef on error.
-     *
-     * This function API will probably change in the near future. The long list of
-     * parameters should be changed to hash with named parameters.
+     * @param {BuildPositionModel} data - See model class
+     * @returns {string} - "!1234.56N/12345.67E/CSD/SPD" or in compressed form "!F*-X;n_Rv&{-A" or an error.
      */
     public makePosition(data: BuildPositionModel): string | null {
         let retVal = "";
@@ -271,11 +262,9 @@ export class PacketFactory {
 
             // if we're doing DAO, round to 6 digits and grab the last 2 characters for DAO
             if(data.isUseDao != null && data.isUseDao == true) {
-                //$latmin_s = sprintf("%06.0f", $latmin * 10000);
                 latMinStr = String((latMin * 10000).toFixed(0)).padStart(6, "0")
-                latMinDao = latMinStr.substring(4, 6); // , 7?
+                latMinDao = latMinStr.substring(4, 6);
             } else {
-                // $latmin_s = sprintf("%04.0f", $latmin * 100);
                 latMinStr = String((latMin * 100).toFixed(0)).padStart(4, "0")
             }
 
@@ -285,7 +274,6 @@ export class PacketFactory {
                 latMinDao = "99";
             }
 
-            //sprintf("%02d%02d.%02d", $latdeg, substr($latmin_s, 0, 2), substr($latmin_s, 2, 2));
             let latString = String(latDegrees).padStart(2, "0")
                     +  String(latMinStr).substring(0, 2).padStart(2, "0")
                     + "."
@@ -295,7 +283,6 @@ export class PacketFactory {
                 // position ambiguity
                 if(data.ambiguity <= 2) {
                     // only minute decimals are blanked
-                    //$latstring = substr($latstring, 0, 7 - $posambiguity) + " " x $posambiguity;
                     latString = latString.substring(0, 7 - data.ambiguity).padEnd(7, " ")
                 } else if(data.ambiguity == 3) {
                     latString = latString.substring(0, 3) + " .  ";
@@ -322,12 +309,9 @@ export class PacketFactory {
 
             // if we're doing DAO, round to 6 digits and grab the last 2 characters for DAO
             if(data.isUseDao != null && data.isUseDao == true) {
-                // $lonmin_s = sprintf("%06.0f", $lonmin * 10000);
                 lonMinStr = String((lonMin * 10000).toFixed(0)).padStart(6, "0")
-                //$lonmin_dao = substr($lonmin_s, 4, 2);
                 lonMinDao = lonMinStr.substring(4, 6)
             } else {
-                //$lonmin_s = sprintf("%04.0f", $lonmin * 100);
                 lonMinStr = String((lonMin * 100).toFixed(0)).padStart(4, "0")
             }
 
@@ -385,10 +369,8 @@ export class PacketFactory {
 
             // /A=(-\d{5}|\d{6})
             if(altitude >= 0) {
-                //$retstring += sprintf("/A=%06.0f", $altitude);
                 retVal += "/A=" + String(altitude.toFixed(0)).padStart(6, "0")
             } else {
-                //$retstring += sprintf("/A=-%05.0f", $altitude * -1);
                 retVal += "/A=-" + Math.abs(altitude).toFixed(0).padStart(5, "0")
             }
         }

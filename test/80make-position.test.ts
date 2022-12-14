@@ -164,10 +164,6 @@ describe('PacketFactory - Test makePosition', () => {
                 it(`Should return a packet with valid timestamp: '@${$expected_time_dhm}5221.84N/01406.27E>353/045/A=000314'.`, () => {
                     assert.equal(`@${$expected_time_dhm}5221.84N/01406.27E>353/045/A=000314`, factory.makePosition(params))
                 })
-
-                //# timestamp DHM with messaging
-                //ok(make_position(52.364, 14.1045, 83.34, 353, 95.7072, '/>', { 'timestamp' => $reftime_dhm, 'with_messaging' => 1 } ),
-                //'@' . $expected_time_dhm . '5221.84N/01406.27E>353/045/A=000314', 'Basic position, northeast, has speed/course/alt, timestamp DHM and messaging');
             })
 
             describe("Basic position, northeast, has speed/course/alt, with messaging, no timestamp.", () => {

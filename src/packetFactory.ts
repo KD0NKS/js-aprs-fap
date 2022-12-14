@@ -1,200 +1,451 @@
+import { ConversionConstantEnum } from "./ConversionConstantEnum";
+import { BuildPositionModel } from "./BuildPositionModel";
+import { TimeFormatEnum } from "./TimeFormatEnum";
+import { NmeaSourceEnum } from "./NmeaSourceEnum";
+import { CompressionOriginEnum } from "./CompressionOriginEnum";
+
+export class PacketFactory {
     /**
-     * Checks a callsign for validity and strips
-     * trailing spaces out and returns the string.
-     * @param {string} $callsign Station callsign to validate
+     * TODO: Move to factory class
      *
-     * @returns {string} null on invalid callsign or callsign + ssid
-     *
-    private _kiss_checkcallsign($callsign: string): string {
-        /*
-        //if((a = a.match(/[a-zA-Z]+/g))) {
-        if(($callsign = $callsign.match(/^([A-Z0-9]+)\s*(|-\d+)$/))) {
-            if($callsign[2].length > 0) {
-                // check the SSID if given
-                if($callsign[2] < -15) {
-                    return null;
-                }
-            }
-
-            return $callsign[1] + $callsign[2];
-        }
-        *
-
-        // no match
-        return null;
-    }
-    */
-
-    /**
-     * =item kiss_to_tnc2($kissframe)
-     * Convert a KISS-frame into a TNC-2 compatible UI-frame.
-     * Non-UI and non-pid-F0 frames are dropped. The KISS-frame
-     * to be decoded should not have FEND (0xC0) characters
-     * in the beginning or in the end. Byte unstuffing
-     * must not be done before calling this function. Returns
-     * a string containing the TNC-2 frame (no CR and/or LF)
+     * =item make_object($name, $tstamp, $lat, $lon, $symbols, $speed, $course, $altitude, $alive, $usecompression, $posambiguity, $comment)
+     * Creates an APRS object. Returns a body of an APRS object, i.e. ";OBJECTNAM*DDHHMM/DDMM.hhN/DDDMM.hhW$CSE/SPDcomments..."
      * or undef on error.
+     * Parameters:
+     *  1st: object name, has to be valid APRS object name, does not need to be space-padded
+     *  2nd: object timestamp as a unix timestamp, or zero to use current time
+     *  3rd: object latitude, decimal degrees
+     *  4th: object longitude, decimal degrees
+     *  5th: object symbol table (or overlay) and symbol code, two bytes if the given symbole length is zero (""), use point (//)
+     *  6th: object speed, -1 if non-moving (km/h)
+     *  7th: object course, -1 if non-moving
+     *  8th: object altitude, -10000 or less if not used
+     *  9th: alive or dead object (0 == dead, 1 == alive)
+     *  10th: compressed (1) or uncompressed (0)
+     *  11th: position ambiguity (0..4)
+     *  12th: object comment text
+     * Note: Course/speed/altitude/compression is not implemented.
+     * This function API will probably change in the near future. The long list of
+     * parameters should be changed to hash with named parameters.
      *
-    private kiss_to_tnc2($kissframe: string): string {
+    private make_object($name: string, $tstamp: number, $lat: number, $lon: number, $symbols:string
+            , $speed: number, $course: number, $altitude: number, $alive: boolean
+            , $usecompression: boolean, $posambiguity: number, $comment: string): string {
+
+        // FIXME: course/speed/altitude/compression not implemented
+
+        let $packetbody = ";";
+
         /*
-        let $asciiframe = '';
-        let $dstcallsign = '';
-        let $callsigntmp = '';
-        let $digipeatercount = 0; // max. 8 digipeaters
-
-
-        # perform byte unstuffing for kiss first
-        $kissframe =~ s/\xdb\xdc/\xc0/g;
-        $kissframe =~ s/\xdb\xdd/\xdb/g;
-
-        # length checking _after_ byte unstuffing
-        if (length($kissframe) < 16) {
-            if ($debug > 0) {
-                warn "too short frame to be valid kiss\n";
-            }
+        # name
+        if ($name =~ /^([\x20-\x7e]{1,9})$/o) {
+            # also pad with whitespace
+            $packetbody .= $1 . " " x (9 - length($1));
+        } else {
             return undef;
         }
 
-        # the first byte has to be zero (kiss data)
-        if (ord(substr($kissframe, 0, 1)) != 0) {
-            if ($debug > 0) {
-                warn "not a kiss data frame\n";
-            }
+        # dead/alive
+        if ($alive == 1) {
+            $packetbody .= "*";
+        } elsif ($alive == 0) {
+            $packetbody .= "_";
+        } else {
             return undef;
         }
 
-        my $addresspart = 0;
-        my $addresscount = 0;
-        while (length($kissframe) > 0) {
-            # in the first run this removes the zero byte,
-            # in subsequent runs this removes the previous byte
-            $kissframe = substr($kissframe, 1);
-            my $charri = substr($kissframe, 0, 1);
-
-            if ($addresspart == 0) {
-                $addresscount++;
-                # we are in the address field, go on
-                # decoding it
-                # switch to numeric
-                $charri = ord($charri);
-                # check whether this is the last
-                # (0-bit is one)
-                if ($charri & 1) {
-                    if ($addresscount < 14 ||
-                        ($addresscount % 7) != 0) {
-                        # addresses ended too soon or in the
-                        # wrong place
-                        if ($debug > 0) {
-                            warn "addresses ended too soon or in the wrong place in kiss frame\n";
-                        }
-                        return undef;
-                    }
-                    # move on to control field next time
-                    $addresspart = 1;
-                }
-                # check the complete callsign
-                # (7 bytes)
-                if (($addresscount % 7) == 0) {
-                    # this is SSID, get the number
-                    my $ssid = ($charri >> 1) & 0xf;
-                    if ($ssid != 0) {
-                        # don't print zero SSID
-                        $callsigntmp .= "-" . $ssid;
-                    }
-                    # check the callsign for validity
-                    my $chkcall = _kiss_checkcallsign($callsigntmp);
-                    if (not(defined($chkcall))) {
-                        if ($debug > 0) {
-                            warn "Invalid callsign in kiss frame, discarding\n";
-                        }
-                        return undef;
-                    }
-                    if ($addresscount == 7) {
-                        # we have a destination callsign
-                        $dstcallsign = $chkcall;
-                        $callsigntmp = "";
-                        next;
-                    } elsif ($addresscount == 14) {
-                        # we have a source callsign, copy
-                        # it to the final frame directly
-                        $asciiframe = $chkcall . ">" . $dstcallsign;
-                        $callsigntmp = "";
-                    } elsif ($addresscount > 14) {
-                        # get the H-bit as well if we
-                        # are in the path part
-                        $asciiframe .= $chkcall;
-                        $callsigntmp = "";
-                        if ($charri & 0x80) {
-                            $asciiframe .= "*";
-                        }
-                        $digipeatercount++;
-                    } else {
-                        if ($debug > 0) {
-                            warn "Internal error 1 in kiss_to_tnc2()\n";
-                        }
-                        return undef;
-                    }
-                    if ($addresspart == 0) {
-                        # more address fields will follow
-                        # check that there are a maximum
-                        # of eight digipeaters in the path
-                        if ($digipeatercount >= 8) {
-                            if ($debug > 0) {
-                                warn "Too many digipeaters in kiss packet, discarding\n";
-                            }
-                            return undef;
-                        }
-                        $asciiframe .= ",";
-                    } else {
-                        # end of address fields
-                        $asciiframe .= ":";
-                    }
-                    next;
-                }
-                # shift one bit right to get the ascii
-                # character
-                $charri >>= 1;
-                $callsigntmp .= chr($charri);
-
-            } elsif ($addresspart == 1) {
-                # control field. we are only interested in
-                # UI frames, discard others
-                $charri = ord($charri);
-                if ($charri != 3) {
-                    if ($debug > 0) {
-                        warn "not UI frame, skipping\n";
-                    }
-                    return undef;
-                }
-                #print " control $charri";
-                $addresspart = 2;
-
-            } elsif ($addresspart == 2) {
-                # PID
-                #printf(" PID %02x data: ", ord($charri));
-                # we want PID 0xFO
-                $charri = ord($charri);
-                if ($charri != 0xf0) {
-                    if ($debug > 0) {
-                        warn "PID not 0xF0, skipping\n";
-                    }
-                    return undef;
-                }
-                $addresspart = 3;
-
-            } else {
-                # body
-                $asciiframe .= $charri;
-            }
+        # timestamp, hardwired for DHM
+        my $aptime = make_timestamp($tstamp, 0);
+        if (not(defined($aptime))) {
+            return undef;
+        } else {
+            $packetbody .= $aptime;
         }
 
-        # Ok, return whole frame
-        return $asciiframe;
+        # actual position
+        my $posstring = make_position($lat, $lon, $speed, $course, $altitude, $symbols, $optionref);
+        if (not(defined($posstring))) {
+            return undef;
+        } else {
+            $packetbody .= $posstring;
+        }
+
+        # add comments to the end
+        $packetbody .= $comment;
+
+        return $packetbody;
         *
-
         return null;
     }
     */
+
+    /**
+     * TODO: Move to factory class
+     *
+     * =item make_timestamp($timestamp, $format)
+     * Create an APRS (UTC) six digit (DHM or HMS) timestamp from a unix timestamp.
+     * The first parameter is the unix timestamp to use, or zero to use
+     * current time. Second parameter should be one for
+     * HMS format, zero for DHM format.
+     * Returns a 7-character string (e.g. "291345z") or undef on error.
+     */
+    public makeTimestamp(timestamp: number, timeFormat: TimeFormatEnum): string {
+        let date: Date
+
+        if(timestamp == 0) {
+            date = new Date(); // Should already be UTC
+        } else {
+            date = new Date(timestamp);
+        }
+
+        let retVal = "";
+
+        if (timeFormat == TimeFormatEnum.DHM) {
+            retVal = String(date.getUTCDate()).padStart(2, "0")
+                    + String(date.getUTCHours()).padStart(2, "0")
+                    + String(date.getUTCMinutes()).padStart(2, "0")
+                    + 'z';
+            //$tstring = sprintf("%02d%02d%02dz", $day, $hour, $minute);
+        } else if(timeFormat == TimeFormatEnum.HMS) {
+            //$tstring = sprintf("%02d%02d%02dh", $hour, $minute, $sec);
+            retVal = String(date.getUTCHours()).padStart(2, "0")
+                    + String(date.getUTCMinutes()).padStart(2, "0")
+                    + String(date.getUTCSeconds()).padStart(2, "0")
+                    + "h"
+        } else {
+            throw new Error("Unsupported time format.");
+        }
+
+        return retVal;
+    }
+
+    /**
+     * DO NOT USE THIS DIRECTLY TO MAKE POSITION REPORTS!
+     *
+     * =item make_position($lat, $lon, $speed, $course, $altitude, $symbols, $optionref)
+     * Creates an APRS position for position/object/item. Parameters:
+     *
+     *
+     * Returns a string such as "1234.56N/12345.67E/CSD/SPD" or in
+     * compressed form "F*-X;n_Rv&{-A" or undef on error.
+     *
+     * This function API will probably change in the near future. The long list of
+     * parameters should be changed to hash with named parameters.
+     */
+    public makePosition(data: BuildPositionModel): string | null {
+        let retVal = "";
+
+        try {
+            retVal = this.buildData(data)
+        } catch(e) {
+            throw e;
+        }
+
+        // add the correct packet type character based on messaging and timestamp
+        if(data.timestamp && data.timestamp != null) {
+            if(data.isMessagingEnabled && data.isMessagingEnabled == true) {
+                retVal = `@${retVal}`;
+            } else {
+                retVal = `/${retVal}`;
+            }
+        } else {
+            if(data.isMessagingEnabled && data.isMessagingEnabled == true) {
+                retVal = `=${retVal}`;
+            } else {
+                retVal = `!${retVal}`;
+            }
+        }
+
+        return retVal;
+    }
+
+    // TODO: GPS Fix Status, NMEA Source, Compression Origin
+    private buildData(data: BuildPositionModel): string | null {
+        if(!data || data == null) {
+            throw new Error("No data provided.")
+        }
+
+        if(data.ambiguity && data.ambiguity != null && data.ambiguity != undefined) {
+            // can't be ambiguous and then add precision with !DAO!
+            data.isUseDao = false;
+        }
+
+        if(!data.latitude || data.latitude == null || data.latitude < -89.99999 || data.latitude > 89.99999
+                || !data.longitude || data.longitude == null || data.longitude < -179.99999 || data.longitude > 179.99999) {
+            // invalid location
+            throw new Error("Invalid location.")
+        }
+
+        let symbolTable = "";
+        let symbolCode = "";
+        let tmpSymbols = []
+
+        if(data.symbols == null || data.symbols == "") {
+            symbolTable = "/";
+            symbolCode = "/";
+        } else if(tmpSymbols = data.symbols.match(/^([\/\\A-Z0-9])([\x21-\x7b\x7d])$/)) {
+            symbolTable = tmpSymbols[1];
+            symbolCode = tmpSymbols[2];
+        } else {
+            throw new Error("Invalid symbols.");
+        }
+
+        // Build the return string little by little, first populate with position, either compressed or uncompressed
+        let retVal = "";
+        let latMinDao;
+        let lonMinDao;
+
+        if(data.isUseCompression == true) {
+            let lat = 380926 * (90 - data.latitude);
+            let lon = 190463 * (180 + data.longitude);
+            let latString = "";
+            let lonString = "";
+
+            for(let i = 3; i >= 0; i--) {
+                // latitude character
+                let value = Math.floor(lat / (91 ** i));
+                lat = lat % (91 ** i);
+                latString += String.fromCharCode(value + 33);
+
+                // longitude character
+                value = Math.floor(lon / (91 ** i));
+                lon = lon % (91 ** i);
+                lonString += String.fromCharCode(value + 33);
+            }
+
+            // encode overlay character if it is a number
+            if(isNaN(Number(symbolTable)) == false) {
+                symbolTable = [ "a", "b", "c", "d", "e", "f", "g", "h", "i", "j" ][Number(symbolTable)];
+            }
+
+            // FIXME: no altitude/radiorange encoding
+            // but /A= comment altitude can be used
+            retVal = symbolTable + latString + lonString + symbolCode;
+
+            if(data.speed != null && data.speed >= 0
+                    && data.course != null && data.course > 0 && data.course <= 360
+                    ) {
+                // In APRS spec unknown course is zero normally (and north is 360),
+                // but in compressed aprs north is zero and there is no unknown course.
+                // So round course to nearest 4-degree section and remember
+                // to do the 360 -> 0 degree transformation.
+                let cVal = Math.floor((data.course + 2) / 4);
+
+                if(cVal > 89) {
+                    cVal = 0;
+                }
+
+                retVal += String.fromCharCode(cVal + 33);
+
+                // speed is in knots in compressed form. round to nearest integer
+                let speedNum = Math.floor((Math.log((data.speed / ConversionConstantEnum.KNOT_TO_KMH) + 1) / Math.log(1.08)) + 0.5);
+
+                if(speedNum > 89) {
+                    // limit top speed
+                    speedNum = 89;
+                }
+
+                // NOTE: This could be A or C see p 39 of the spec.
+                retVal += String.fromCharCode(speedNum + 33);
+            } else {
+                retVal += "  "
+            }
+
+            // Compression type.  Hard code for now
+            const compressionType = String.fromCharCode(parseInt("001" + NmeaSourceEnum.OTHER + CompressionOriginEnum.COMPRESSED, 2) + 33);
+            retVal += compressionType;
+        } else {    // normal position format
+            // convert to degrees and minutes
+            let isNorth: boolean = true;
+            let latitude = data.latitude
+            let longitude = data.longitude
+
+            if(latitude && latitude != null && latitude < 0.0) {
+                latitude = latitude * -1;
+                isNorth = false;
+            }
+
+            let latDegrees = Math.floor(latitude);
+            let latMin = (latitude - latDegrees) * 60;
+            let latMinStr;
+
+            // if we're doing DAO, round to 6 digits and grab the last 2 characters for DAO
+            if(data.isUseDao != null && data.isUseDao == true) {
+                //$latmin_s = sprintf("%06.0f", $latmin * 10000);
+                latMinStr = String((latMin * 10000).toFixed(0)).padStart(6, "0")
+                latMinDao = latMinStr.substring(4, 6); // , 7?
+            } else {
+                // $latmin_s = sprintf("%04.0f", $latmin * 100);
+                latMinStr = String((latMin * 100).toFixed(0)).padStart(4, "0")
+            }
+
+            // check for rouding to 60 minutes and fix to 59.99 and DAO to 99
+            if(latMinStr.match(/^60/)) {
+                latMinStr = "5999";
+                latMinDao = "99";
+            }
+
+            //sprintf("%02d%02d.%02d", $latdeg, substr($latmin_s, 0, 2), substr($latmin_s, 2, 2));
+            let latString = String(latDegrees).padStart(2, "0")
+                    +  String(latMinStr).substring(0, 2).padStart(2, "0")
+                    + "."
+                    + String(latMinStr).substring(2, 4);
+
+            if(data.ambiguity && data.ambiguity > 0 && data.ambiguity <= 4) {
+                // position ambiguity
+                if(data.ambiguity <= 2) {
+                    // only minute decimals are blanked
+                    //$latstring = substr($latstring, 0, 7 - $posambiguity) + " " x $posambiguity;
+                    latString = latString.substring(0, 7 - data.ambiguity).padEnd(7, " ")
+                } else if(data.ambiguity == 3) {
+                    latString = latString.substring(0, 3) + " .  ";
+                } else if(data.ambiguity == 4) {
+                    latString = latString.substring(0, 2) + "  .  ";
+                }
+            }
+
+            if (isNorth == true) {
+                latString += "N";
+            } else {
+                latString += "S";
+            }
+
+            let isEast = 1;
+            if(longitude && longitude != null && longitude < 0.0) {
+                longitude = longitude * -1;
+                isEast = 0;
+            }
+
+            let lonDegrees = Math.floor(longitude);
+            let lonMin = (longitude - lonDegrees) * 60;
+            let lonMinStr;
+
+            // if we're doing DAO, round to 6 digits and grab the last 2 characters for DAO
+            if(data.isUseDao != null && data.isUseDao == true) {
+                // $lonmin_s = sprintf("%06.0f", $lonmin * 10000);
+                lonMinStr = String((lonMin * 10000).toFixed(0)).padStart(6, "0")
+                //$lonmin_dao = substr($lonmin_s, 4, 2);
+                lonMinDao = lonMinStr.substring(4, 6)
+            } else {
+                //$lonmin_s = sprintf("%04.0f", $lonmin * 100);
+                lonMinStr = String((lonMin * 100).toFixed(0)).padStart(4, "0")
+            }
+
+            // check for rouding to 60 minutes and fix to 59.99 and DAO to 99
+            if(lonMinStr.match(/^60/)) {
+                lonMinStr = "5999";
+                lonMinDao = "99";
+            }
+
+            let lonString = String(lonDegrees).padStart(3, "0") + String(lonMinStr).substring(0, 2) + "." + String(lonMinStr).substring(2, 4);
+
+            if(data.ambiguity && data.ambiguity > 0 && data.ambiguity <= 4) {
+                // position ambiguity
+                if(data.ambiguity <= 2) {
+                    // only minute decimals are blanked
+                    lonString = lonString.substring(0, 8 - data.ambiguity).padEnd(8, " ");
+                } else if(data.ambiguity == 3) {
+                    lonString = lonString.substring(0, 4) + " .  ";
+                } else if(data.ambiguity == 4) {
+                    lonString = lonString.substring(0, 3) + "  .  ";
+                }
+            }
+
+            if(isEast == 1) {
+                lonString += "E";
+            } else {
+                lonString += "W";
+            }
+
+            retVal += latString + symbolTable + lonString + symbolCode;
+
+            let course = data.course;
+            let speed = data.speed;
+
+            // add course/speed, if given
+            if(course && course != null && course >= 0
+                    && speed && speed != null && speed >= 0 ) {
+                // convert speed to knots
+                speed = speed / ConversionConstantEnum.KNOT_TO_KMH;
+
+                if(speed > 999) {
+                    speed = 999;   // maximum speed
+                }
+
+                if(course > 360) {
+                    course = 0;    // unknown course
+                }
+
+                retVal += String(course).padStart(3, "0") + "/" + String(speed).padStart(3, "0");
+            }
+        }
+
+        if(data.altitude && data.altitude != null) {
+            let altitude = data.altitude / ConversionConstantEnum.FEET_TO_METERS;
+
+            // /A=(-\d{5}|\d{6})
+            if(altitude >= 0) {
+                //$retstring += sprintf("/A=%06.0f", $altitude);
+                retVal += "/A=" + String(altitude.toFixed(0)).padStart(6, "0")
+            } else {
+                //$retstring += sprintf("/A=-%05.0f", $altitude * -1);
+                retVal += "/A=-" + Math.abs(altitude).toFixed(0).padStart(5, "0")
+            }
+        }
+
+        if(data.comment && data.comment != null && data.comment != "") {
+            retVal += data.comment;
+        }
+
+        if(data.isUseCompression == false && data.isUseDao != null && data.isUseDao == true) {
+            // !DAO! extension, use Base91 format for best precision
+            // /1.1 : scale from 0.99 to 0..90 for base91, int(... + 0.5): round to nearest integer
+            retVal += '!w' + String.fromCharCode((Math.floor(Number(latMinDao)) / 1.1 + 0.5) + 33)
+                    + String.fromCharCode((Math.floor(Number(lonMinDao)) / 1.1 + 0.5) + 33) + '!';
+        }
+
+        if(data.timestamp != null) {
+            let timestamp = data.timestamp
+
+            // This *shouldn't* be possible to hit
+            if(/^\d+$/.test(timestamp.toString()) == false) {
+                throw new Error("Timestamp must be numeric.");
+            }
+
+            let now = new Date().getTime();
+
+            if(timestamp == 0) {
+                timestamp = now;
+            }
+
+            let age = now - timestamp;
+
+            // NOTE: 86400 seconds in a day
+            if(age < -3610) {
+                // over 1 hour into the future, fail
+                throw new Error("Timestamp too far in the futre.")
+            } else if(age < 84600) {   // 86400 - 1800
+                //  within the last 23 hours, HMS
+                retVal = `${ this.makeTimestamp(timestamp, TimeFormatEnum.HMS) }${retVal}`
+            } else if(age < 2419200) {   // 28 * 86400
+                // within the last 28 days, DHM
+                retVal = `${ this.makeTimestamp(timestamp, TimeFormatEnum.DHM) }${retVal}`
+            } else {
+                // over 28 days into the past, fail
+                throw new Error("Timestamp too far in the past.")
+            }
+
+            // check for failed timestamp generation
+            // This *shouldn't* be possible to hit
+            //if(!retVal || retVal == null || retVal == "") {
+            //    throw new Error("Packet contains no data.");
+            //}
+        }
+
+        return retVal;
+    }
+}
+
 
     /**
      * =item tnc2_to_kiss($tnc2frame)
@@ -392,306 +643,5 @@
         *
 
         return null;
-    }
-    */
-
-    /**
-     * TODO: Move to factory class
-     *
-     * =item make_object($name, $tstamp, $lat, $lon, $symbols, $speed, $course, $altitude, $alive, $usecompression, $posambiguity, $comment)
-     * Creates an APRS object. Returns a body of an APRS object, i.e. ";OBJECTNAM*DDHHMM/DDMM.hhN/DDDMM.hhW$CSE/SPDcomments..."
-     * or undef on error.
-     * Parameters:
-     *  1st: object name, has to be valid APRS object name, does not need to be space-padded
-     *  2nd: object timestamp as a unix timestamp, or zero to use current time
-     *  3rd: object latitude, decimal degrees
-     *  4th: object longitude, decimal degrees
-     *  5th: object symbol table (or overlay) and symbol code, two bytes if the given symbole length is zero (""), use point (//)
-     *  6th: object speed, -1 if non-moving (km/h)
-     *  7th: object course, -1 if non-moving
-     *  8th: object altitude, -10000 or less if not used
-     *  9th: alive or dead object (0 == dead, 1 == alive)
-     *  10th: compressed (1) or uncompressed (0)
-     *  11th: position ambiguity (0..4)
-     *  12th: object comment text
-     * Note: Course/speed/altitude/compression is not implemented.
-     * This function API will probably change in the near future. The long list of
-     * parameters should be changed to hash with named parameters.
-     *
-    private make_object($name: string, $tstamp: number, $lat: number, $lon: number, $symbols:string
-            , $speed: number, $course: number, $altitude: number, $alive: boolean
-            , $usecompression: boolean, $posambiguity: number, $comment: string): string {
-
-        // FIXME: course/speed/altitude/compression not implemented
-
-        let $packetbody = ";";
-
-        /*
-        # name
-        if ($name =~ /^([\x20-\x7e]{1,9})$/o) {
-            # also pad with whitespace
-            $packetbody .= $1 . " " x (9 - length($1));
-        } else {
-            return undef;
-        }
-
-        # dead/alive
-        if ($alive == 1) {
-            $packetbody .= "*";
-        } elsif ($alive == 0) {
-            $packetbody .= "_";
-        } else {
-            return undef;
-        }
-
-        # timestamp, hardwired for DHM
-        my $aptime = make_timestamp($tstamp, 0);
-        if (not(defined($aptime))) {
-            return undef;
-        } else {
-            $packetbody .= $aptime;
-        }
-
-        # actual position
-        my $posstring = make_position($lat, $lon, $speed, $course, $altitude, $symbols, $optionref);
-        if (not(defined($posstring))) {
-            return undef;
-        } else {
-            $packetbody .= $posstring;
-        }
-
-        # add comments to the end
-        $packetbody .= $comment;
-
-        return $packetbody;
-        *
-        return null;
-    }
-    */
-
-    /**
-     * TODO: Move to factory class
-     *
-     * =item make_timestamp($timestamp, $format)
-     * Create an APRS (UTC) six digit (DHM or HMS) timestamp from a unix timestamp.
-     * The first parameter is the unix timestamp to use, or zero to use
-     * current time. Second parameter should be one for
-     * HMS format, zero for DHM format.
-     * Returns a 7-character string (e.g. "291345z") or undef on error.
-     *
-    private make_timestamp($tstamp: number, $tformat: number): string {
-        /*
-        if($tstamp == 0) {
-            $tstamp = new Date(); // Should already be UTC
-        } else {
-            // TODO: convert $tstamp from string to time?
-        }
-
-        // Is this check needed with js?
-        if(!$tstamp.getUTCDay()) {
-            return null;
-        }
-
-        let $tstring = "";
-
-        if ($tformat == 0) {
-            $tstring = "00".substring(0, 2 - $tstamp.getUTCDay().length) + ('' + $tstamp.getUTCDay())
-                    + "00".substring(0, 2 - $tstamp.getUTCHours().length) + ('' + $tstamp.getUTCHours())
-                    + "00".substring(0, 2 - $tstamp.getUTCMinutes().length) + ('' + $tstamp.getUTCMinutes())
-                    + 'z';
-            //$tstring = sprintf("%02d%02d%02dz", $day, $hour, $minute);
-        } else if($tformat == 1) {
-            //$tstring = sprintf("%02d%02d%02dh", $hour, $minute, $sec);
-            $tstring = "00".substring(0, 2 - $tstamp.getUTCHours().length) + ('' + $tstamp.getUTCHours())
-                    + "00".substring(0, 2 - $tstamp.getUTCMinutes().length) + ('' + $tstamp.getUTCMinutes())
-                    + "00".substring(0, 2 - $tstamp.getUTCSeconds().length) + ('' + $tstamp.getUTCSeconds())
-                    + 'h';
-        } else {
-            return null;
-        }
-
-        return $tstring;
-        *
-
-        return null;
-    }
-    */
-
-    /**
-     * TODO: Move to factory class
-     *
-     * =item make_position($lat, $lon, $speed, $course, $altitude, $symbols, $usecompression, $posambiguity)
-     * Creates an APRS position for position/object/item. Parameters:
-     *  1st: latitude in decimal degrees
-     *  2nd: longitude in decimal degrees
-     *  3rd: speed in km/h, -1 == don't include
-     *  4th: course in degrees, -1 == don't include. zero == unknown course, 360 == north
-     *  5th: altitude in meters above mean sea level, -10000 or under == don't use
-     *  6th: aprs symbols to use, first table/overlay and then code (two bytes). If string length is zero (""), uses default.
-     *  7th: use compression (1) or not (0)
-     *  8th: use amount (0..4) of position ambiguity. Note that position ambiguity and compression can't be used at the same time.
-     * Returns a string such as "1234.56N/12345.67E/CSD/SPD" or in
-     * compressed form "F*-X;n_Rv&{-A" or undef on error.
-     * Please note: course/speed/altitude are not supported yet, and neither is compressed format or position ambiguity.
-     * This function API will probably change in the near future. The long list of
-     * parameters should be changed to hash with named parameters.
-     *
-    private make_position($lat: number, $lon: number, $speed: number, $course: number
-            , $altitude: number, $symbols: string, $usecompression: boolean, $posambiguity: number) {
-
-        // FIXME: course/speed/altitude are not supported yet,
-        //        neither is compressed format or position ambiguity
-
-        /*
-        if ($lat < -89.99999 ||
-            $lat > 89.99999 ||
-            $lon < -179.99999 ||
-            $lon > 179.99999) {
-            # invalid location
-            return undef;
-        }
-
-        my $symboltable = "";
-        my $symbolcode = "";
-        if (length($symbols) == 0) {
-            $symboltable = "/";
-            $symbolcode = "/";
-        } elsif ($symbols =~ /^([\/\\A-Z0-9])([\x21-\x7b\x7d])$/o) {
-            $symboltable = $1;
-            $symbolcode = $2;
-        } else {
-            return undef;
-        }
-
-
-        if ($usecompression == 1) {
-            my $latval = 380926 * (90 - $lat);
-            my $lonval = 190463 * (180 + $lon);
-            my $latstring = "";
-            my $lonstring = "";
-            for (my $i = 3; $i >= 0; $i--) {
-                # latitude character
-                my $value = int($latval / (91 ** $i));
-                $latval = $latval % (91 ** $i);
-                $latstring .= chr($value + 33);
-                # longitude character
-                $value = int($lonval / (91 ** $i));
-                $lonval = $lonval % (91 ** $i);
-                $lonstring .= chr($value + 33);
-            }
-            # encode overlay character if it is a number
-            $symboltable =~ tr/0-9/a-j/;
-            # FIXME: no speed/course/altitude/radiorange encoding
-            my $retstring = $symboltable . $latstring . $lonstring . $symbolcode;
-            if ($speed >= 0 && $course > 0 && $course <= 360) {
-                # In APRS spec unknown course is zero normally (and north is 360),
-                # but in compressed aprs north is zero and there is no unknown course.
-                # So round course to nearest 4-degree section and remember
-                # to do the 360 -> 0 degree transformation.
-                my $cval = int(($course + 2) / 4);
-                if ($cval > 89) {
-                    $cval = 0;
-                }
-                $retstring .= chr($cval + 33);
-                # speed is in knots in compressed form. round to nearest integer
-                my $speednum = int((log(($speed / $knot_to_kmh) + 1) / log(1.08)) + 0.5);
-                if ($speednum > 89) {
-                    # limit top speed
-                    $speednum = 89;
-                }
-                $retstring .= chr($speednum + 33) . "A";
-            } else {
-                $retstring .= "  A";
-            }
-            return $retstring;
-
-        # normal position format
-        } else {
-            # convert to degrees and minutes
-            my $isnorth = 1;
-            if ($lat < 0.0) {
-                $lat = 0 - $lat;
-                $isnorth = 0;
-            }
-            my $latdeg = int($lat);
-            my $latmin = sprintf("%04d", ($lat - $latdeg) * 6000);
-            my $latstring = sprintf("%02d%02d.%02d", $latdeg, substr($latmin, 0, 2), substr($latmin, 2, 2));
-            if ($posambiguity > 0 || $posambiguity <= 4) {
-                # position ambiguity
-                if ($posambiguity <= 2) {
-                    # only minute decimals are blanked
-                    $latstring = substr($latstring, 0, 7 - $posambiguity) . " " x $posambiguity;
-                } elsif ($posambiguity == 3) {
-                    $latstring = substr($latstring, 0, 3) . " .  ";
-                } elsif ($posambiguity == 4) {
-                    $latstring = substr($latstring, 0, 2) . "  .  ";
-                }
-            }
-            if ($isnorth == 1) {
-                $latstring .= "N";
-            } else {
-                $latstring .= "S";
-            }
-            my $iseast = 1;
-            if ($lon < 0.0) {
-                $lon = 0 - $lon;
-                $iseast = 0;
-            }
-            my $londeg = int($lon);
-            my $lonmin = sprintf("%04d", ($lon - $londeg) * 6000);
-            my $lonstring = sprintf("%03d%02d.%02d", $londeg, substr($lonmin, 0, 2), substr($lonmin, 2, 2));
-            if ($posambiguity > 0 || $posambiguity <= 4) {
-                # position ambiguity
-                if ($posambiguity <= 2) {
-                    # only minute decimals are blanked
-                    $lonstring = substr($lonstring, 0, 8 - $posambiguity) . " " x $posambiguity;
-                } elsif ($posambiguity == 3) {
-                    $lonstring = substr($lonstring, 0, 4) . " .  ";
-                } elsif ($posambiguity == 4) {
-                    $lonstring = substr($lonstring, 0, 3) . "  .  ";
-                }
-            }
-            if ($iseast == 1) {
-                $lonstring .= "E";
-            } else {
-                $lonstring .= "W";
-            }
-
-            my $retstring;
-
-            if ($options->{'timestamp'}) {
-                my $now = time();
-                $retstring = sprintf('/%02d%02d%02dh', $hour, $min, $sec);
-                return undef if ($options->{'timestamp'} > $now+10);
-
-                my $age = $now - $options->{'timestamp'};
-
-                if ($age < 86400-1800) {
-                    # less than 23h30min old, use HMS timestamp
-                    my($sec,$min,$hour) = gmtime($options->{'timestamp'});
-                    $retstring = sprintf('/%02d%02d%02dh', $hour, $min, $sec);
-                } elsif ($age < 28*86400) {
-                    # TODO: could use DHM timestamp here
-                }
-            } else {
-                $retstring = '!';
-            }
-            $retstring .= $latstring . $symboltable . $lonstring . $symbolcode;
-
-            # add course/speed, if given
-            if ($speed >= 0 && $course >= 0) {
-                # convert speed to knots
-                $speed = $speed / $knot_to_kmh;
-                if ($speed > 999) {
-                    $speed = 999; # maximum speed
-                }
-                if ($course > 360) {
-                    $course = 0; # unknown course
-                }
-                $retstring .= sprintf("%03d/%03d", $course, $speed);
-            }
-            return $retstring;
-        }
-        *
     }
     */

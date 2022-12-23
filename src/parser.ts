@@ -1563,7 +1563,7 @@ export default class aprsParser {
 
         // check the information field (longitude, course, speed and
         // symbol table and code are checked). Not bullet proof..
-        let mice_fixed;
+        let mice_fixed: boolean = false;
         let symboltable = packet.charAt(7);
 
         if(!(tmp = packet.match(/^[\x26-\x7f][\x26-\x61][\x1c-\x7f]{2}[\x1c-\x7d][\x1c-\x7f][\x21-\x7b\x7d][\/\\A-Z0-9]/))) {
@@ -1577,7 +1577,7 @@ export default class aprsParser {
 
             if(options && options['accept_broken_mice']
                     && (packet = packet.replace(/^([\x26-\x7f][\x26-\x61][\x1c-\x7f]{2})\x20([\x21-\x7b\x7d][\/\\A-Z0-9])(.*)/, '$1\x20\x20$2$3'))) {
-                mice_fixed = 1;
+                mice_fixed = true;
                 // Now the symbol table identifier is again in the correct spot...
                 symboltable = packet.charAt(7);
 
@@ -1737,7 +1737,7 @@ export default class aprsParser {
 
         // Now onto speed and course.
         // If the packet has had a mic-e fix applied, course and speed are likely to be off.
-        if(!mice_fixed) {
+        if(mice_fixed == false) {
             let speed = ((packet.charCodeAt(3)) - 28) * 10;
             let coursespeed = (packet.charCodeAt(4)) - 28;
             let coursespeedtmp = Math.floor(coursespeed / 10);  // had been parseint... changed to math.floor because tests started failing.
@@ -1829,7 +1829,7 @@ export default class aprsParser {
             }
         }
 
-        if(mice_fixed) {
+        if(mice_fixed == true) {
             rethash.mice_mangled = true;
             // TODO: warn "$srccallsign: fixed packet was parsed\n";
         }
@@ -1839,6 +1839,8 @@ export default class aprsParser {
 
     /**
      * convert a compressed position to decimal degrees
+     *
+     * TODO: p39.  Parse NMEA Source and Compression Origin
      */
     private _compressed_to_decimal(packet: string, srccallsign: string, rethash: aprsPacket): aprsPacket {
         // A compressed position is always 13 characters long.
@@ -2083,6 +2085,7 @@ export default class aprsParser {
                 s = s.replace(tmp[0], '');
             }
         } else if((tmp = s.match(/^g(\d+)t(-{0,1}[\d \.]+)/))) {
+            // TODO: ($s =~ s/^g([\d .]+)t(-{0,1}[\d \.]+)//)
             // g000t054r000p010P010h65b10073WS 2300 {UIV32N}
             wind_gust = tmp[1];
 

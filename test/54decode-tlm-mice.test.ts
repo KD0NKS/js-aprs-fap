@@ -29,21 +29,21 @@ describe('FAP - Test decoding mic-e packet with sequence 00, 5 channels of telem
         });
 
         it(`Should return a telemetry sequence: 0`, function() {
-            assert.equal(0, parsed.telemetry.seq);
+            assert.equal(0, parsed.telemetry?.seq);
         });
 
         it('Should return 5 valid telemetry values', function() {
-            assert.equal(5, parsed.telemetry.vals.length);
+            assert.equal(5, parsed.telemetry?.vals?.length);
 
-            assert.equal('0', parsed.telemetry.vals[0]);
-            assert.equal('0', parsed.telemetry.vals[1]);
-            assert.equal('0', parsed.telemetry.vals[2]);
-            assert.equal('0', parsed.telemetry.vals[3]);
-            assert.equal('0', parsed.telemetry.vals[4]);
+            assert.equal('0', parsed.telemetry?.vals[0]);
+            assert.equal('0', parsed.telemetry?.vals[1]);
+            assert.equal('0', parsed.telemetry?.vals[2]);
+            assert.equal('0', parsed.telemetry?.vals[3]);
+            assert.equal('0', parsed.telemetry?.vals[4]);
         });
 
         it(`Should return a telemetry bits: '00000000'`, function() {
-            assert.equal('00000000', parsed.telemetry.bits);
+            assert.equal('00000000', parsed.telemetry?.bits);
         });
     });
 
@@ -67,17 +67,17 @@ describe('FAP - Test decoding mic-e packet with sequence 00, 5 channels of telem
         });
 
         it(`Should return a telemetry sequence: 0`, function() {
-            assert.equal(0, parsed.telemetry.seq);
+            assert.equal(0, parsed.telemetry?.seq);
         });
 
         it('Should return 1 valid telemetry value; the rest null', function() {
-            assert.equal(5, parsed.telemetry.vals.length);
+            assert.equal(5, parsed.telemetry?.vals?.length);
 
-            assert.equal('0', parsed.telemetry.vals[0]);
-            assert.equal(null, parsed.telemetry.vals[1]);
-            assert.equal(null, parsed.telemetry.vals[2]);
-            assert.equal(null, parsed.telemetry.vals[3]);
-            assert.equal(null, parsed.telemetry.vals[4]);
+            assert.equal('0', parsed.telemetry?.vals[0]);
+            assert.equal(null, parsed.telemetry?.vals[1]);
+            assert.equal(null, parsed.telemetry?.vals[2]);
+            assert.equal(null, parsed.telemetry?.vals[3]);
+            assert.equal(null, parsed.telemetry?.vals[4]);
         });
     });
 
@@ -86,7 +86,7 @@ describe('FAP - Test decoding mic-e packet with sequence 00, 5 channels of telem
         let parsed: aprsPacket = parser.parseaprs($aprspacket);
 
         it(`Should return a telemetry bits: '10000000'`, function() {
-            assert.equal('10000000', parsed.telemetry.bits);
+            assert.equal('10000000', parsed.telemetry?.bits);
         });
     });
 

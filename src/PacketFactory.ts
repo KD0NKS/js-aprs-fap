@@ -211,7 +211,7 @@ export class PacketFactory {
 
             // FIXME: no altitude/radiorange encoding
             // but /A= comment altitude can be used
-            retVal = symbolTable + latString + lonString + symbolCode;
+            retVal = `${symbolTable}${latString}${lonString}${symbolCode}`;
 
             if(data.speed != null && data.speed >= 0
                     && data.course != null && data.course > 0 && data.course <= 360
@@ -247,13 +247,14 @@ export class PacketFactory {
             retVal += compressionType;
         } else {    // normal position format
             // convert to degrees and minutes
-            let isNorth: boolean = true;
+            let latDir = "N";
+            let lonDir = "E"
             let latitude = data.latitude
             let longitude = data.longitude
 
             if(latitude && latitude != null && latitude < 0.0) {
                 latitude = latitude * -1;
-                isNorth = false;
+                latDir = "S";
             }
 
             let latDegrees = Math.floor(latitude);
@@ -262,7 +263,7 @@ export class PacketFactory {
 
             // if we're doing DAO, round to 6 digits and grab the last 2 characters for DAO
             if(data.isUseDao != null && data.isUseDao == true) {
-                latMinStr = String((latMin * 10000).toFixed(0)).padStart(6, "0")
+                latMinStr = (latMin * 10000).toFixed(0).padStart(6, "0")
                 latMinDao = latMinStr.substring(4, 6);
             } else {
                 latMinStr = String((latMin * 100).toFixed(0)).padStart(4, "0")
@@ -279,28 +280,10 @@ export class PacketFactory {
                     + "."
                     + String(latMinStr).substring(2, 4);
 
-            if(data.ambiguity && data.ambiguity > 0 && data.ambiguity <= 4) {
-                // position ambiguity
-                if(data.ambiguity <= 2) {
-                    // only minute decimals are blanked
-                    latString = latString.substring(0, 7 - data.ambiguity).padEnd(7, " ")
-                } else if(data.ambiguity == 3) {
-                    latString = latString.substring(0, 3) + " .  ";
-                } else if(data.ambiguity == 4) {
-                    latString = latString.substring(0, 2) + "  .  ";
-                }
-            }
 
-            if (isNorth == true) {
-                latString += "N";
-            } else {
-                latString += "S";
-            }
-
-            let isEast = 1;
             if(longitude && longitude != null && longitude < 0.0) {
                 longitude = longitude * -1;
-                isEast = 0;
+                lonDir = "W";
             }
 
             let lonDegrees = Math.floor(longitude);
@@ -321,27 +304,26 @@ export class PacketFactory {
                 lonMinDao = "99";
             }
 
-            let lonString = String(lonDegrees).padStart(3, "0") + String(lonMinStr).substring(0, 2) + "." + String(lonMinStr).substring(2, 4);
+            let lonString = `${String(lonDegrees).padStart(3, "0")}${String(lonMinStr).substring(0, 2)}.${String(lonMinStr).substring(2, 4)}`;
 
             if(data.ambiguity && data.ambiguity > 0 && data.ambiguity <= 4) {
+                // TODO: This can be condensed
                 // position ambiguity
                 if(data.ambiguity <= 2) {
+                    // TODO: In case of 2, shouldn't there be 2 spaces in decimal places?
                     // only minute decimals are blanked
+                    latString = latString.substring(0, 7 - data.ambiguity).padEnd(7, " ")
                     lonString = lonString.substring(0, 8 - data.ambiguity).padEnd(8, " ");
                 } else if(data.ambiguity == 3) {
-                    lonString = lonString.substring(0, 4) + " .  ";
+                    latString = `${latString.substring(0, 3)} .  `;
+                    lonString = `${lonString.substring(0, 4)} .  `;
                 } else if(data.ambiguity == 4) {
-                    lonString = lonString.substring(0, 3) + "  .  ";
+                    latString = `${latString.substring(0, 2)}  .  `;
+                    lonString = `${lonString.substring(0, 3)}  .  `;
                 }
             }
 
-            if(isEast == 1) {
-                lonString += "E";
-            } else {
-                lonString += "W";
-            }
-
-            retVal += latString + symbolTable + lonString + symbolCode;
+            retVal += `${latString}${latDir}${symbolTable}${lonString}${lonDir}${symbolCode}`;
 
             let course = data.course;
             let speed = data.speed;
@@ -360,8 +342,9 @@ export class PacketFactory {
                     course = 0;    // unknown course
                 }
 
-                retVal += String(course).padStart(3, "0") + "/" + String(speed).padStart(3, "0");
+                retVal += `${String(course).padStart(3, "0")}/${String(speed).padStart(3, "0")}`;
             }
+
         }
 
         if(data.altitude && data.altitude != null) {
@@ -369,9 +352,9 @@ export class PacketFactory {
 
             // /A=(-\d{5}|\d{6})
             if(altitude >= 0) {
-                retVal += "/A=" + String(altitude.toFixed(0)).padStart(6, "0")
+                retVal += `/A=${String(altitude.toFixed(0)).padStart(6, "0")}`
             } else {
-                retVal += "/A=-" + Math.abs(altitude).toFixed(0).padStart(5, "0")
+                retVal += `/A=-${Math.abs(altitude).toFixed(0).padStart(5, "0")}`
             }
         }
 

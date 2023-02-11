@@ -35,7 +35,7 @@ export class KissUtil {
 
         // byte unstuffing
         // TODO: Don't think this is working properly after being converted to TypeScript
-        frame.replace(/\xDB\xDC\xC0\xDB\xDD\xDB/, '');
+        frame.replace(/\0xDB\0xDC\0xC0\0xDB\0xDD\0xDB/, '');
 
         // length checking after byte unstuffing
         if(frame.length < 16) {
@@ -64,7 +64,7 @@ export class KissUtil {
                 // (0-bit is one)
                 if(charCode & 1) {
                     if(addressCount < 14 || (addressCount % 7) != 0) {
-                        throw new Error("addresses ended too soon or in the wrong place in kiss frame.");
+                        //throw new Error("addresses ended too soon or in the wrong place in kiss frame.");
                     }
 
                     // move on to control field next time
@@ -84,9 +84,9 @@ export class KissUtil {
 
                     // check the callsign for validity
                     let chkCall = this.checkKissCallsign(callsignTmp);
-                    if(!chkCall || chkCall == null) {
-                        throw new Error("Invalid callsign in kiss frame, discarding.");
-                    }
+                    //if(!chkCall || chkCall == null) {
+                    //    throw new Error("Invalid callsign in kiss frame, discarding.");
+                    //}
 
                     if(addressCount == 7) {
                         // we have a destination callsign
@@ -141,14 +141,14 @@ export class KissUtil {
                 // control field. we are only interested in
                 // UI frames, discard others
                 if(charCode != 3) {
-                    throw new Error("not UI frame, skipping.");
+                    //throw new Error("not UI frame, skipping.");
                 }
 
                 addressPart = 2;
             } else if(addressPart == 2) {
                 // we want PID 0xFO
                 if(charCode != 0xF0) {
-                    throw new Error("PID not 0xF0, skipping.")
+                    //throw new Error("PID not 0xF0, skipping.")
                 }
 
                 addressPart = 3;
@@ -159,5 +159,156 @@ export class KissUtil {
         } while(frame.length > 0);
 
         return asciiFrame;
+    }
+
+    /**
+     * =item tnc2_to_kiss($tnc2frame)
+     * Convert a TNC-2 compatible UI-frame into a KISS data
+     * frame (single port KISS TNC). The frame will be complete,
+     * i.e. it has byte stuffing done and FEND (0xC0) characters
+     * on both ends. If conversion fails, return undef.
+     *
+     * NOTE: While all callsigns should be uppercase, regexes may need to account for a-z
+     */
+    public tnc2ToKiss($gotframe: string): string | null {
+        let $kissframe = String.fromCharCode(parseInt("00", 16)); // kiss frame starts with byte 0x00
+
+        let $body;
+        let $header;
+
+        // separate header and body
+        if(/^([A-Z0-9,*>-]+):(.+)$/.test($gotframe)) {
+            [, $header, $body] = $gotframe.match(/^([A-Z0-9,*>-]+):(.+)$/)
+        } else {
+            throw new Error("Separation into header and body failed.");
+        }
+
+        // separate the sender, recipient and digipeaters
+        let $sender;
+        let $sender_ssid;
+        let $receiver;
+        let $receiver_ssid;
+        let $digipeaters;
+
+        if(/^([A-Z0-9]{1,6})(-\d+|)>([A-Z0-9]{1,6})(-\d+|)(|,.*)$/.test($header)) {
+            [, $sender, $sender_ssid, $receiver, $receiver_ssid, $digipeaters] = $header.match(/^([A-Z0-9]{1,6})(-\d+|)>([A-Z0-9]{1,6})(-\d+|)(|,.*)$/)
+        } else {
+            throw new Error("Separation of sender and receiver from header failed.");
+        }
+
+        // Check SSID format and convert to number
+        if($sender_ssid.length > 0) {
+            $sender_ssid = Number($sender_ssid) * -1;
+
+            if($sender_ssid > 15) {
+                throw new Error("Sender SSID ($sender_ssid) is over 15.");
+            }
+        } else {
+            $sender_ssid = 0;
+        }
+
+        if($receiver_ssid.length > 0) {
+            $receiver_ssid = Number($receiver_ssid) * -1;
+
+            if($receiver_ssid > 15) {
+                throw new Error("tnc2_to_kiss(): receiver SSID ($receiver_ssid) is over 15.");
+            }
+        } else {
+            $receiver_ssid = 0;
+        }
+
+        // pad callsigns to 6 characters with space
+        $sender = $sender.padEnd(6, ' ') // ' ' x (6 - length($sender));
+        $receiver = $receiver.padEnd(6, ' ') //' ' x (6 - length($receiver));
+
+        // encode destination and source
+        $kissframe += this.encodeString($receiver);
+        $kissframe += String.fromCharCode(0xe0 | ($receiver_ssid << 1));
+
+        $kissframe += this.encodeString($sender);
+
+        if($digipeaters.length > 0) {
+            $kissframe += String.fromCharCode(0x60 | ($sender_ssid << 1));
+        } else {
+            $kissframe += String.fromCharCode(0x61 | ($sender_ssid << 1));
+        }
+
+        // if there are digipeaters, add them
+        if($digipeaters.length > 0) {
+            $digipeaters = $digipeaters.indexOf(',') == 0 ? $digipeaters.substring(1) : $digipeaters; // remove the first comma
+
+            // split into parts
+            let digis = $digipeaters.split(/,/);
+            //let $digicount = scalar(@digis);
+
+            if(digis.length > 8 || digis.length < 1) {
+                // too many (or none?!?) digipeaters
+                throw new Error(`Too many (or zero) digipeaters: ${digis.length}`);
+            }
+
+            for(let $i = 0; $i < digis.length; $i++) {
+                let tmp
+
+                // split into callsign, SSID and h-bit
+                if((tmp = digis[$i].match(/^([A-Z0-9]{1,6})(-\d+|)(\*|)$/))) {
+                    let $callsign = tmp[1].padEnd(6, ' ');
+                    let $ssid = 0;
+                    let $hbit = 0x00;
+
+                    if(tmp[2].length > 0) {
+                        $ssid = Number(tmp[2]) * -1;
+
+                        if($ssid > 15) {
+                            throw new Error(`Digipeater nr. ${$i} SSID ($ssid) invalid.`);
+                        }
+                    }
+
+                    if(tmp[3] == '*') {
+                        $hbit = 0x80;
+                    }
+
+                    // add to kiss frame
+                    $kissframe += this.encodeString($callsign);
+
+                    if($i + 1 < digis.length) {
+                        // more digipeaters to follow
+                        $kissframe += String.fromCharCode($hbit | 0x60 | ($ssid << 1));
+                    } else {
+                        // last digipeater
+                        $kissframe += String.fromCharCode($hbit | 0x61 | ($ssid << 1));
+                    }
+
+                } else {
+                    throw new Error(`Digipeater nr. ${$i} parsing failed.`);
+                }
+            }
+        }
+
+        // add frame type (0x03) and PID (0xF0)
+        $kissframe = `${$kissframe}${String.fromCharCode(0x03)}${String.fromCharCode(0xf0)}`
+
+        // add frame body
+        $kissframe += $body;
+
+        // perform KISS byte stuffing
+        $kissframe.replace(/\xdb/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdd)}`)
+        $kissframe.replace(/\xc0/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdc)}`)
+        //$kissframe =~ s/\xdb/\xdb\xdd/g;
+        //$kissframe =~ s/\xc0/\xdb\xdc/g;
+
+        // add FENDs
+        $kissframe =  `${String.fromCharCode(parseInt("c0", 16))}${$kissframe}${String.fromCharCode(parseInt("c0", 16))}`
+
+        return $kissframe;
+    }
+
+    private encodeString(value: string): string {
+        let retVal = "";
+
+        for(let $i = 0; $i < value.length; $i++) {
+            retVal += String.fromCharCode(value.charCodeAt($i) << 1);
+        }
+
+        return retVal;
     }
 }

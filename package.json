@@ -2,7 +2,7 @@
   "author": "afairhurst",
   "license": "ISC",
   "name": "js-aprs-fap",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "homepage": "https://github.com/KD0NKS/js-aprs-fap",
   "description": "NodeJs library for parsing APRS packets.",
   "repository": {
@@ -35,7 +35,7 @@
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^18.11.15",
+    "@types/node": "^18.11.17",
     "chai": "^4.3.7",
     "coveralls": "^3.1.1",
     "mocha": "^10.2.0",

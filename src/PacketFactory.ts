@@ -96,25 +96,20 @@ export class PacketFactory {
             date = new Date(timestamp);
         }
 
-        let retVal = "";
-
-        if (timeFormat == TimeFormatEnum.DHM) {
-            retVal = String(date.getUTCDate()).padStart(2, "0")
-                    + String(date.getUTCHours()).padStart(2, "0")
-                    + String(date.getUTCMinutes()).padStart(2, "0")
-                    + 'z';
-            //$tstring = sprintf("%02d%02d%02dz", $day, $hour, $minute);
-        } else if(timeFormat == TimeFormatEnum.HMS) {
-            //$tstring = sprintf("%02d%02d%02dh", $hour, $minute, $sec);
-            retVal = String(date.getUTCHours()).padStart(2, "0")
-                    + String(date.getUTCMinutes()).padStart(2, "0")
-                    + String(date.getUTCSeconds()).padStart(2, "0")
-                    + "h"
-        } else {
-            throw new Error("Unsupported time format.");
+        switch(timeFormat) {
+            case TimeFormatEnum.DHM:
+                return String(date.getUTCDate()).padStart(2, "0")
+                        + String(date.getUTCHours()).padStart(2, "0")
+                        + String(date.getUTCMinutes()).padStart(2, "0")
+                        + 'z';
+            case TimeFormatEnum.HMS:
+                return String(date.getUTCHours()).padStart(2, "0")
+                        + String(date.getUTCMinutes()).padStart(2, "0")
+                        + String(date.getUTCSeconds()).padStart(2, "0")
+                        + "h";
+            default:
+                throw new Error("Unsupported time format.");
         }
-
-        return retVal;
     }
 
     /**
@@ -123,7 +118,7 @@ export class PacketFactory {
      * @param {BuildPositionModel} data - See model class
      * @returns {string} - "!1234.56N/12345.67E/CSD/SPD" or in compressed form "!F*-X;n_Rv&{-A" or an error.
      */
-    public makePosition(data: BuildPositionModel): string | null {
+    public makePosition(data?: BuildPositionModel): string | null {
         let retVal = "";
 
         try {

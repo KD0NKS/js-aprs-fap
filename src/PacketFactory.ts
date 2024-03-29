@@ -351,7 +351,7 @@ export class PacketFactory {
             }
         }
 
-        if(data.comment && data.comment != null && data.comment != "") {
+        if(!!data.comment) {
             retVal += data.comment;
         }
 

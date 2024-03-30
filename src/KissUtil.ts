@@ -170,75 +170,75 @@ export class KissUtil {
      *
      * NOTE: While all callsigns should be uppercase, regexes may need to account for a-z
      */
-    public tnc2ToKiss($gotframe: string): string | null {
-        let $kissframe = String.fromCharCode(parseInt("00", 16)); // kiss frame starts with byte 0x00
+    public tnc2ToKiss(frame: string): string | null {
+        let kissFrame = String.fromCharCode(parseInt("00", 16)); // kiss frame starts with byte 0x00
 
-        let $body;
-        let $header;
+        let body;
+        let header;
 
         // separate header and body
-        if(/^([A-Z0-9,*>-]+):(.+)$/.test($gotframe)) {
-            [, $header, $body] = $gotframe.match(/^([A-Z0-9,*>-]+):(.+)$/)
+        if(/^([A-Z0-9,*>-]+):(.+)$/.test(frame)) {
+            [, header, body] = frame.match(/^([A-Z0-9,*>-]+):(.+)$/)
         } else {
             throw new Error("Separation into header and body failed.");
         }
 
         // separate the sender, recipient and digipeaters
-        let $sender;
-        let $sender_ssid;
-        let $receiver;
-        let $receiver_ssid;
-        let $digipeaters;
+        let sender;
+        let senderSsid;
+        let receiver;
+        let receiverSsid;
+        let digipeaters;
 
-        if(/^([A-Z0-9]{1,6})(-\d+|)>([A-Z0-9]{1,6})(-\d+|)(|,.*)$/.test($header)) {
-            [, $sender, $sender_ssid, $receiver, $receiver_ssid, $digipeaters] = $header.match(/^([A-Z0-9]{1,6})(-\d+|)>([A-Z0-9]{1,6})(-\d+|)(|,.*)$/)
+        if(/^([A-Z0-9]{1,6})(-\d+|)>([A-Z0-9]{1,6})(-\d+|)(|,.*)$/.test(header)) {
+            [, sender, senderSsid, receiver, receiverSsid, digipeaters] = header.match(/^([A-Z0-9]{1,6})(-\d+|)>([A-Z0-9]{1,6})(-\d+|)(|,.*)$/)
         } else {
             throw new Error("Separation of sender and receiver from header failed.");
         }
 
         // Check SSID format and convert to number
-        if($sender_ssid.length > 0) {
-            $sender_ssid = Number($sender_ssid) * -1;
+        if(senderSsid.length > 0) {
+            senderSsid = Number(senderSsid) * -1;
 
-            if($sender_ssid > 15) {
+            if(senderSsid > 15) {
                 throw new Error("Sender SSID ($sender_ssid) is over 15.");
             }
         } else {
-            $sender_ssid = 0;
+            senderSsid = 0;
         }
 
-        if($receiver_ssid.length > 0) {
-            $receiver_ssid = Number($receiver_ssid) * -1;
+        if(receiverSsid.length > 0) {
+            receiverSsid = Number(receiverSsid) * -1;
 
-            if($receiver_ssid > 15) {
+            if(receiverSsid > 15) {
                 throw new Error("tnc2_to_kiss(): receiver SSID ($receiver_ssid) is over 15.");
             }
         } else {
-            $receiver_ssid = 0;
+            receiverSsid = 0;
         }
 
         // pad callsigns to 6 characters with space
-        $sender = $sender.padEnd(6, ' ') // ' ' x (6 - length($sender));
-        $receiver = $receiver.padEnd(6, ' ') //' ' x (6 - length($receiver));
+        sender = sender.padEnd(6, ' ') // ' ' x (6 - length($sender));
+        receiver = receiver.padEnd(6, ' ') //' ' x (6 - length($receiver));
 
         // encode destination and source
-        $kissframe += this.encodeString($receiver);
-        $kissframe += String.fromCharCode(0xe0 | ($receiver_ssid << 1));
+        kissFrame += this.encodeString(receiver);
+        kissFrame += String.fromCharCode(0xe0 | (receiverSsid << 1));
 
-        $kissframe += this.encodeString($sender);
+        kissFrame += this.encodeString(sender);
 
-        if($digipeaters.length > 0) {
-            $kissframe += String.fromCharCode(0x60 | ($sender_ssid << 1));
+        if(digipeaters.length > 0) {
+            kissFrame += String.fromCharCode(0x60 | (senderSsid << 1));
         } else {
-            $kissframe += String.fromCharCode(0x61 | ($sender_ssid << 1));
+            kissFrame += String.fromCharCode(0x61 | (senderSsid << 1));
         }
 
         // if there are digipeaters, add them
-        if($digipeaters.length > 0) {
-            $digipeaters = $digipeaters.indexOf(',') == 0 ? $digipeaters.substring(1) : $digipeaters; // remove the first comma
+        if(digipeaters.length > 0) {
+            digipeaters = digipeaters.indexOf(',') == 0 ? digipeaters.substring(1) : digipeaters; // remove the first comma
 
             // split into parts
-            let digis = $digipeaters.split(/,/);
+            let digis = digipeaters.split(/,/);
             //let $digicount = scalar(@digis);
 
             if(digis.length > 8 || digis.length < 1) {
@@ -246,67 +246,67 @@ export class KissUtil {
                 throw new Error(`Too many (or zero) digipeaters: ${digis.length}`);
             }
 
-            for(let $i = 0; $i < digis.length; $i++) {
+            for(let i = 0; i < digis.length; i++) {
                 let tmp
 
                 // split into callsign, SSID and h-bit
-                if((tmp = digis[$i].match(/^([A-Z0-9]{1,6})(-\d+|)(\*|)$/))) {
-                    let $callsign = tmp[1].padEnd(6, ' ');
-                    let $ssid = 0;
-                    let $hbit = 0x00;
+                if((tmp = digis[i].match(/^([A-Z0-9]{1,6})(-\d+|)(\*|)$/))) {
+                    let callsign = tmp[1].padEnd(6, ' ');
+                    let ssid = 0;
+                    let hbit = 0x00;
 
                     if(tmp[2].length > 0) {
-                        $ssid = Number(tmp[2]) * -1;
+                        ssid = Number(tmp[2]) * -1;
 
-                        if($ssid > 15) {
-                            throw new Error(`Digipeater nr. ${$i} SSID ($ssid) invalid.`);
+                        if(ssid > 15) {
+                            throw new Error(`Digipeater nr. ${i} SSID ($ssid) invalid.`);
                         }
                     }
 
                     if(tmp[3] == '*') {
-                        $hbit = 0x80;
+                        hbit = 0x80;
                     }
 
                     // add to kiss frame
-                    $kissframe += this.encodeString($callsign);
+                    kissFrame += this.encodeString(callsign);
 
-                    if($i + 1 < digis.length) {
+                    if(i + 1 < digis.length) {
                         // more digipeaters to follow
-                        $kissframe += String.fromCharCode($hbit | 0x60 | ($ssid << 1));
+                        kissFrame += String.fromCharCode(hbit | 0x60 | (ssid << 1));
                     } else {
                         // last digipeater
-                        $kissframe += String.fromCharCode($hbit | 0x61 | ($ssid << 1));
+                        kissFrame += String.fromCharCode(hbit | 0x61 | (ssid << 1));
                     }
 
                 } else {
-                    throw new Error(`Digipeater nr. ${$i} parsing failed.`);
+                    throw new Error(`Digipeater nr. ${i} parsing failed.`);
                 }
             }
         }
 
         // add frame type (0x03) and PID (0xF0)
-        $kissframe = `${$kissframe}${String.fromCharCode(0x03)}${String.fromCharCode(0xf0)}`
+        kissFrame = `${kissFrame}${String.fromCharCode(0x03)}${String.fromCharCode(0xf0)}`
 
         // add frame body
-        $kissframe += $body;
+        kissFrame += body;
 
         // perform KISS byte stuffing
-        $kissframe.replace(/\xdb/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdd)}`)
-        $kissframe.replace(/\xc0/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdc)}`)
+        kissFrame.replace(/\xdb/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdd)}`)
+        kissFrame.replace(/\xc0/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdc)}`)
         //$kissframe =~ s/\xdb/\xdb\xdd/g;
         //$kissframe =~ s/\xc0/\xdb\xdc/g;
 
         // add FENDs
-        $kissframe =  `${String.fromCharCode(parseInt("c0", 16))}${$kissframe}${String.fromCharCode(parseInt("c0", 16))}`
+        kissFrame =  `${String.fromCharCode(parseInt("c0", 16))}${kissFrame}${String.fromCharCode(parseInt("c0", 16))}`
 
-        return $kissframe;
+        return kissFrame;
     }
 
     private encodeString(value: string): string {
         let retVal = "";
 
-        for(let $i = 0; $i < value.length; $i++) {
-            retVal += String.fromCharCode(value.charCodeAt($i) << 1);
+        for(let i = 0; i < value.length; i++) {
+            retVal += String.fromCharCode(value.charCodeAt(i) << 1);
         }
 
         return retVal;

@@ -1,9 +1,5 @@
 const assert = require('assert');
 
-import aprsPacket from '../src/aprsPacket';
-import { PacketTypeEnum } from '../src/PacketTypeEnum';
-import aprsParser from '../src/parser';
-
 import { KissUtil } from '../src/KissUtil';
 
 // a mic-e decoding test
@@ -13,8 +9,8 @@ describe('FAP - Test parsing mic-e packages', () => {
     let util: KissUtil = new KissUtil();
 
     describe('Test 1', () => {
-        let $aprspacket = "TEST-9>TEST,WIDE1-1,WIDE2-1:!3430.00SI15000.00E#1";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,WIDE1-1,WIDE2-1:!3430.00SI15000.00E#1";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -33,13 +29,13 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 
     describe('Test 2', () => {
-        let $aprspacket = "TEST-9>TEST,WIDE1-1,WIDE2-2:!3430.00SI15000.00E#2";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,WIDE1-1,WIDE2-2:!3430.00SI15000.00E#2";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -58,13 +54,13 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 
     describe('Test 3', () => {
-        let $aprspacket = "TEST-9>TEST,WIDE2-2:!3430.00SI15000.00E#3";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,WIDE2-2:!3430.00SI15000.00E#3";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -83,13 +79,13 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 
     describe('Test 4', () => {
-        let $aprspacket = "TEST-9>TEST,WIDE1-1,TEST*,WIDE2-1:!3430.00SI15000.00E#4";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,WIDE1-1,TEST*,WIDE2-1:!3430.00SI15000.00E#4";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -108,13 +104,13 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 
     describe('Test 5', () => {
-        let $aprspacket = "TEST-9>TEST,WIDE1*,WIDE2-1:!3430.00SI15000.00E#5";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,WIDE1*,WIDE2-1:!3430.00SI15000.00E#5";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -133,13 +129,13 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 
     describe('Test 6', () => {
-        let $aprspacket = "TEST-9>TEST,TEST*,WIDE1*,WIDE2-1:!3430.00SI15000.00E#6";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,TEST*,WIDE1*,WIDE2-1:!3430.00SI15000.00E#6";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -158,13 +154,13 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 
     describe('Test 10', () => {
-        let $aprspacket = "TEST-9>TEST,VK2AMW-1,WIDE2-1:!3430.00SI15000.00E#10";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,VK2AMW-1,WIDE2-1:!3430.00SI15000.00E#10";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -183,13 +179,13 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 
     describe('Test 11', () => {
-        let $aprspacket = "TEST-9>TEST,VK2RHR-1,WIDE2-1:!3430.00SI15000.00E#11";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,VK2RHR-1,WIDE2-1:!3430.00SI15000.00E#11";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -208,13 +204,13 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 
     describe('Test 51', () => {
-        let $aprspacket = "TEST-9>TEST,WIDE1-1,WIDE2-4:!3430.00SI15000.00E#51";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,WIDE1-1,WIDE2-4:!3430.00SI15000.00E#51";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -233,13 +229,13 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 
     describe('Test 52', () => {
-        let $aprspacket = "TEST-9>TEST,WIDE1-1,WIDE2-2,WIDE2-2:!3430.00SI15000.00E#52";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,WIDE1-1,WIDE2-2,WIDE2-2:!3430.00SI15000.00E#52";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -258,13 +254,13 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 
     describe('Test 53', () => {
-        let $aprspacket = "TEST-9>TEST,TEST*,WIDE1*,WIDE2-1:!3430.00SI15000.00E#53";
-        let test = util.tnc2ToKiss($aprspacket)
+        let aprspacket = "TEST-9>TEST,TEST*,WIDE1*,WIDE2-1:!3430.00SI15000.00E#53";
+        let test = util.tnc2ToKiss(aprspacket)
 
         if(test?.charAt(0) == String.fromCharCode(parseInt("c0", 16))) {
             test = test.substring(1)
@@ -283,7 +279,7 @@ describe('FAP - Test parsing mic-e packages', () => {
         */
 
         it("Should result in matching packets", () => {
-            assert.equal($aprspacket, test)
+            assert.equal(aprspacket, test)
         })
     })
 })

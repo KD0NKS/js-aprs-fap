@@ -35,7 +35,7 @@ export class KissUtil {
 
         // byte unstuffing
         // TODO: Don't think this is working properly after being converted to TypeScript
-        frame.replace(/\0xDB\0xDC\0xC0\0xDB\0xDD\0xDB/, '');
+        frame = frame.replace(/\xDB\xDC\xC0\xDB\xDD\xDB/, '');
 
         // length checking after byte unstuffing
         if(frame.length < 16) {

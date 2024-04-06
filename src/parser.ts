@@ -107,7 +107,7 @@ export default class aprsParser {
      * my ret = parseaprs("OH2XYZ>APRS,RELAY*,WIDE:!2345.56N/12345.67E-PHG0123 hi",
      * \%hash, 'isax25' => 0, 'accept_broken_mice' => 0);
      */
-    parseaprs(packet: string, options?: any): aprsPacket {
+    parseaprs(packet: string, options?: any): aprsPacket | null | undefined {
         let retVal: aprsPacket = new aprsPacket();
         let isax25 = (options && options['isax25'] != undefined) ? options['isax25'] : false;
 

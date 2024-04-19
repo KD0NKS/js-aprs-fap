@@ -64,7 +64,7 @@ export class KissUtil {
                 // (0-bit is one)
                 if(charCode & 1) {
                     if(addressCount < 14 || (addressCount % 7) != 0) {
-                        //throw new Error("addresses ended too soon or in the wrong place in kiss frame.");
+                        throw new Error("addresses ended too soon or in the wrong place in kiss frame.");
                     }
 
                     // move on to control field next time
@@ -84,9 +84,9 @@ export class KissUtil {
 
                     // check the callsign for validity
                     let chkCall = this.checkKissCallsign(callsignTmp);
-                    //if(!chkCall || chkCall == null) {
-                    //    throw new Error("Invalid callsign in kiss frame, discarding.");
-                    //}
+                    if(!chkCall || chkCall == null || chkCall == undefined) {
+                        throw new Error("Invalid callsign in kiss frame, discarding.");
+                    }
 
                     if(addressCount == 7) {
                         // we have a destination callsign
@@ -148,7 +148,7 @@ export class KissUtil {
             } else if(addressPart == 2) {
                 // we want PID 0xFO
                 if(charCode != 0xF0) {
-                    //throw new Error("PID not 0xF0, skipping.")
+                    throw new Error("PID not 0xF0, skipping.")
                 }
 
                 addressPart = 3;

@@ -291,8 +291,8 @@ export class KissUtil {
         kissFrame += body;
 
         // perform KISS byte stuffing
-        kissFrame.replace(/\xdb/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdd)}`)
-        kissFrame.replace(/\xc0/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdc)}`)
+        kissFrame = kissFrame.replace(/\xdb/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdd)}`)
+        kissFrame = kissFrame.replace(/\xc0/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdc)}`)
         //$kissframe =~ s/\xdb/\xdb\xdd/g;
         //$kissframe =~ s/\xc0/\xdb\xdc/g;
 

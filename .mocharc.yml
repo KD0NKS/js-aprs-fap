@@ -1,6 +1,6 @@
 bail: true
 spec: 'test/**/*.test.ts'
 require:
-  - ts-node/register
+  - tsx
   - source-map-support/register
 full-trace: true

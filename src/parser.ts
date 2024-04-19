@@ -107,7 +107,7 @@ export default class aprsParser {
      * my ret = parseaprs("OH2XYZ>APRS,RELAY*,WIDE:!2345.56N/12345.67E-PHG0123 hi",
      * \%hash, 'isax25' => 0, 'accept_broken_mice' => 0);
      */
-    parseaprs(packet: string, options?: any): aprsPacket {
+    parseaprs(packet: string, options?: any): aprsPacket | null | undefined {
         let retVal: aprsPacket = new aprsPacket();
         let isax25 = (options && options['isax25'] != undefined) ? options['isax25'] : false;
 
@@ -854,7 +854,7 @@ export default class aprsParser {
                 if(type === 'C' || type === 'E') {
                     let numberid = leftoverstring.substring(1, 2);
 
-                    if((tmp = numberid.match(/^(\d{2})$/)) && parseInt(numberid) > 0 && parseInt(numberid) < 95) {
+                    if(/^(\d{2})$/.test(numberid) && parseInt(numberid) > 0 && parseInt(numberid) < 95) {
                         code = String.fromCharCode(parseInt(tmp[1]) + 32);
 
                         if(type === 'C') {
@@ -1197,12 +1197,11 @@ export default class aprsParser {
         // First check the possible APRS data extension,
         // immediately following the packet
         if(rest.length >= 7) {
-            if((tmprest = rest.match(/^([0-9. ]{3})\/([0-9. ]{3})/))) {
-                let course = tmprest[1];
-                let speed = tmprest[2];
+            if(/^([0-9. ]{3})\/([0-9. ]{3})/.test(rest)) {
+                let [ , course, speed ] = rest.match(/^([0-9. ]{3})\/([0-9. ]{3})/);
                 let match;
 
-                if((match = course.match(/^\d{3}$/)) &&
+                if(/^\d{3}$/.test(course) &&
                         parseInt(course) <= 360 &&
                         parseInt(course) >= 1) {
                     // force numeric interpretation
@@ -1214,7 +1213,7 @@ export default class aprsParser {
 
                 // If speed is invalid, don't set it
                 // (zero speed is a valid speed).
-                if((match = speed.match(/^\d{3}$/))) {
+                if(/^\d{3}$/.test(speed)) {
                     // force numeric interpretation
                     // and convert to km/h
                     rethash.speed = parseInt(speed) * ConversionConstantEnum.KNOT_TO_KMH;

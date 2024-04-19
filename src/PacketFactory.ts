@@ -164,14 +164,12 @@ export class PacketFactory {
 
         let symbolTable = "";
         let symbolCode = "";
-        let tmpSymbols = []
 
         if(data.symbols == null || data.symbols == "") {
             symbolTable = "/";
             symbolCode = "/";
-        } else if(tmpSymbols = data.symbols.match(/^([\/\\A-Z0-9])([\x21-\x7b\x7d])$/)) {
-            symbolTable = tmpSymbols[1];
-            symbolCode = tmpSymbols[2];
+        } else if(/^([\/\\A-Z0-9])([\x21-\x7b\x7d])$/.test(data.symbols)) {
+            [,symbolTable, symbolCode] = data.symbols.match(/^([\/\\A-Z0-9])([\x21-\x7b\x7d])$/);
         } else {
             throw new Error("Invalid symbols.");
         }
@@ -265,7 +263,7 @@ export class PacketFactory {
             }
 
             // check for rouding to 60 minutes and fix to 59.99 and DAO to 99
-            if(latMinStr.match(/^60/)) {
+            if(/^60/.test(latMinStr)) {
                 latMinStr = "5999";
                 latMinDao = "99";
             }
@@ -294,7 +292,7 @@ export class PacketFactory {
             }
 
             // check for rouding to 60 minutes and fix to 59.99 and DAO to 99
-            if(lonMinStr.match(/^60/)) {
+            if(/^60/.test(lonMinStr)) {
                 lonMinStr = "5999";
                 lonMinDao = "99";
             }
@@ -353,7 +351,7 @@ export class PacketFactory {
             }
         }
 
-        if(data.comment && data.comment != null && data.comment != "") {
+        if(!!data.comment) {
             retVal += data.comment;
         }
 
@@ -405,160 +403,6 @@ export class PacketFactory {
         return retVal;
     }
 }
-
-
-    /**
-     * =item tnc2_to_kiss($tnc2frame)
-     * Convert a TNC-2 compatible UI-frame into a KISS data
-     * frame (single port KISS TNC). The frame will be complete,
-     * i.e. it has byte stuffing done and FEND (0xC0) characters
-     * on both ends. If conversion fails, return undef.
-     *
-    private tnc2_to_kiss($gotframe: string): string {
-        let $kissframe = 0x00; // kiss frame starts with byte 0x00
-        /*
-        let $body;
-        let $header;
-
-        # separate header and body
-        if ($gotframe =~ /^([A-Z0-9,*>-]+):(.+)$/o) {
-            $header = $1;
-            $body = $2;
-        } else {
-            if ($debug > 0) {
-                warn "tnc2_to_kiss(): separation into header and body failed\n";
-            }
-            return undef;
-        }
-
-        # separate the sender, recipient and digipeaters
-        my $sender;
-        my $sender_ssid;
-        my $receiver;
-        my $receiver_ssid;
-        my $digipeaters;
-        if ($header =~ /^([A-Z0-9]{1,6})(-\d+|)>([A-Z0-9]{1,6})(-\d+|)(|,.*)$/o) {
-            $sender = $1;
-            $sender_ssid = $2;
-            $receiver = $3;
-            $receiver_ssid = $4;
-            $digipeaters = $5;
-        } else {
-            if ($debug > 0) {
-                warn "tnc2_to_kiss(): separation of sender and receiver from header failed\n";
-            }
-            return undef;
-        }
-
-        # Check SSID format and convert to number
-        if (length($sender_ssid) > 0) {
-            $sender_ssid = 0 - $sender_ssid;
-            if ($sender_ssid > 15) {
-                if ($debug > 0) {
-                    warn "tnc2_to_kiss(): sender SSID ($sender_ssid) is over 15\n";
-                }
-                return undef;
-            }
-        } else {
-            $sender_ssid = 0;
-        }
-        if (length($receiver_ssid) > 0) {
-            $receiver_ssid = 0 - $receiver_ssid;
-            if ($receiver_ssid > 15) {
-                if ($debug > 0) {
-                    warn "tnc2_to_kiss(): receiver SSID ($receiver_ssid) is over 15\n";
-                }
-                return undef;
-            }
-        } else {
-            $receiver_ssid = 0;
-        }
-        # pad callsigns to 6 characters with space
-        $sender .= ' ' x (6 - length($sender));
-        $receiver .= ' ' x (6 - length($receiver));
-        # encode destination and source
-        for (my $i = 0; $i < 6; $i++) {
-            $kissframe .= chr(ord(substr($receiver, $i, 1)) << 1);
-        }
-        $kissframe .= chr(0xe0 | ($receiver_ssid << 1));
-        for (my $i = 0; $i < 6; $i++) {
-            $kissframe .= chr(ord(substr($sender, $i, 1)) << 1);
-        }
-        if (length($digipeaters) > 0) {
-            $kissframe .= chr(0x60 | ($sender_ssid << 1));
-        } else {
-            $kissframe .= chr(0x61 | ($sender_ssid << 1));
-        }
-
-        # if there are digipeaters, add them
-        if (length($digipeaters) > 0) {
-            $digipeaters =~ s/,//; # remove the first comma
-            # split into parts
-            my @digis = split(/,/, $digipeaters);
-            my $digicount = scalar(@digis);
-            if ($digicount > 8 || $digicount < 1) {
-                # too many (or none?!?) digipeaters
-                if ($debug > 0) {
-                    warn "tnc2_to_kiss(): too many (or zero) digipeaters: $digicount\n";
-                }
-                return undef;
-            }
-            for (my $i = 0; $i < $digicount; $i++) {
-                # split into callsign, SSID and h-bit
-                if ($digis[$i] =~ /^([A-Z0-9]{1,6})(-\d+|)(\*|)$/o) {
-                    my $callsign = $1 . ' ' x (6 - length($1));
-                    my $ssid = 0;
-                    my $hbit = 0x00;
-                    if (length($2) > 0) {
-                        $ssid = 0 - $2;
-                        if ($ssid > 15) {
-                            if ($debug > 0) {
-                                warn "tnc2_to_kiss(): digipeater nr. $i SSID ($ssid) invalid\n";
-                            }
-                            return undef;
-                        }
-                    }
-                    if ($3 eq '*') {
-                        $hbit = 0x80;
-                    }
-                    # add to kiss frame
-                    for (my $k = 0; $k < 6; $k++) {
-                        $kissframe .= chr(ord(substr($callsign, $k, 1)) << 1);
-                    }
-                    if ($i + 1 < $digicount) {
-                        # more digipeaters to follow
-                        $kissframe .= chr($hbit | 0x60 | ($ssid << 1));
-                    } else {
-                        # last digipeater
-                        $kissframe .= chr($hbit | 0x61 | ($ssid << 1));
-                    }
-
-                } else {
-                    if ($debug > 0) {
-                        warn "tnc2_to_kiss(): digipeater nr. $i parsing failed\n";
-                    }
-                    return undef;
-                }
-            }
-        }
-
-        # add frame type (0x03) and PID (0xF0)
-        $kissframe .= chr(0x03) . chr(0xf0);
-        # add frame body
-        $kissframe .= $body;
-        # perform KISS byte stuffing
-        $kissframe =~ s/\xdb/\xdb\xdd/g;
-        $kissframe =~ s/\xc0/\xdb\xdc/g;
-        # add FENDs
-        $kissframe = chr(0xc0) . $kissframe . chr(0xc0);
-        *
-
-        return $kissframe;
-        *
-
-        return null;
-    }
-    */
 
     /**
      * =item aprs_duplicate_parts($packet)

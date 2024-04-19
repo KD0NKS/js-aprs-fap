@@ -35,7 +35,7 @@ export class KissUtil {
 
         // byte unstuffing
         // TODO: Don't think this is working properly after being converted to TypeScript
-        frame.replace(/\xDB\xDC\xC0\xDB\xDD\xDB/, '');
+        frame = frame.replace(/\xDB\xDC\xC0\xDB\xDD\xDB/, '');
 
         // length checking after byte unstuffing
         if(frame.length < 16) {
@@ -84,7 +84,7 @@ export class KissUtil {
 
                     // check the callsign for validity
                     let chkCall = this.checkKissCallsign(callsignTmp);
-                    if(!chkCall || chkCall == null) {
+                    if(!chkCall || chkCall == null || chkCall == undefined) {
                         throw new Error("Invalid callsign in kiss frame, discarding.");
                     }
 
@@ -141,7 +141,7 @@ export class KissUtil {
                 // control field. we are only interested in
                 // UI frames, discard others
                 if(charCode != 3) {
-                    throw new Error("not UI frame, skipping.");
+                    //throw new Error("not UI frame, skipping.");
                 }
 
                 addressPart = 2;
@@ -159,5 +159,156 @@ export class KissUtil {
         } while(frame.length > 0);
 
         return asciiFrame;
+    }
+
+    /**
+     * =item tnc2_to_kiss($tnc2frame)
+     * Convert a TNC-2 compatible UI-frame into a KISS data
+     * frame (single port KISS TNC). The frame will be complete,
+     * i.e. it has byte stuffing done and FEND (0xC0) characters
+     * on both ends. If conversion fails, return undef.
+     *
+     * NOTE: While all callsigns should be uppercase, regexes may need to account for a-z
+     */
+    public tnc2ToKiss(frame: string): string | null {
+        let kissFrame = String.fromCharCode(parseInt("00", 16)); // kiss frame starts with byte 0x00
+
+        let body;
+        let header;
+
+        // separate header and body
+        if(/^([A-Z0-9,*>-]+):(.+)$/.test(frame)) {
+            [, header, body] = frame.match(/^([A-Z0-9,*>-]+):(.+)$/)
+        } else {
+            throw new Error("Separation into header and body failed.");
+        }
+
+        // separate the sender, recipient and digipeaters
+        let sender;
+        let senderSsid;
+        let receiver;
+        let receiverSsid;
+        let digipeaters;
+
+        if(/^([A-Z0-9]{1,6})(-\d+|)>([A-Z0-9]{1,6})(-\d+|)(|,.*)$/.test(header)) {
+            [, sender, senderSsid, receiver, receiverSsid, digipeaters] = header.match(/^([A-Z0-9]{1,6})(-\d+|)>([A-Z0-9]{1,6})(-\d+|)(|,.*)$/)
+        } else {
+            throw new Error("Separation of sender and receiver from header failed.");
+        }
+
+        // Check SSID format and convert to number
+        if(senderSsid.length > 0) {
+            senderSsid = Number(senderSsid) * -1;
+
+            if(senderSsid > 15) {
+                throw new Error("Sender SSID ($sender_ssid) is over 15.");
+            }
+        } else {
+            senderSsid = 0;
+        }
+
+        if(receiverSsid.length > 0) {
+            receiverSsid = Number(receiverSsid) * -1;
+
+            if(receiverSsid > 15) {
+                throw new Error("tnc2_to_kiss(): receiver SSID ($receiver_ssid) is over 15.");
+            }
+        } else {
+            receiverSsid = 0;
+        }
+
+        // pad callsigns to 6 characters with space
+        sender = sender.padEnd(6, ' ') // ' ' x (6 - length($sender));
+        receiver = receiver.padEnd(6, ' ') //' ' x (6 - length($receiver));
+
+        // encode destination and source
+        kissFrame += this.encodeString(receiver);
+        kissFrame += String.fromCharCode(0xe0 | (receiverSsid << 1));
+
+        kissFrame += this.encodeString(sender);
+
+        if(digipeaters.length > 0) {
+            kissFrame += String.fromCharCode(0x60 | (senderSsid << 1));
+        } else {
+            kissFrame += String.fromCharCode(0x61 | (senderSsid << 1));
+        }
+
+        // if there are digipeaters, add them
+        if(digipeaters.length > 0) {
+            digipeaters = digipeaters.indexOf(',') == 0 ? digipeaters.substring(1) : digipeaters; // remove the first comma
+
+            // split into parts
+            let digis = digipeaters.split(/,/);
+            //let $digicount = scalar(@digis);
+
+            if(digis.length > 8 || digis.length < 1) {
+                // too many (or none?!?) digipeaters
+                throw new Error(`Too many (or zero) digipeaters: ${digis.length}`);
+            }
+
+            for(let i = 0; i < digis.length; i++) {
+                let tmp
+
+                // split into callsign, SSID and h-bit
+                if((tmp = digis[i].match(/^([A-Z0-9]{1,6})(-\d+|)(\*|)$/))) {
+                    let callsign = tmp[1].padEnd(6, ' ');
+                    let ssid = 0;
+                    let hbit = 0x00;
+
+                    if(tmp[2].length > 0) {
+                        ssid = Number(tmp[2]) * -1;
+
+                        if(ssid > 15) {
+                            throw new Error(`Digipeater nr. ${i} SSID ($ssid) invalid.`);
+                        }
+                    }
+
+                    if(tmp[3] == '*') {
+                        hbit = 0x80;
+                    }
+
+                    // add to kiss frame
+                    kissFrame += this.encodeString(callsign);
+
+                    if(i + 1 < digis.length) {
+                        // more digipeaters to follow
+                        kissFrame += String.fromCharCode(hbit | 0x60 | (ssid << 1));
+                    } else {
+                        // last digipeater
+                        kissFrame += String.fromCharCode(hbit | 0x61 | (ssid << 1));
+                    }
+
+                } else {
+                    throw new Error(`Digipeater nr. ${i} parsing failed.`);
+                }
+            }
+        }
+
+        // add frame type (0x03) and PID (0xF0)
+        kissFrame = `${kissFrame}${String.fromCharCode(0x03)}${String.fromCharCode(0xf0)}`
+
+        // add frame body
+        kissFrame += body;
+
+        // perform KISS byte stuffing
+        kissFrame = kissFrame.replace(/\xdb/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdd)}`)
+        kissFrame = kissFrame.replace(/\xc0/, `${String.fromCharCode(0xdb)}${String.fromCharCode(0xdc)}`)
+        //$kissframe =~ s/\xdb/\xdb\xdd/g;
+        //$kissframe =~ s/\xc0/\xdb\xdc/g;
+
+        // add FENDs
+        kissFrame =  `${String.fromCharCode(parseInt("c0", 16))}${kissFrame}${String.fromCharCode(parseInt("c0", 16))}`
+
+        return kissFrame;
+    }
+
+    private encodeString(value: string): string {
+        let retVal = "";
+
+        for(let i = 0; i < value.length; i++) {
+            retVal += String.fromCharCode(value.charCodeAt(i) << 1);
+        }
+
+        return retVal;
     }
 }
